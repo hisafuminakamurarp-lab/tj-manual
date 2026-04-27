@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TJソリューション 業務マニュアル</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-dark: #0F1923;
+    --bg-panel: #1A2535;
+    --bg-hover: #243347;
+    --bg-active: #1B3A5C;
+    --text-primary: #F0F4F8;
+    --text-secondary: #8FA3BA;
+    --text-muted: #5A7191;
+    --border: #2A3E56;
+    --content-bg: #F5F8FB;
+    --content-text: #0F1923;
+    --content-secondary: #4A5E72;
+    --content-border: #DDE6EF;
+    --accent: #1B6FE0;
+    --favorite: #F59E0B;
+    --sidebar-width: 250px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Noto Sans JP", sans-serif; background: var(--content-bg); color: var(--content-text); display: flex; height: 100vh; overflow: hidden; }
+
+  /* SIDEBAR */
+  #sidebar { width: var(--sidebar-width); background: var(--bg-dark); display: flex; flex-direction: column; height: 100vh; flex-shrink: 0; border-right: 1px solid var(--border); }
+  .sidebar-header { padding: 20px 16px 14px; border-bottom: 1px solid var(--border); }
+  .sidebar-logo { display: flex; align-items: center; gap: 10px; }
+  .sidebar-logo-icon { width: 32px; height: 32px; background: linear-gradient(135deg, #1B6FE0, #00C6FF); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; color: #fff; letter-spacing: -0.5px; }
+  .sidebar-logo-text { font-size: 13px; font-weight: 700; color: var(--text-primary); line-height: 1.3; }
+  .sidebar-logo-sub { font-size: 10px; color: var(--text-muted); font-weight: 400; }
+  .sidebar-search { margin: 12px 12px 0; position: relative; }
+  .sidebar-search input { width: 100%; background: var(--bg-panel); border: 1px solid var(--border); border-radius: 6px; padding: 7px 10px 7px 30px; font-size: 12px; color: var(--text-primary); font-family: inherit; outline: none; transition: border-color 0.2s; }
+  .sidebar-search input:focus { border-color: var(--accent); }
+  .sidebar-search input::placeholder { color: var(--text-muted); }
+  .sidebar-search-icon { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 12px; }
+  .sidebar-nav { flex: 1; overflow-y: auto; padding: 8px 0 16px; }
+  .sidebar-nav::-webkit-scrollbar { width: 4px; }
+  .sidebar-nav::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .nav-section-label { padding: 10px 16px 4px; font-size: 10px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.08em; text-transform: uppercase; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 14px; cursor: pointer; border-left: 3px solid transparent; transition: all 0.15s; color: var(--text-secondary); font-size: 13px; font-weight: 500; position: relative; }
+  .nav-item:hover { background: var(--bg-hover); color: var(--text-primary); }
+  .nav-item.active { background: var(--bg-active); color: var(--text-primary); }
+  .nav-item-icon { font-size: 15px; width: 20px; text-align: center; flex-shrink: 0; }
+  .nav-item-label { flex: 1; }
+  .nav-item-badge { font-size: 10px; background: var(--bg-hover); color: var(--text-muted); padding: 1px 6px; border-radius: 10px; }
+  .nav-item.active .nav-item-badge { background: rgba(255,255,255,0.1); color: var(--text-secondary); }
+  .nav-accent-bar { position: absolute; left: 0; top: 0; bottom: 0; width: 3px; border-radius: 0 2px 2px 0; display: none; }
+  .nav-item.active .nav-accent-bar { display: block; }
+
+  /* MAIN */
+  #main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .topbar { background: #fff; border-bottom: 1px solid var(--content-border); padding: 0 28px; height: 54px; display: flex; align-items: center; gap: 12px; flex-shrink: 0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+  .breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--content-secondary); }
+  .breadcrumb-sep { color: #C5D0DB; }
+  .breadcrumb-current { color: var(--content-text); font-weight: 600; }
+  .topbar-badge { margin-left: auto; font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 600; }
+  .content-area { flex: 1; overflow-y: auto; padding: 32px 36px; }
+  .content-area::-webkit-scrollbar { width: 6px; }
+  .content-area::-webkit-scrollbar-thumb { background: #C5D0DB; border-radius: 3px; }
+
+  /* CATEGORY HEADER */
+  .cat-header { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 28px; padding-bottom: 24px; border-bottom: 1px solid var(--content-border); }
+  .cat-icon-big { width: 52px; height: 52px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }
+  .cat-title { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+  .cat-desc { font-size: 13px; color: var(--content-secondary); line-height: 1.6; }
+
+  /* SECTION CARDS */
+  .sections-grid { display: grid; gap: 12px; }
+  .section-card { background: #fff; border: 1px solid var(--content-border); border-radius: 10px; overflow: hidden; transition: box-shadow 0.2s; }
+  .section-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.07); }
+  .section-header { display: flex; align-items: center; gap: 12px; padding: 14px 18px; cursor: pointer; user-select: none; }
+  .section-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .section-title { flex: 1; font-size: 14px; font-weight: 600; color: var(--content-text); }
+  .section-count { font-size: 11px; color: #9CA3AF; margin-right: 8px; }
+  .section-fav { font-size: 15px; color: #D1D5DB; cursor: pointer; transition: all 0.15s; padding: 2px 4px; line-height: 1; user-select: none; }
+  .section-fav:hover { color: var(--favorite); transform: scale(1.15); }
+  .section-fav.active { color: var(--favorite); }
+  .section-close { font-size: 14px; color: #D1D5DB; cursor: pointer; padding: 2px 6px; line-height: 1; user-select: none; transition: color 0.15s; }
+  .section-close:hover { color: #6B7280; }
+  .section-toggle { font-size: 18px; color: #9CA3AF; transition: transform 0.2s; line-height: 1; margin-left: 4px; }
+  .section-toggle.open { transform: rotate(45deg); }
+  .section-body { display: none; padding: 0 18px 16px 38px; border-top: 1px solid var(--content-border); }
+  .section-body.open { display: block; }
+  .task-list { margin-top: 12px; display: flex; flex-direction: column; gap: 4px; }
+  .task-item { display: flex; align-items: flex-start; gap: 8px; padding: 5px 0; font-size: 13px; color: var(--content-secondary); line-height: 1.5; }
+  .task-item::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: #C5D0DB; flex-shrink: 0; margin-top: 7px; }
+
+  /* NESTED SUBSECTIONS */
+  .subsection-list { margin: 10px 0 4px 0; display: flex; flex-direction: column; gap: 6px; }
+  .subsection-card { background: #F5F8FB; border: 1px solid #DDE6EF; border-radius: 8px; overflow: hidden; }
+  .subsection-header { display: flex; align-items: center; gap: 10px; padding: 10px 14px; cursor: pointer; user-select: none; }
+  .subsection-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; opacity: 0.6; }
+  .subsection-title { flex: 1; font-size: 13px; font-weight: 600; color: #374151; }
+  .subsection-count { font-size: 10px; color: #9CA3AF; margin-right: 6px; }
+  .subsection-toggle { font-size: 15px; color: #9CA3AF; transition: transform 0.2s; line-height: 1; }
+  .subsection-toggle.open { transform: rotate(45deg); }
+  .subsection-body { display: none; padding: 0 14px 10px 30px; border-top: 1px solid #DDE6EF; }
+  .subsection-body.open { display: block; }
+
+  /* MEMO */
+  .memo-area { margin-top: 14px; padding-top: 12px; border-top: 1px dashed #DDE6EF; }
+  .memo-toggle { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: #6B7280; background: #F3F4F6; border: 1px solid #E5E7EB; border-radius: 6px; padding: 4px 10px; cursor: pointer; user-select: none; transition: all 0.15s; font-family: inherit; }
+  .memo-toggle:hover { background: #E5E7EB; color: #374151; }
+  .memo-toggle.has-memo { background: #FEF3C7; border-color: #FDE68A; color: #92400E; }
+  .memo-editor { display: none; margin-top: 8px; }
+  .memo-editor.open { display: block; }
+  .memo-editor textarea { width: 100%; min-height: 80px; padding: 10px 12px; font-size: 12px; font-family: inherit; color: var(--content-text); background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 6px; resize: vertical; outline: none; line-height: 1.6; }
+  .memo-editor textarea:focus { border-color: var(--favorite); }
+  .memo-actions { display: flex; gap: 8px; margin-top: 6px; justify-content: flex-end; }
+  .memo-btn { font-size: 11px; padding: 4px 12px; border: none; border-radius: 5px; cursor: pointer; font-family: inherit; font-weight: 600; transition: opacity 0.15s; }
+  .memo-btn:hover { opacity: 0.85; }
+  .memo-btn.save { background: var(--favorite); color: #fff; }
+  .memo-btn.cancel { background: #F3F4F6; color: #6B7280; }
+  .memo-btn.delete { background: transparent; color: #EF4444; }
+
+  /* FAVORITES VIEW */
+  .favorites-empty { text-align: center; padding: 60px 20px; color: var(--content-secondary); }
+  .favorites-empty-icon { font-size: 40px; margin-bottom: 12px; opacity: 0.4; }
+  .favorites-empty-text { font-size: 14px; }
+  .favorites-empty-sub { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+
+  /* SECTION IMAGE */
+  .section-img { cursor: zoom-in; transition: opacity 0.15s, transform 0.15s; }
+  .section-img:hover { opacity: 0.9; transform: scale(1.01); }
+
+  /* SEARCH */
+  .search-empty { text-align: center; padding: 60px 0; color: var(--content-secondary); font-size: 14px; }
+  .search-result-item { background: #fff; border: 1px solid var(--content-border); border-radius: 10px; padding: 14px 18px; margin-bottom: 10px; border-left-width: 3px; cursor: pointer; transition: box-shadow 0.15s; }
+  .search-result-item:hover { box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
+  .search-result-cat { font-size: 11px; font-weight: 700; margin-bottom: 4px; }
+  .search-result-title { font-size: 14px; font-weight: 600; color: var(--content-text); margin-bottom: 4px; }
+  .search-result-preview { font-size: 12px; color: var(--content-secondary); line-height: 1.6; }
+  mark { background: #FEF08A; border-radius: 2px; padding: 0 1px; }
+
+  /* LOGIN SCREEN */
+  #loginScreen {
+    position: fixed; inset: 0; background: linear-gradient(135deg, #0F1923 0%, #1A2535 50%, #0F1923 100%);
+    z-index: 99998; display: flex; align-items: center; justify-content: center; flex-direction: column;
+  }
+  .login-box {
+    background: rgba(26,37,53,0.9); border: 1px solid #2A3E56;
+    border-radius: 16px; padding: 40px 36px; width: 360px; text-align: center;
+    backdrop-filter: blur(20px); box-shadow: 0 24px 64px rgba(0,0,0,0.4);
+  }
+  .login-logo {
+    width: 56px; height: 56px; background: linear-gradient(135deg, #1B6FE0, #00C6FF);
+    border-radius: 14px; display: flex; align-items: center; justify-content: center;
+    font-size: 20px; font-weight: 800; color: #fff; margin: 0 auto 16px; letter-spacing: -0.5px;
+  }
+  .login-title { font-size: 20px; font-weight: 700; color: #F0F4F8; margin-bottom: 4px; }
+  .login-sub { font-size: 12px; color: #5A7191; margin-bottom: 28px; }
+  .login-label { font-size: 11px; font-weight: 700; color: #5A7191; letter-spacing: 0.08em; text-align: left; margin-bottom: 8px; }
+
+  /* サイドバーのユーザー表示 */
+  .sidebar-user { padding: 10px 12px; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 8px; cursor: pointer; transition: background 0.15s; }
+  .sidebar-user:hover { background: var(--bg-panel); }
+  .sidebar-user-avatar { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #fff; flex-shrink: 0; }
+  .sidebar-user-name { font-size: 12px; color: var(--text-secondary); flex: 1; }
+  .sidebar-user-switch { font-size: 10px; color: var(--text-muted); }
+
+  /* ハンバーガーボタン */
+  .hamburger { display: none; position: fixed; top: 12px; left: 12px; z-index: 1000; width: 38px; height: 38px; background: var(--bg-panel); border: 1px solid var(--border); border-radius: 8px; align-items: center; justify-content: center; cursor: pointer; flex-direction: column; gap: 5px; }
+  .hamburger span { display: block; width: 18px; height: 2px; background: var(--text-secondary); border-radius: 2px; transition: all 0.2s; }
+  .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 998; }
+
+  @media (max-width: 768px) {
+    :root { --sidebar-width: 260px; }
+    .hamburger { display: flex; }
+    #sidebar { position: fixed; left: -280px; top: 0; height: 100vh; z-index: 999; transition: left 0.25s ease; }
+    #sidebar.open { left: 0; }
+    .sidebar-overlay.open { display: block; }
+    #main { width: 100%; }
+    .topbar { padding: 0 16px 0 58px; height: 50px; }
+    .content-area { padding: 20px 16px; }
+    .cat-title { font-size: 18px; }
+    .cat-icon-big { width: 40px; height: 40px; font-size: 20px; }
+    .login-box { width: 90vw; padding: 28px 20px; }
+    .section-header { padding: 12px 14px; }
+    .section-body { padding: 0 14px 14px 28px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">TJ</div>
+    <div class="login-title">TJソリューション</div>
+    <div class="login-sub">業務マニュアル</div>
+    <div class="login-label" style="margin-bottom:8px;">メールアドレス</div>
+    <input type="email" id="loginEmail" placeholder="example@email.com"
+      style="width:100%;background:#0F1923;border:1px solid #2A3E56;border-radius:8px;padding:10px 12px;font-size:13px;color:#F0F4F8;font-family:inherit;outline:none;margin-bottom:14px;box-sizing:border-box;"
+      onfocus="this.style.borderColor='#1B6FE0'" onblur="this.style.borderColor='#2A3E56'">
+    <div class="login-label" style="margin-bottom:8px;">パスワード</div>
+    <input type="password" id="loginPassword" placeholder="パスワード"
+      style="width:100%;background:#0F1923;border:1px solid #2A3E56;border-radius:8px;padding:10px 12px;font-size:13px;color:#F0F4F8;font-family:inherit;outline:none;margin-bottom:6px;box-sizing:border-box;"
+      onfocus="this.style.borderColor='#1B6FE0'" onblur="this.style.borderColor='#2A3E56'"
+      onkeydown="if(event.key==='Enter')doLogin()">
+    <div id="loginError" style="color:#EF4444;font-size:12px;min-height:18px;margin-bottom:10px;"></div>
+    <button onclick="doLogin()"
+      style="width:100%;background:linear-gradient(135deg,#1B6FE0,#00C6FF);border:none;border-radius:8px;padding:12px;font-size:14px;font-weight:700;color:#fff;cursor:pointer;font-family:inherit;transition:opacity 0.15s;"
+      onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">ログイン</button>
+  </div>
+</div>
+
+<!-- HAMBURGER & OVERLAY -->
+<div class="hamburger" id="hamburger" onclick="toggleSidebar()">
+  <span></span><span></span><span></span>
+</div>
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<!-- LIGHTBOX -->
+<div id="lightbox" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.9);z-index:99999;align-items:center;justify-content:center;">
+  <img id="lightboxImg" src="" alt="" style="max-width:90vw;max-height:90vh;object-fit:contain;border-radius:10px;box-shadow:0 20px 60px rgba(0,0,0,0.6);">
+  <div onclick="closeLightbox()" style="position:fixed;top:14px;right:20px;color:#fff;font-size:36px;cursor:pointer;line-height:1;font-weight:300;">✕</div>
+</div>
+
+<!-- SIDEBAR -->
+<aside id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon">TJ</div>
+      <div>
+        <div class="sidebar-logo-text">TJソリューション</div>
+        <div class="sidebar-logo-sub">業務マニュアル</div>
+      </div>
+    </div>
+  </div>
+  <div class="sidebar-search">
+    <span class="sidebar-search-icon">🔍</span>
+    <input type="text" id="searchInput" placeholder="キーワード検索..." oninput="handleSearch(this.value)">
+  </div>
+  <nav class="sidebar-nav" id="sidebarNav">
+    <div class="nav-section-label">カテゴリ</div>
+  </nav>
+  <div class="sidebar-user" id="sidebarUser" onclick="showLogin()">
+    <div class="sidebar-user-avatar" id="sidebarAvatar"></div>
+    <div class="sidebar-user-name" id="sidebarUserName"></div>
+    <div class="sidebar-user-switch">切替</div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div id="main">
+  <div class="topbar" id="topbar">
+    <div class="breadcrumb">
+      <span>マニュアル</span>
+      <span class="breadcrumb-sep">›</span>
+      <span class="breadcrumb-current" id="breadcrumbCurrent">採用・入社プロセス</span>
+    </div>
+  </div>
+  <div class="content-area" id="contentArea"></div>
+</div>
+
+<script>
+function toggleSidebar() {
+  const sb = document.getElementById("sidebar");
+  const ov = document.getElementById("sidebarOverlay");
+  sb.classList.toggle("open");
+  ov.classList.toggle("open");
+}
+function closeSidebar() {
+  document.getElementById("sidebar").classList.remove("open");
+  document.getElementById("sidebarOverlay").classList.remove("open");
+}
+
+const _lbSrcs = {};
+function openLightbox(idx) {
+  const src = _lbSrcs[idx];
+  if (!src) return;
+  document.getElementById("lightboxImg").src = src;
+  document.getElementById("lightbox").style.display = "flex";
+  document.body.style.overflow = "hidden";
+}
+function closeLightbox() {
+  document.getElementById("lightbox").style.display = "none";
+  document.getElementById("lightboxImg").src = "";
+  document.body.style.overflow = "";
+}
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeLightbox(); });
+
+const data = [
+  {
+    id: "hr", label: "人事・労務", icon: "📋", color: "#10B981",
+    desc: "採用・入社から勤怠管理、給与計算、社会保険手続きまで、人事・労務に関わるすべての業務。",
+    sections: [
+      {
+        title: "採用・入社プロセス",
+        tasks: [],
+        subsections: [
+          { title: "採用フロー", tasks: ["採用計画の策定", "募集要項の作成", "媒体掲載", "候補者管理", "面談調整", "面接評価", "採用判断", "オファー作成・条件提示", "合意形成"] },
+          { title: "契約・入社手続き", tasks: ["雇用契約書または業務委託契約書の作成", "契約締結", "入社日調整", "必要書類案内", "本人確認書類回収", "マイナンバー取得", "口座情報取得", "住所情報取得", "緊急連絡先取得"] },
+          { title: "オンボーディング準備", tasks: ["入社前案内送付", "社内共有", "PC準備", "アカウント発行・権限設計", "メールアドレス作成", "Google Workspace設定", "Slack招待", "Kintone招待", "LINEワークス招待", "ドライブ権限設定", "パスワード管理設定", "セキュリティポリシー共有"] },
+          { title: "入社初日・研修", tasks: ["入社初日オリエンテーション", "業務説明・組織説明", "MVV・カルチャー共有", "業務フロー説明", "担当者紹介", "初期タスク付与", "研修設定"] }
+        ]
+      },
+      { title: "勤怠管理", tasks: ["勤怠ルール設定", "勤怠システム設定", "勤怠打刻確認", "勤怠修正フロー", "残業管理", "有給管理", "休暇申請フロー", "承認フロー"] },
+      { title: "給与計算・明細", tasks: ["給与計算対象データ整理", "給与計算処理", "給与明細作成", "給与振込"] },
+      { title: "社会保険・雇用保険", tasks: ["社会保険資格取得手続き", "健康保険手続き", "厚生年金手続き", "扶養手続き", "雇用保険手続き"] },
+      { title: "就労規則・相談", tasks: ["労働条件通知書管理", "就業規則管理", "36協定管理", "労務相談対応", "休職対応", "復職対応"] },
+      { title: "退職・年末調整", tasks: ["退職手続き", "資格喪失手続き", "源泉徴収票作成", "年末調整", "法定調書作成"] }
+    ]
+  },
+  {
+    id: "sales-legal", label: "営業", icon: "💼", color: "#EF4444",
+    desc: "リード取得から顧客管理まで、営業〜契約〜請求の一連フロー。Kintone・freeeサイン・freee会計で管理。",
+    sections: [
+      {
+        title: "①リード管理（Kintone）",
+        tasks: ["リード管理とは、見込み顧客（リード）を管理するページです。名刺交換・紹介・問い合わせなどで取得した顧客情報を登録し、案件管理や顧客管理へ連携する営業の入口となります。"],
+        subsections: [
+          { title: "①-1 登録方法｜Eight名刺連携", tasks: ["名刺交換の場合はEightから自動登録", "自動登録後、Kintoneの「リード管理」を開く", "左端赤枠のファイルボタンをタップ", "「担当者を追加する」へ移行する"] },
+          { title: "①-2 登録方法｜手動登録", tasks: ["名刺交換以外の場合はKintoneから手動入力で登録", "右上の「＋」ボタンをタップしてレコードを新規作成", "情報入力後に保存", "右端赤枠のプラスボタンをタップし「営業アクション」へ移行"] },
+          { title: "②-1 担当者を追加する", tasks: ["同じ会社で担当者が複数名いる場合、「担当者を追加する」をタップ", "担当者を追加後、「顧客管理を新規作成する」へ移行", "担当者がいない場合は「担当者を追加する」をスルーして次へ"] },
+          { title: "②-2 顧客管理を新規作成する", tasks: ["「顧客管理を新規作成する」をタップ", "情報入力後に保存をタップ", "保存すると顧客IDが発行される", "顧客IDが発行されると「案件を登録する」へ連携可能"] },
+          { title: "②-3 案件管理を登録する", tasks: ["「案件を登録する」をタップ", "顧客IDの取得から同一の顧客IDを選択", "情報入力後に保存をタップ", "保存すると案件IDが発行される", "「案件管理」の「活動を登録する」へ移行"] }
+        ]
+      },
+      { title: "③活動管理（Kintone）", tasks: ["商談・面談記録の登録", "メール・電話履歴の記録", "次アクションの設定", "活動レポートの確認"] },
+      { title: "④契約管理(freeeサイン）", tasks: ["契約書テンプレートの選択・作成", "リーガルチェック・反社チェック", "freeeサインで電子契約送付", "署名・契約締結の完了確認", "契約期限・更新日の管理", "NDA・業務委託契約の管理", "契約解約・変更処理"] },
+      { title: "⑤請求管理（Kintone・freee会計）", tasks: ["Kintoneで請求書を申請・承認", "freee会計で請求書作成・送付", "請求データの管理", "入金確認・消込処理", "売掛金・未入金の管理", "督促対応", "売上集計・レポート作成"] },
+      { title: "⑥顧客管理（Kintone）※全て集約", tasks: ["全活動・案件・契約・請求を顧客レコードに紐づけ", "顧客ステータスの管理", "BtoB / BtoC 管理", "サブスクリプション管理", "価格表管理"] }
+    ]
+  },
+  {
+    id: "accounting", label: "経理・会計・税務", icon: "📊", color: "#8B5CF6",
+    desc: "経費処理から決算・税務申告まで、経理に関わるすべての業務。",
+    sections: [
+      { title: "日常経費処理", tasks: ["経費申請", "経費承認", "証憑回収", "領収書管理", "仕訳入力", "会計ソフト入力", "勘定科目管理"] },
+      { title: "月次処理", tasks: ["月次締め処理", "残高確認", "売掛金確認", "買掛金確認", "未払金確認", "預金残高確認", "試算表作成", "月次レポート作成"] },
+      { title: "税務対応", tasks: ["税区分確認", "消費税処理", "法人税対応", "税務申告資料作成", "税理士連携"] },
+      { title: "決算", tasks: ["決算整理仕訳", "決算書作成", "監査対応"] },
+      {
+        title: "freee会計の使い方",
+        tasks: [],
+        subsections: [
+          { title: "ログイン・初期設定", tasks: ["freee会計にログイン", "事業所情報の確認・設定", "勘定科目マスタの確認・追加", "取引先マスタの登録"] },
+          { title: "取引の登録（収入・支出）", tasks: ["収入取引の手動入力", "支出取引の手動入力", "勘定科目・税区分の設定", "証憑（領収書）のアップロード・紐づけ"] },
+          { title: "口座連携・同期", tasks: ["銀行口座の連携設定", "クレジットカードの連携設定", "明細の自動取込・同期", "自動仕訳ルールの設定"] },
+          { title: "仕訳入力・編集", tasks: ["仕訳帳からの手動入力", "取込済み明細への仕訳割当", "仕訳の修正・削除", "未処理明細の確認・対応"] },
+          { title: "請求書の作成・送付", tasks: ["請求書の新規作成", "品目・金額・税区分の入力", "請求書のメール送付・PDF出力", "入金確認・消込処理"] },
+          { title: "見積書・納品書の作成", tasks: ["見積書の新規作成・送付", "見積書から請求書への変換", "納品書の作成・送付", "書類の管理・検索"] },
+          { title: "経費精算・申請", tasks: ["経費申請フォームへの入力", "領収書の撮影・アップロード", "申請の承認フロー", "承認済み経費の仕訳反映"] },
+          { title: "レポート確認（月次・試算表）", tasks: ["損益計算書の確認", "貸借対照表の確認", "月次試算表の出力", "レポートのCSVエクスポート"] },
+          { title: "決算・確定申告", tasks: ["決算整理仕訳の入力", "年次試算表・決算書の確認", "税理士アカウントへの共有設定", "申告書類データのエクスポート"] },
+          { title: "消費税処理", tasks: ["消費税設定（課税方式・申告方式）の確認", "取引ごとの税区分確認", "消費税集計レポートの確認", "消費税申告データの出力"] },
+          { title: "ユーザー権限管理", tasks: ["メンバーの招待・追加", "権限レベルの設定（管理者・一般等）", "メンバーのアクセス範囲確認", "退職者アカウントの削除・停止"] }
+        ]
+      },
+      {
+        title: "マネーフォワードクラウド会計の使い方",
+        tasks: [],
+        subsections: [
+          { title: "基本操作", tasks: ["ログイン・ホーム画面確認", "事業者設定の確認", "勘定科目マスタの管理", "取引先マスタの登録"] },
+          { title: "仕訳・取引登録", tasks: ["仕訳の手動入力", "銀行・カードの自動連携設定", "自動仕訳ルールの設定", "証憑（レシート・領収書）のアップロード", "仕訳の修正・承認"] },
+          { title: "請求書・経費精算", tasks: ["請求書の作成・送付", "入金消込の処理", "経費申請・承認フロー", "経費の仕訳自動反映"] },
+          { title: "レポート・分析", tasks: ["損益計算書の確認", "貸借対照表の確認", "資金繰り表の確認", "部門別・プロジェクト別集計", "レポートのCSVエクスポート"] },
+          { title: "決算・税務対応", tasks: ["決算仕訳の入力", "税理士アカウントの共有", "消費税申告データの確認", "決算書類の出力"] }
+        ]
+      }
+    ]
+  },
+  {
+    id: "it", label: "総務・法務・IT", icon: "⚖️", color: "#06B6D4",
+    desc: "契約書管理、書類管理、オフィス運営、コンプライアンス、IT・セキュリティ管理など、総務・法務・ITに関わる業務。",
+    sections: [
+      {
+        title: "freeeサインの使い方",
+        tasks: [],
+        subsections: [
+          { title: "ログイン・初期設定", tasks: ["freeeサインにログイン", "事業者情報・会社情報の登録", "ロゴ・印影の設定", "送信者情報・メール設定の確認"] },
+          { title: "テンプレート作成・管理", tasks: ["テンプレートの新規作成", "署名欄・入力フィールドの配置", "変数項目（相手方名・金額等）の設定", "テンプレートの複製・編集・アーカイブ"] },
+          { title: "契約書の作成・アップロード", tasks: ["テンプレートから契約書を新規作成", "PDFファイルのアップロード", "署名・捺印箇所の配置", "入力フィールド・日付項目の設定"] },
+          { title: "署名依頼の送付", tasks: ["署名者（相手方・自社）のメールアドレス入力", "署名順序の設定（順次・一斉）", "送付メッセージの編集", "送信前プレビュー確認後に送付"] },
+          { title: "署名・契約締結フロー", tasks: ["署名状況のステータス確認", "未署名者へのリマインド送信", "締結完了通知の受領", "締結済み書類のPDFダウンロード"] },
+          { title: "契約書の検索・保管", tasks: ["締結済み書類の一覧閲覧", "キーワード・タグ・期間による検索", "フォルダ整理・タグ付与", "書類のダウンロード・印刷"] },
+          { title: "更新期限・アラート設定", tasks: ["契約期限・更新日の登録", "アラート通知日の設定", "通知受取メンバーの指定", "期限切れ契約の一覧確認"] },
+          { title: "ユーザー権限管理", tasks: ["メンバーの招待・追加", "権限レベルの設定（管理者・一般・閲覧のみ等）", "部署・チーム別のアクセス範囲設定", "退職者アカウントの削除・停止"] }
+        ]
+      },
+      { title: "オフィス・備品管理", tasks: ["オフィス用品・消耗品の発注管理", "備品台帳の管理・更新", "郵便物・宅配便の受付・発送対応", "オフィス環境の整備・清掃管理"] },
+      { title: "コンプライアンス", tasks: ["社内規程・ポリシーの整備・更新", "コンプライアンス研修の実施・管理", "内部通報窓口の運営", "法改正情報のキャッチアップ・周知"] },
+      { title: "株主総会", tasks: ["株主総会の招集・準備", "議事録の作成・保管"] },
+      { title: "機器・デバイス管理", tasks: ["PC管理", "端末管理", "デバイス設定", "ソフトウェア管理"] },
+      { title: "SaaS・アカウント管理", tasks: ["Google Workspace管理", "Slack管理", "Kintone管理", "LINE公式アカウント管理", "アカウント権限管理", "SaaS管理"] },
+      { title: "セキュリティ", tasks: ["パスワードポリシー管理", "二段階認証設定", "アクセス制御", "ログ管理", "セキュリティ設定", "情報資産管理"] },
+      { title: "インフラ・クラウド", tasks: ["バックアップ管理", "クラウド管理", "ドメイン管理", "DNS管理"] }
+    ]
+  },
+  {
+    id: "periodic", label: "定期業務", icon: "🗓️", color: "#F97316",
+    desc: "月次・年次で発生する定例業務のスケジュールと作業内容。",
+    sections: [
+      { title: "月次定期業務", tasks: ["月次業務スケジュール管理", "給与締め", "請求締め", "会計締め", "定期契約更新"] },
+      { title: "年次定期業務", tasks: ["税務スケジュール管理", "年末調整", "法定調書提出", "社会保険算定基礎届", "労働保険年度更新", "決算", "株主総会対応"] },
+      { title: "定期メンテナンス", tasks: ["権限棚卸し", "セキュリティチェック", "データ整理", "マニュアル更新"] }
+    ]
+  },
+  {
+    id: "offboarding", label: "退職・オフボーディング", icon: "🚪", color: "#EC4899",
+    desc: "退職申請受付から情報管理まで、退職に関わる業務フロー。",
+    sections: [
+      { title: "退職手続き", tasks: ["退職申請受付", "退職日調整", "業務引き継ぎ計画", "引き継ぎ資料作成"] },
+      { title: "アカウント・機器回収", tasks: ["アカウント停止", "権限削除", "PC回収", "貸与物回収"] },
+      { title: "社会保険・書類", tasks: ["社会保険資格喪失手続き", "離職票作成", "源泉徴収票作成"] },
+      { title: "情報管理", tasks: ["退職後連絡方法整理", "情報漏洩リスク確認", "退職者データ保管"] }
+    ]
+  }
+];
+
+// ★ Favorites view を仮想カテゴリとして定義
+const FAVORITES_CAT = {
+  id: "__favorites", label: "お気に入り", icon: "⭐", color: "#F59E0B",
+  desc: "⭐をつけたセクションがここに集まります。よく参照する業務にスターをつけておくと便利です。",
+  sections: [],
+  isFavoritesView: true
+};
+
+let currentCat = data[0];
+let openSections = new Set();
+let searchQuery = "";
+
+// ============================================================
+// ★ メンバー設定 ★
+// ============================================================
+const members = [
+  {
+    id: "nakamura",
+    name: "中村 尚史",
+    initial: "中",
+    color: "#1B6FE0",
+    role: "管理者 / 全カテゴリ",
+    email: "hisafumi.nakamura.rp@gmail.com",
+    password: "nssh0508",
+    categories: null
+  }
+];
+
+let currentMember = null;
+
+// ============================================================
+// お気に入り & メモ管理（localStorage）
+// ============================================================
+function sectionKey(catId, secIdx) { return `${catId}::${secIdx}`; }
+
+function getFavorites() {
+  const raw = localStorage.getItem("tj_favorites");
+  if (!raw) return new Set();
+  try { return new Set(JSON.parse(raw)); } catch { return new Set(); }
+}
+function saveFavorites(favs) {
+  localStorage.setItem("tj_favorites", JSON.stringify([...favs]));
+}
+function toggleFavorite(catId, secIdx) {
+  const favs = getFavorites();
+  const key = sectionKey(catId, secIdx);
+  if (favs.has(key)) favs.delete(key); else favs.add(key);
+  saveFavorites(favs);
+  return favs.has(key);
+}
+function isFavorite(catId, secIdx) {
+  return getFavorites().has(sectionKey(catId, secIdx));
+}
+
+function getMemos() {
+  const raw = localStorage.getItem("tj_memos");
+  if (!raw) return {};
+  try { return JSON.parse(raw); } catch { return {}; }
+}
+function saveMemo(catId, secIdx, text) {
+  const memos = getMemos();
+  const key = sectionKey(catId, secIdx);
+  if (text && text.trim()) memos[key] = text; else delete memos[key];
+  localStorage.setItem("tj_memos", JSON.stringify(memos));
+}
+function getMemo(catId, secIdx) {
+  return getMemos()[sectionKey(catId, secIdx)] || "";
+}
+
+// ============================================================
+// ログイン
+// ============================================================
+function showLogin() {
+  document.getElementById("loginEmail").value = "";
+  document.getElementById("loginPassword").value = "";
+  document.getElementById("loginError").textContent = "";
+  document.getElementById("loginScreen").style.display = "flex";
+}
+
+function doLogin() {
+  const email = document.getElementById("loginEmail").value.trim();
+  const password = document.getElementById("loginPassword").value;
+  const member = members.find(m => m.email === email && m.password === password);
+  if (member) {
+    document.getElementById("loginError").textContent = "";
+    selectMember(member);
+  } else {
+    document.getElementById("loginError").textContent = "メールアドレスまたはパスワードが違います";
+  }
+}
+
+function selectMember(member) {
+  currentMember = member;
+  localStorage.setItem("tj_manualUser", member.id);
+  document.getElementById("loginScreen").style.display = "none";
+
+  document.getElementById("sidebarAvatar").textContent = member.initial;
+  document.getElementById("sidebarAvatar").style.background = member.color;
+  document.getElementById("sidebarAvatar").style.fontSize = "10px";
+  document.getElementById("sidebarAvatar").style.letterSpacing = "-0.5px";
+  document.getElementById("sidebarUserName").textContent = member.name;
+
+  const filtered = member.categories
+    ? data.filter(cat => member.categories.includes(cat.id))
+    : data;
+
+  currentCat = filtered[0];
+  buildFilteredNav(filtered);
+  renderContent(filtered[0]);
+}
+
+function getVisibleData() {
+  return currentMember && currentMember.categories
+    ? data.filter(c => currentMember.categories.includes(c.id))
+    : data;
+}
+
+function buildFilteredNav(filteredData) {
+  const nav = document.getElementById("sidebarNav");
+  nav.innerHTML = '<div class="nav-section-label">カテゴリ</div>';
+
+  // お気に入りビュー（特別項目）
+  const favCount = getFavorites().size;
+  const favEl = document.createElement("div");
+  favEl.className = "nav-item" + (currentCat.id === "__favorites" ? " active" : "");
+  favEl.innerHTML = `
+    <div class="nav-accent-bar" style="background:${FAVORITES_CAT.color}"></div>
+    <span class="nav-item-icon">${FAVORITES_CAT.icon}</span>
+    <span class="nav-item-label">${FAVORITES_CAT.label}</span>
+    <span class="nav-item-badge">${favCount}</span>
+  `;
+  favEl.onclick = () => {
+    if (searchQuery) { document.getElementById("searchInput").value = ""; searchQuery = ""; }
+    currentCat = FAVORITES_CAT;
+    openSections.clear();
+    buildFilteredNav(filteredData);
+    renderFavorites();
+    closeSidebar();
+  };
+  nav.appendChild(favEl);
+
+  // 通常カテゴリ
+  filteredData.forEach(cat => {
+    const el = document.createElement("div");
+    el.className = "nav-item" + (cat.id === currentCat.id ? " active" : "");
+    el.innerHTML = `
+      <div class="nav-accent-bar" style="background:${cat.color}"></div>
+      <span class="nav-item-icon">${cat.icon}</span>
+      <span class="nav-item-label">${cat.label}</span>
+      <span class="nav-item-badge">${cat.sections.length}</span>
+    `;
+    el.onclick = () => {
+      if (searchQuery) { document.getElementById("searchInput").value = ""; searchQuery = ""; }
+      currentCat = cat; openSections.clear();
+      buildFilteredNav(filteredData); renderContent(cat);
+      closeSidebar();
+    };
+    nav.appendChild(el);
+  });
+}
+
+function init() {
+  const savedId = localStorage.getItem("tj_manualUser");
+  if (savedId) {
+    const member = members.find(m => m.id === savedId);
+    if (member) { selectMember(member); return; }
+  }
+  document.getElementById("loginScreen").style.display = "flex";
+}
+
+// ============================================================
+// セクションカードHTML生成（通常カテゴリとお気に入りで共用）
+// ============================================================
+function buildSectionCard(cat, sec, globalIdx, origIdx) {
+  const isOpen = openSections.has(globalIdx);
+  const fav = isFavorite(cat.id, origIdx);
+  const memoText = getMemo(cat.id, origIdx);
+  const hasMemo = memoText.length > 0;
+
+  let subsHtml = "";
+  if (sec.subsections && sec.subsections.length > 0) {
+    subsHtml = `<div class="subsection-list">` +
+      sec.subsections.map((sub, si) => `
+        <div class="subsection-card">
+          <div class="subsection-header" onclick="toggleSubsection(event,${globalIdx},${si})">
+            <span class="subsection-dot" style="background:${cat.color}"></span>
+            <span class="subsection-title">${escHtml(sub.title)}</span>
+            <span class="subsection-count">${sub.tasks.length}項目</span>
+            <span class="subsection-toggle" id="stog-${globalIdx}-${si}">+</span>
+          </div>
+          <div class="subsection-body" id="sbod-${globalIdx}-${si}">
+            <div class="task-list">${sub.tasks.map(t=>`<div class="task-item">${escHtml(t)}</div>`).join("")}</div>
+            ${sub.image ? (() => { const k = `sub_${globalIdx}_${si}`; _lbSrcs[k] = sub.image; return `<img src="${sub.image}" class="section-img" onclick="openLightbox('${k}')" style="width:100%;max-width:520px;border-radius:8px;margin-top:10px;border:1px solid #DDE6EF;display:block;">`; })() : ""}
+          </div>
+        </div>`).join("") + `</div>`;
+  }
+
+  let imgHtml = "";
+  if (sec.image) {
+    const lbKey = `${cat.id}_${globalIdx}`;
+    _lbSrcs[lbKey] = sec.image;
+    imgHtml = `<img src="${sec.image}" class="section-img" onclick="openLightbox('${lbKey}')" style="width:100%;max-width:520px;border-radius:8px;margin-top:12px;border:1px solid #DDE6EF;display:block;">`;
+  }
+
+  const count = sec.subsections ? sec.subsections.length : sec.tasks.length;
+
+  return `
+    <div class="section-card" data-cat="${cat.id}" data-orig="${origIdx}">
+      <div class="section-header">
+        <span class="section-dot" style="background:${cat.color}"></span>
+        <span class="section-title" onclick="toggleSection(${globalIdx}, this.parentElement)">${escHtml(sec.title)}</span>
+        <span class="section-count">${count}項目</span>
+        <span class="section-fav ${fav ? 'active' : ''}" onclick="onFavClick(event, '${cat.id}', ${origIdx})" title="お気に入り">${fav ? '★' : '☆'}</span>
+        <span class="section-toggle ${isOpen ? "open" : ""}" onclick="toggleSection(${globalIdx}, this.parentElement)">+</span>
+        <span class="section-close" onclick="onCloseClick(event, ${globalIdx})" title="閉じる">✕</span>
+      </div>
+      <div class="section-body ${isOpen ? "open" : ""}">
+        ${sec.tasks.length > 0 ? `<div class="task-list">${sec.tasks.map(t=>`<div class="task-item">${escHtml(t)}</div>`).join("")}</div>` : ""}
+        ${imgHtml}
+        ${subsHtml}
+        <div class="memo-area">
+          <button class="memo-toggle ${hasMemo ? 'has-memo' : ''}" onclick="toggleMemo(event, '${cat.id}', ${origIdx}, ${globalIdx})">
+            📝 メモ${hasMemo ? '（あり）' : ''}
+          </button>
+          <div class="memo-editor" id="memo-${globalIdx}">
+            <textarea id="memoTxt-${globalIdx}" placeholder="このセクションに関するメモを記入...">${escHtml(memoText)}</textarea>
+            <div class="memo-actions">
+              ${hasMemo ? `<button class="memo-btn delete" onclick="deleteMemo('${cat.id}', ${origIdx}, ${globalIdx})">削除</button>` : ''}
+              <button class="memo-btn cancel" onclick="closeMemo(${globalIdx})">キャンセル</button>
+              <button class="memo-btn save" onclick="saveMemoAction('${cat.id}', ${origIdx}, ${globalIdx})">保存</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderContent(cat) {
+  if (cat.isFavoritesView) { renderFavorites(); return; }
+
+  document.getElementById("breadcrumbCurrent").textContent = cat.label;
+  const area = document.getElementById("contentArea");
+  const topbar = document.getElementById("topbar");
+  const oldBadge = topbar.querySelector(".topbar-badge");
+  if (oldBadge) oldBadge.remove();
+  const badge = document.createElement("span");
+  badge.className = "topbar-badge";
+  badge.style.background = cat.color + "18";
+  badge.style.color = cat.color;
+  badge.textContent = `${cat.sections.length} セクション`;
+  topbar.appendChild(badge);
+
+  area.innerHTML = `
+    <div class="cat-header">
+      <div class="cat-icon-big" style="background:${cat.color}15">${cat.icon}</div>
+      <div>
+        <div class="cat-title" style="color:${cat.color}">${escHtml(cat.label)}</div>
+        <div class="cat-desc">${escHtml(cat.desc)}</div>
+      </div>
+    </div>
+    <div class="sections-grid" id="sectionsGrid"></div>
+  `;
+
+  const grid = document.getElementById("sectionsGrid");
+  cat.sections.forEach((sec, i) => {
+    grid.insertAdjacentHTML("beforeend", buildSectionCard(cat, sec, i, i));
+  });
+}
+
+function renderFavorites() {
+  document.getElementById("breadcrumbCurrent").textContent = "お気に入り";
+  const area = document.getElementById("contentArea");
+  const topbar = document.getElementById("topbar");
+  const oldBadge = topbar.querySelector(".topbar-badge");
+  if (oldBadge) oldBadge.remove();
+
+  const favs = getFavorites();
+  const visibleCats = getVisibleData();
+
+  // 収集
+  const items = [];
+  visibleCats.forEach(cat => {
+    cat.sections.forEach((sec, i) => {
+      if (favs.has(sectionKey(cat.id, i))) items.push({ cat, sec, origIdx: i });
+    });
+  });
+
+  const badge = document.createElement("span");
+  badge.className = "topbar-badge";
+  badge.style.background = FAVORITES_CAT.color + "18";
+  badge.style.color = FAVORITES_CAT.color;
+  badge.textContent = `${items.length} セクション`;
+  topbar.appendChild(badge);
+
+  area.innerHTML = `
+    <div class="cat-header">
+      <div class="cat-icon-big" style="background:${FAVORITES_CAT.color}15">${FAVORITES_CAT.icon}</div>
+      <div>
+        <div class="cat-title" style="color:${FAVORITES_CAT.color}">${FAVORITES_CAT.label}</div>
+        <div class="cat-desc">${escHtml(FAVORITES_CAT.desc)}</div>
+      </div>
+    </div>
+    <div class="sections-grid" id="sectionsGrid"></div>
+  `;
+
+  const grid = document.getElementById("sectionsGrid");
+
+  if (items.length === 0) {
+    grid.innerHTML = `
+      <div class="favorites-empty">
+        <div class="favorites-empty-icon">☆</div>
+        <div class="favorites-empty-text">お気に入りはまだありません</div>
+        <div class="favorites-empty-sub">各セクションの☆マークをタップして追加できます</div>
+      </div>
+    `;
+    return;
+  }
+
+  // カテゴリごとにグルーピング表示
+  let globalIdx = 0;
+  const grouped = {};
+  items.forEach(it => {
+    if (!grouped[it.cat.id]) grouped[it.cat.id] = { cat: it.cat, items: [] };
+    grouped[it.cat.id].items.push(it);
+  });
+
+  Object.values(grouped).forEach(group => {
+    const header = document.createElement("div");
+    header.style.cssText = `font-size:11px;font-weight:700;color:${group.cat.color};letter-spacing:0.06em;margin:14px 0 6px 2px;display:flex;align-items:center;gap:6px;`;
+    header.innerHTML = `<span>${group.cat.icon}</span><span>${escHtml(group.cat.label)}</span>`;
+    grid.appendChild(header);
+
+    group.items.forEach(it => {
+      grid.insertAdjacentHTML("beforeend", buildSectionCard(it.cat, it.sec, globalIdx, it.origIdx));
+      globalIdx++;
+    });
+  });
+}
+
+// ============================================================
+// インタラクション
+// ============================================================
+function toggleSection(index, headerEl) {
+  const body = headerEl.nextElementSibling;
+  const toggle = headerEl.querySelector(".section-toggle");
+  const isOpen = body.classList.toggle("open");
+  toggle.classList.toggle("open", isOpen);
+  if (isOpen) openSections.add(index); else openSections.delete(index);
+}
+
+function toggleSubsection(event, secIdx, subIdx) {
+  event.stopPropagation();
+  const body = document.getElementById(`sbod-${secIdx}-${subIdx}`);
+  const toggle = document.getElementById(`stog-${secIdx}-${subIdx}`);
+  const isOpen = body.classList.toggle("open");
+  toggle.classList.toggle("open", isOpen);
+}
+
+function onFavClick(event, catId, origIdx) {
+  event.stopPropagation();
+  const nowFav = toggleFavorite(catId, origIdx);
+  const starEl = event.currentTarget;
+  starEl.textContent = nowFav ? '★' : '☆';
+  starEl.classList.toggle('active', nowFav);
+  // サイドバーのお気に入りバッジ数を更新
+  buildFilteredNav(getVisibleData());
+  // お気に入りビューを表示中なら再描画
+  if (currentCat.id === "__favorites") renderFavorites();
+}
+
+function onCloseClick(event, globalIdx) {
+  event.stopPropagation();
+  const header = event.currentTarget.parentElement;
+  const body = header.nextElementSibling;
+  if (body.classList.contains("open")) {
+    body.classList.remove("open");
+    const toggle = header.querySelector(".section-toggle");
+    if (toggle) toggle.classList.remove("open");
+    openSections.delete(globalIdx);
+  }
+}
+
+function toggleMemo(event, catId, origIdx, globalIdx) {
+  event.stopPropagation();
+  const editor = document.getElementById(`memo-${globalIdx}`);
+  editor.classList.toggle("open");
+  if (editor.classList.contains("open")) {
+    const txt = document.getElementById(`memoTxt-${globalIdx}`);
+    if (txt) txt.focus();
+  }
+}
+
+function saveMemoAction(catId, origIdx, globalIdx) {
+  const txt = document.getElementById(`memoTxt-${globalIdx}`);
+  const val = txt.value;
+  saveMemo(catId, origIdx, val);
+  // メモボタンの見た目を更新
+  const btn = txt.closest(".memo-area").querySelector(".memo-toggle");
+  if (val.trim()) {
+    btn.classList.add("has-memo");
+    btn.innerHTML = "📝 メモ（あり）";
+  } else {
+    btn.classList.remove("has-memo");
+    btn.innerHTML = "📝 メモ";
+  }
+  closeMemo(globalIdx);
+  // 削除ボタンの表示切替のため、該当カードを再描画（簡易）
+  refreshCardControls(globalIdx, catId, origIdx);
+}
+
+function deleteMemo(catId, origIdx, globalIdx) {
+  if (!confirm("このメモを削除しますか？")) return;
+  saveMemo(catId, origIdx, "");
+  const txt = document.getElementById(`memoTxt-${globalIdx}`);
+  if (txt) txt.value = "";
+  const btn = txt.closest(".memo-area").querySelector(".memo-toggle");
+  btn.classList.remove("has-memo");
+  btn.innerHTML = "📝 メモ";
+  closeMemo(globalIdx);
+  refreshCardControls(globalIdx, catId, origIdx);
+}
+
+function closeMemo(globalIdx) {
+  const editor = document.getElementById(`memo-${globalIdx}`);
+  if (editor) editor.classList.remove("open");
+}
+
+function refreshCardControls(globalIdx, catId, origIdx) {
+  // 削除ボタンの表示有無だけ再構築
+  const hasMemo = getMemo(catId, origIdx).length > 0;
+  const actions = document.querySelector(`#memo-${globalIdx} .memo-actions`);
+  if (!actions) return;
+  const existingDel = actions.querySelector(".memo-btn.delete");
+  if (hasMemo && !existingDel) {
+    const btn = document.createElement("button");
+    btn.className = "memo-btn delete";
+    btn.textContent = "削除";
+    btn.onclick = () => deleteMemo(catId, origIdx, globalIdx);
+    actions.insertBefore(btn, actions.firstChild);
+  } else if (!hasMemo && existingDel) {
+    existingDel.remove();
+  }
+}
+
+// ============================================================
+// 検索
+// ============================================================
+function handleSearch(query) {
+  searchQuery = query.trim();
+  const area = document.getElementById("contentArea");
+  if (!searchQuery) { renderContent(currentCat); return; }
+  document.getElementById("breadcrumbCurrent").textContent = `「${searchQuery}」の検索結果`;
+  document.querySelectorAll(".nav-item").forEach(el => el.classList.remove("active"));
+  const results = [];
+  getVisibleData().forEach(cat => {
+    cat.sections.forEach(sec => {
+      const matchTitle = sec.title.includes(searchQuery);
+      const matchCat = cat.label.includes(searchQuery);
+      const matchTasks = sec.tasks.filter(t => t.includes(searchQuery));
+      // サブセクションも検索対象に
+      let matchSubs = [];
+      if (sec.subsections) {
+        sec.subsections.forEach(sub => {
+          if (sub.title.includes(searchQuery) || sub.tasks.some(t => t.includes(searchQuery))) {
+            matchSubs.push(sub.title);
+          }
+        });
+      }
+      if (matchTitle || matchCat || matchTasks.length > 0 || matchSubs.length > 0) {
+        const preview = matchTasks.length > 0 ? matchTasks
+                      : matchSubs.length > 0 ? matchSubs
+                      : sec.tasks.slice(0,3);
+        results.push({ cat, sec, matchTasks: preview });
+      }
+    });
+  });
+  if (results.length === 0) {
+    area.innerHTML = `<div class="search-empty">「${escHtml(searchQuery)}」に一致する項目が見つかりませんでした。</div>`;
+    return;
+  }
+  area.innerHTML = `<div style="margin-bottom:20px;font-size:13px;color:#6B7280">${results.length}件 見つかりました</div><div id="searchResults"></div>`;
+  const container = document.getElementById("searchResults");
+  results.forEach(({ cat, sec, matchTasks }) => {
+    const el = document.createElement("div");
+    el.className = "search-result-item";
+    el.style.borderLeftColor = cat.color;
+    el.innerHTML = `
+      <div class="search-result-cat" style="color:${cat.color}">${cat.icon} ${escHtml(cat.label)}</div>
+      <div class="search-result-title">${highlight(sec.title, searchQuery)}</div>
+      <div class="search-result-preview">${matchTasks.map(t => highlight(t, searchQuery)).join(" ・ ")}</div>
+    `;
+    el.onclick = () => {
+      document.getElementById("searchInput").value = ""; searchQuery = "";
+      currentCat = cat; openSections.clear();
+      buildFilteredNav(getVisibleData()); renderContent(cat);
+    };
+    container.appendChild(el);
+  });
+}
+
+function highlight(text, query) {
+  if (!query) return escHtml(text);
+  return escHtml(text).replace(new RegExp(escRegex(escHtml(query)), "gi"), m => `<mark>${m}</mark>`);
+}
+function escHtml(str) { return String(str).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function escRegex(str) { return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
+
+init();
+</script>
+</body>
+</html>
