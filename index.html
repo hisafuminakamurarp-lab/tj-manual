@@ -3959,16 +3959,48 @@ function closeFeatureModal() {
 }
 
 // ========== URLハッシュからの復元（ディープリンク） ==========
-// ハッシュ形式: #<カテゴリID>/<セクションタイトル>/<サブセクションタイトル>
-// 例: #tools/freee会計/A%20売上 → ツール → freee会計 → 「A 売上」を開いてスクロール
-// タイトルで照合するため、並び替えに強い。サブまで省略可（カテゴリのみ・セクションまでもOK）。
+// ハッシュ形式: #<カテゴリID>/<セクション>/<サブ>/<孫>…（任意の深さ）
+// 例: #tools/freee/freee会計/A%20売上 → ツール → freee → freee会計 → 「A 売上」を開いてスクロール
+// 各階層をタイトルで照合するため、並び替えに強い。途中まで省略も可（カテゴリのみ／セクションまで等）。
 let _suppressHash = false;
 function updateHash(parts) {
-  // parts: [カテゴリID, セクションタイトル?, サブセクションタイトル?]
+  // parts: [カテゴリID, タイトル1, タイトル2, …]
   const h = parts.filter(p => p != null && p !== "").map(encodeURIComponent).join("/");
   if (("#" + h) === window.location.hash) return;
   _suppressHash = true;
   window.location.hash = h;
+}
+
+// タイトル配列を辿って該当カード（セクション→サブ→孫…）を開き、最深ノードを返す
+function openByTitlePath(titlePath) {
+  const grid = document.getElementById("sectionsGrid");
+  if (!grid || !titlePath.length) return null;
+  // 最上位：セクション
+  let sectionCard = null;
+  for (const card of grid.children) {
+    const t = card.querySelector(":scope > .section-header > .section-title");
+    if (t && t.textContent.trim() === titlePath[0]) { sectionCard = card; break; }
+  }
+  if (!sectionCard) return null;
+  const secBody = sectionCard.querySelector(":scope > .section-body");
+  const secTog = sectionCard.querySelector(":scope > .section-header > .section-toggle");
+  if (secBody) { secBody.classList.add("open"); if (secTog) secTog.classList.add("open"); }
+  let container = secBody, target = sectionCard;
+  // 2階層目以降：subsection-card をタイトルで辿る（document順で最初に一致する＝その深さのカード）
+  for (let d = 1; d < titlePath.length && container; d++) {
+    let found = null;
+    const cards = container.querySelectorAll(".subsection-card");
+    for (const c of cards) {
+      const h = c.querySelector(":scope > .subsection-header > .subsection-title");
+      if (h && h.textContent.trim() === titlePath[d]) { found = c; break; }
+    }
+    if (!found) break;
+    const body = found.querySelector(":scope > .subsection-body");
+    const tog = found.querySelector(":scope > .subsection-header > .subsection-toggle");
+    if (body) { body.classList.add("open"); if (tog) tog.classList.add("open"); }
+    container = body; target = found;
+  }
+  return target;
 }
 
 function handleHashChange() {
@@ -3984,36 +4016,22 @@ function handleHashChange() {
 
   currentCat = cat;
   openSections.clear();
-  let secIdx = -1;
   if (segs[1] && cat.sections) {
-    secIdx = cat.sections.findIndex(s => s.title === segs[1]);
-    if (secIdx >= 0) openSections.add(secIdx);
+    const secIdx = cat.sections.findIndex(s => s.title === segs[1]);
+    if (secIdx >= 0) openSections.add(secIdx); // ナビ強調＋初期open
   }
   buildFilteredNav(filtered);
   renderContent(cat);
 
-  if (secIdx >= 0) {
-    let subIdx = -1;
-    if (segs[2] && cat.sections[secIdx].subsections) {
-      subIdx = cat.sections[secIdx].subsections.findIndex(ss => ss.title === segs[2]);
-    }
-    // renderContent後のDOM生成を待ってから、サブセクションを開いてスクロール
+  if (segs.length > 1) {
+    const titlePath = segs.slice(1); // [セクション, サブ, 孫, …]
+    // renderContent後のDOM生成を待ってから、該当ノードまで開いてスクロール
     setTimeout(() => {
-      const grid = document.getElementById("sectionsGrid");
-      const card = grid && grid.children[secIdx];
-      if (!card) return;
-      let target = card;
-      if (subIdx >= 0) {
-        const sbod = document.getElementById(`sbod-${secIdx}-${subIdx}`);
-        const stog = document.getElementById(`stog-${secIdx}-${subIdx}`);
-        if (sbod) {
-          sbod.classList.add("open");
-          if (stog) stog.classList.add("open");
-          target = sbod.parentElement;
-        }
+      const target = openByTitlePath(titlePath);
+      if (target) {
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+        setBreadcrumbPath(breadcrumbParts(target));
       }
-      target.scrollIntoView({ behavior: "smooth", block: "start" });
-      setBreadcrumbPath(breadcrumbParts(target));
     }, 60);
   }
 }
