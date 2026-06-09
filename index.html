@@ -3944,6 +3944,7 @@ function buildFilteredNav(filteredData) {
     if (searchQuery) { document.getElementById("searchInput").value = ""; searchQuery = ""; }
     currentCat = cat; openSections.clear();
     buildFilteredNav(filteredData); renderContent(cat);
+    updateHash([cat.id]);
     closeSidebar();
   };
   nav.appendChild(el);
@@ -3957,18 +3958,63 @@ function closeFeatureModal() {
   document.getElementById("featureModal").style.display = "none";
 }
 
-// ========== URLハッシュからの復元 ==========
+// ========== URLハッシュからの復元（ディープリンク） ==========
+// ハッシュ形式: #<カテゴリID>/<セクションタイトル>/<サブセクションタイトル>
+// 例: #tools/freee会計/A%20売上 → ツール → freee会計 → 「A 売上」を開いてスクロール
+// タイトルで照合するため、並び替えに強い。サブまで省略可（カテゴリのみ・セクションまでもOK）。
+let _suppressHash = false;
+function updateHash(parts) {
+  // parts: [カテゴリID, セクションタイトル?, サブセクションタイトル?]
+  const h = parts.filter(p => p != null && p !== "").map(encodeURIComponent).join("/");
+  if (("#" + h) === window.location.hash) return;
+  _suppressHash = true;
+  window.location.hash = h;
+}
+
 function handleHashChange() {
-  const hash = decodeURIComponent(window.location.hash.substring(1));
-  if (hash) {
-  const cat = data.find(c => c.id === hash);
-  if (cat && currentMember) {
-    currentCat = cat;
-    openSections.clear();
-    const filtered = currentMember.categories ? data.filter(c => currentMember.categories.includes(c.id)) : data;
-    buildFilteredNav(filtered);
-    renderContent(cat);
+  // updateHash由来の変更は無視（フィードバックループ防止）
+  if (_suppressHash) { _suppressHash = false; return; }
+  const raw = window.location.hash.substring(1);
+  if (!raw || !currentMember) return;
+  const segs = raw.split("/").map(s => { try { return decodeURIComponent(s); } catch (e) { return s; } });
+  const cat = data.find(c => c.id === segs[0]);
+  if (!cat) return;
+  const filtered = currentMember.categories ? data.filter(c => currentMember.categories.includes(c.id)) : data;
+  if (!filtered.some(c => c.id === cat.id)) return; // 閲覧権限なし
+
+  currentCat = cat;
+  openSections.clear();
+  let secIdx = -1;
+  if (segs[1] && cat.sections) {
+    secIdx = cat.sections.findIndex(s => s.title === segs[1]);
+    if (secIdx >= 0) openSections.add(secIdx);
   }
+  buildFilteredNav(filtered);
+  renderContent(cat);
+
+  if (secIdx >= 0) {
+    let subIdx = -1;
+    if (segs[2] && cat.sections[secIdx].subsections) {
+      subIdx = cat.sections[secIdx].subsections.findIndex(ss => ss.title === segs[2]);
+    }
+    // renderContent後のDOM生成を待ってから、サブセクションを開いてスクロール
+    setTimeout(() => {
+      const grid = document.getElementById("sectionsGrid");
+      const card = grid && grid.children[secIdx];
+      if (!card) return;
+      let target = card;
+      if (subIdx >= 0) {
+        const sbod = document.getElementById(`sbod-${secIdx}-${subIdx}`);
+        const stog = document.getElementById(`stog-${secIdx}-${subIdx}`);
+        if (sbod) {
+          sbod.classList.add("open");
+          if (stog) stog.classList.add("open");
+          target = sbod.parentElement;
+        }
+      }
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+      setBreadcrumbPath(breadcrumbParts(target));
+    }, 60);
   }
 }
 
@@ -4113,6 +4159,7 @@ function openSectionByIndex(i) {
     const card = grid.children[i];
     card.scrollIntoView({ behavior: "smooth", block: "start" });
     setBreadcrumbPath(breadcrumbParts(card));
+    updateHash([currentCat.id, ...breadcrumbParts(card)]);
   }
   closeSidebar();
 }
@@ -4132,6 +4179,7 @@ function buildNav() {
   el.onclick = () => {
     if (searchQuery) { document.getElementById("searchInput").value = ""; searchQuery = ""; }
     currentCat = cat; openSections.clear(); buildNav(); renderContent(cat);
+    updateHash([cat.id]);
   };
   nav.appendChild(el);
   appendCategoryTOC(nav, cat);
@@ -4405,6 +4453,7 @@ function toggleSection(index, headerEl) {
     body.querySelectorAll(".subsection-toggle.open").forEach(el => el.classList.remove("open"));
   }
   setBreadcrumbPath(isOpen ? breadcrumbParts(headerEl.parentElement) : []);
+  updateHash(isOpen ? [currentCat.id, ...breadcrumbParts(headerEl.parentElement)] : [currentCat.id]);
 }
 
 function toggleSubsection(event, id) {
@@ -4420,7 +4469,9 @@ function toggleSubsection(event, id) {
     body.querySelectorAll(".subsection-toggle.open").forEach(el => el.classList.remove("open"));
   }
   const card = body.parentElement;
-  setBreadcrumbPath(breadcrumbParts(isOpen ? card : card.parentElement));
+  const parts = breadcrumbParts(isOpen ? card : card.parentElement);
+  setBreadcrumbPath(parts);
+  updateHash([currentCat.id, ...parts]);
 }
 
 // ========== 関連レコード一覧仕様からのジャンプ機能 ==========
@@ -4759,6 +4810,7 @@ function handleSearch(query) {
   el.onclick = () => {
     document.getElementById("searchInput").value = ""; searchQuery = "";
     currentCat = cat; openSections.clear(); buildNav(); renderContent(cat);
+    updateHash([cat.id]);
   };
   container.appendChild(el);
   });
