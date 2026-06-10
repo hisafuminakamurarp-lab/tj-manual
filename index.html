@@ -4458,16 +4458,57 @@ function renderContent(cat) {
                   ${ch.phases ? ch.phases.map((ph, phi) => {
                     const phImgs = ph.images || (ph.image ? [ph.image] : []);
                     const phMobile = ph.mobileImages || (ph.mobileImage ? [ph.mobileImage] : []);
-                    const phImgHtmls = phImgs.map((src, ii) => {
+                    const mkImg = (ii) => {
+                      const src = phImgs[ii];
                       const k2 = `${ck}_p${phi}_${ii}`;
                       const mobileSrc = phMobile[ii] || src;
                       _lbSrcs[k2] = src;
                       return `<img alt="${ph.heading || ch.title}" loading="lazy" src="${src}" data-pc-src="${src}" data-mobile-src="${mobileSrc}" data-lb-key="${k2}" class="section-img${sec.kintoneTabs ? ' kintone-img' : ''}" onerror="if(this.src!==this.dataset.pcSrc){this.src=this.dataset.pcSrc;}" onclick="openLightbox('${k2}')" style="width:100%;border-radius:8px;border:1px solid #E5E7EB;display:block;cursor:zoom-in;margin-bottom:8px;">`;
-                    }).join("");
+                    };
+                    const phImgHtmls = phImgs.map((_, ii) => mkImg(ii)).join("");
                     const headingHtml = ph.heading ? `<div class="task-heading" style="${phi===0 ? 'border-top:none;padding-top:0;margin-top:0;' : ''}">${ph.heading}</div>` : '';
-                    const itemsHtml = ph.items && ph.items.length > 0 ? `<div class="task-list" style="margin-top:4px;">${ph.items.map(t=>`<div class="task-item"><span style="flex:1;min-width:0;">${styleLeadingLabel(t)}</span></div>`).join("")}</div>` : '';
                     const isLast = phi === ch.phases.length - 1;
                     const noticeHtml = isLast ? renderNotice(ch.notice) : "";
+                    const items = ph.items || [];
+                    // 本文の「画像①」「同①」マーカーから、各画像をそれを説明する文章の真横に配置する
+                    const _CIRC = "①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳㉑㉒㉓㉔㉕㉖㉗㉘㉙㉚㉛㉜㉝㉞㉟";
+                    const imgToItem = {};      // 画像index → 最初にそれを参照した文章index
+                    const itemToImgs = {};     // 文章index → 画像indexの配列（順序保持）
+                    if (phImgs.length > 0 && items.length > 0) {
+                      const re = /(?:画像|同)\s*([\u2460-\u2473\u3251-\u325F])/g;
+                      items.forEach((t, it) => {
+                        let m;
+                        re.lastIndex = 0;
+                        while ((m = re.exec(t)) !== null) {
+                          const idx = _CIRC.indexOf(m[1]);
+                          if (idx >= 0 && idx < phImgs.length && imgToItem[idx] === undefined) {
+                            imgToItem[idx] = it;
+                            (itemToImgs[it] = itemToImgs[it] || []).push(idx);
+                          }
+                        }
+                      });
+                    }
+                    const hasPairing = Object.keys(imgToItem).length > 0;
+                    if (phImgHtmls && hasPairing) {
+                      // 画像と文章を1対1で横並びにする（元のfreeeヘルプ記事の構成に合わせる）
+                      const rows = items.map((t, it) => {
+                        const txt = `<div class="task-list" style="margin-top:0;"><div class="task-item"><span style="flex:1;min-width:0;">${styleLeadingLabel(t)}</span></div></div>`;
+                        const imgs = itemToImgs[it];
+                        if (imgs && imgs.length > 0) {
+                          const imgHtml = imgs.map(ix => mkImg(ix)).join("");
+                          return `<div style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;margin-top:12px;">
+                            <div class="img-container" style="flex:1.2;min-width:200px;">${imgHtml}</div>
+                            <div style="flex:1;min-width:180px;">${txt}</div>
+                          </div>`;
+                        }
+                        return `<div style="margin-top:12px;">${txt}</div>`;
+                      }).join("");
+                      // どの文章からも参照されなかった画像は末尾にまとめる
+                      const leftover = phImgs.map((_, ii) => ii).filter(ii => imgToItem[ii] === undefined);
+                      const leftoverHtml = leftover.length > 0 ? `<div class="img-container" style="margin-top:12px;">${leftover.map(ii => mkImg(ii)).join("")}</div>` : "";
+                      return `<div style="margin-top:${phi===0 ? '8px' : '20px'};">${headingHtml}${rows}${leftoverHtml}${noticeHtml}</div>`;
+                    }
+                    const itemsHtml = items.length > 0 ? `<div class="task-list" style="margin-top:4px;">${items.map(t=>`<div class="task-item"><span style="flex:1;min-width:0;">${styleLeadingLabel(t)}</span></div>`).join("")}</div>` : '';
                     if (phImgHtmls) {
                       return `<div style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;margin-top:${phi===0 ? '8px' : '20px'};">
                         <div class="img-container" style="flex:1.2;min-width:200px;">${phImgHtmls}</div>
