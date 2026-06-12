@@ -90,6 +90,10 @@
   /* タスク内見出し（フェーズ区切り用） */
   .task-heading { font-size: 13px;font-weight: 600;color: #1A1F36;padding: 12px 0 4px 0;margin-top: 6px;border-top: 1px solid #E5E7EB;}
   .task-heading:first-child { margin-top: 0;border-top: none;padding-top: 0;}
+  /* 業務の背骨＝手順を強調、補足はその配下にネスト */
+  .task-heading.step-main { font-size: 15px;font-weight: 700;color: var(--accent, #A21034);border-top: 2px solid var(--accent, #A21034);padding-top: 14px;margin-top: 18px;}
+  .task-heading.step-sub { font-size: 12px;font-weight: 600;color: #6B7280;border-top: 1px dashed #E5E7EB;}
+  .phase-sub { margin-left: 22px;border-left: 3px solid #EEF0F4;padding-left: 16px;}
 
   /* NESTED SUBSECTIONS */
   .subsection-list { margin: 10px 0 4px 0;display: flex;flex-direction: column;gap: 6px;}
@@ -4466,7 +4470,11 @@ function renderContent(cat) {
                       return `<img alt="${ph.heading || ch.title}" loading="lazy" src="${src}" data-pc-src="${src}" data-mobile-src="${mobileSrc}" data-lb-key="${k2}" class="section-img${sec.kintoneTabs ? ' kintone-img' : ''}" onerror="if(this.src!==this.dataset.pcSrc){this.src=this.dataset.pcSrc;}" onclick="openLightbox('${k2}')" style="width:100%;border-radius:8px;border:1px solid #E5E7EB;display:block;cursor:zoom-in;margin-bottom:8px;">`;
                     };
                     const phImgHtmls = phImgs.map((_, ii) => mkImg(ii)).join("");
-                    const headingHtml = ph.heading ? `<div class="task-heading" style="${phi===0 ? 'border-top:none;padding-top:0;margin-top:0;' : ''}">${ph.heading}</div>` : '';
+                    const _hd = ph.heading || '';
+                    const isMainStep = /^(手順|チェック\d|はじめに)/.test(_hd);
+                    const isSub = /^補足/.test(_hd);
+                    const subClass = isSub ? ' phase-sub' : '';
+                    const headingHtml = ph.heading ? `<div class="task-heading${isMainStep ? ' step-main' : ''}${isSub ? ' step-sub' : ''}" style="${phi===0 ? 'border-top:none;padding-top:0;margin-top:0;' : ''}">${ph.heading}</div>` : '';
                     const isLast = phi === ch.phases.length - 1;
                     const noticeHtml = isLast ? renderNotice(ch.notice) : "";
                     const items = ph.items || [];
@@ -4506,16 +4514,16 @@ function renderContent(cat) {
                       // どの文章からも参照されなかった画像は末尾にまとめる
                       const leftover = phImgs.map((_, ii) => ii).filter(ii => imgToItem[ii] === undefined);
                       const leftoverHtml = leftover.length > 0 ? `<div class="img-container" style="margin-top:12px;">${leftover.map(ii => mkImg(ii)).join("")}</div>` : "";
-                      return `<div style="margin-top:${phi===0 ? '8px' : '20px'};">${headingHtml}${rows}${leftoverHtml}${noticeHtml}</div>`;
+                      return `<div class="${subClass.trim()}" style="margin-top:${phi===0 ? '8px' : '20px'};">${headingHtml}${rows}${leftoverHtml}${noticeHtml}</div>`;
                     }
                     const itemsHtml = items.length > 0 ? `<div class="task-list" style="margin-top:4px;">${items.map(t=>`<div class="task-item"><span style="flex:1;min-width:0;">${styleLeadingLabel(t)}</span></div>`).join("")}</div>` : '';
                     if (phImgHtmls) {
-                      return `<div style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;margin-top:${phi===0 ? '8px' : '20px'};">
+                      return `<div class="${subClass.trim()}" style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;margin-top:${phi===0 ? '8px' : '20px'};">
                         <div class="img-container" style="flex:1.2;min-width:200px;">${phImgHtmls}</div>
                         <div style="flex:1;min-width:180px;">${headingHtml}${itemsHtml}${noticeHtml}</div>
                       </div>`;
                     } else {
-                      return `<div style="margin-top:${phi===0 ? '8px' : '20px'};">${headingHtml}${itemsHtml}${noticeHtml}</div>`;
+                      return `<div class="${subClass.trim()}" style="margin-top:${phi===0 ? '8px' : '20px'};">${headingHtml}${itemsHtml}${noticeHtml}</div>`;
                     }
                   }).join("") : (ch.image || (ch.images && ch.images.length > 0)) ? (() => {
                     const pcImgs = ch.images || (ch.image ? [ch.image] : []);
@@ -5358,6 +5366,10 @@ init();
   /* タスク内見出し（フェーズ区切り用） */
   .task-heading { font-size: 13px;font-weight: 600;color: #1A1F36;padding: 12px 0 4px 0;margin-top: 6px;border-top: 1px solid #E5E7EB;}
   .task-heading:first-child { margin-top: 0;border-top: none;padding-top: 0;}
+  /* 業務の背骨＝手順を強調、補足はその配下にネスト */
+  .task-heading.step-main { font-size: 15px;font-weight: 700;color: var(--accent, #A21034);border-top: 2px solid var(--accent, #A21034);padding-top: 14px;margin-top: 18px;}
+  .task-heading.step-sub { font-size: 12px;font-weight: 600;color: #6B7280;border-top: 1px dashed #E5E7EB;}
+  .phase-sub { margin-left: 22px;border-left: 3px solid #EEF0F4;padding-left: 16px;}
 
   /* NESTED SUBSECTIONS */
   .subsection-list { margin: 10px 0 4px 0;display: flex;flex-direction: column;gap: 6px;}
