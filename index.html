@@ -3,8 +3,8 @@
 <html lang="ja"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><style data-rc-order="prependQueue" data-css-hash="ifat8r" data-token-hash="1p9qdg">.anticon{display:inline-flex;align-items:center;color:inherit;font-style:normal;line-height:0;text-align:center;text-transform:none;vertical-align:-0.125em;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;}.anticon >*{line-height:1;}.anticon svg{display:inline-block;}.anticon .anticon .anticon-icon{display:block;}</style>
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TJソリューション業務マニュアル</title>
-<link rel="preconnect" href="https://fonts.googleapis.com/"><link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin=""><link href="./TJソリューション業務マニュアル_files/css2" rel="stylesheet">
+<title>税理士法人TJ会計ソリューション業務マニュアル</title>
+<link rel="preconnect" href="https://fonts.googleapis.com/"><link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin=""><link href="./税理士法人TJ会計ソリューション業務マニュアル_files/css2" rel="stylesheet">
 <style>
   :root {
   --bg-dark: #111827;
@@ -29,7 +29,7 @@
   .sidebar-header { padding: 20px 16px 14px;border-bottom: 1px solid var(--border);}
   .sidebar-logo { display: flex;align-items: center;gap: 8px;}
   .sidebar-logo-icon { width: 28px;height: 28px;background: linear-gradient(135deg, #3B82F6, #8B5CF6);border-radius: 6px;display: flex;align-items: center;justify-content: center;font-size: 14px;}
-  .sidebar-logo-text { font-size: 13px;font-weight: 700;color: var(--text-primary);line-height: 1.3;}
+  .sidebar-logo-text { font-size: 12px;font-weight: 700;color: var(--text-primary);line-height: 1.35;overflow-wrap: anywhere;}
   .sidebar-logo-sub { font-size: 10px;color: var(--text-muted);font-weight: 400;}
   .sidebar-search { margin: 12px 12px 0;position: relative;}
   .sidebar-search input { width: 100%;background: var(--bg-panel);border: 1px solid var(--border);border-radius: 6px;padding: 7px 10px 7px 30px;font-size: 12px;color: var(--text-primary);font-family: inherit;outline: none;transition: border-color 0.2s;}
@@ -277,7 +277,7 @@
   .cat-title { font-size: 18px;}
   .cat-icon-big { width: 40px;height: 40px;font-size: 20px;}
 
-  .login-box { width: 90vw;padding: 28px 20px;}
+  .login-box { width: 90vw;max-width: 380px;padding: 28px 20px;}
 
   .section-header { padding: 12px 14px;}
   .section-body { padding: 0 14px 14px 28px;}
@@ -310,7 +310,7 @@
 <div id="loginScreen" style="display: none;">
   <div class="login-box">
   <div class="login-logo">📚</div>
-  <div class="login-title">TJソリューション</div>
+  <div class="login-title">税理士法人TJ会計ソリューション</div>
   <div class="login-sub">業務マニュアル</div>
   <div class="login-label" style="margin-bottom:8px;">メールアドレス</div>
   <input type="email" id="loginEmail" placeholder="example@email.com" style="width:100%;background:#111827;border:1px solid #374151;border-radius:8px;padding:10px 12px;font-size:13px;color:#F9FAFB;font-family:inherit;outline:none;margin-bottom:14px;box-sizing:border-box;" onfocus="this.style.borderColor=&#39;#3B82F6&#39;" onblur="this.style.borderColor=&#39;#374151&#39;">
@@ -340,7 +340,7 @@
 
 <!-- LIGHTBOX -->
 <div id="lightbox" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.88);z-index:99999;align-items:center;justify-content:center;">
-  <img id="lightboxImg" src="./TJソリューション業務マニュアル_files/税務キーパー業務マニュアル.html" alt="" style="max-width:90vw;max-height:90vh;object-fit:contain;border-radius:10px;box-shadow:0 20px 60px rgba(0,0,0,0.6);">
+  <img id="lightboxImg" src="./税理士法人TJ会計ソリューション業務マニュアル_files/税務キーパー業務マニュアル.html" alt="" style="max-width:90vw;max-height:90vh;object-fit:contain;border-radius:10px;box-shadow:0 20px 60px rgba(0,0,0,0.6);">
   <div onclick="closeLightbox()" style="position:fixed;top:14px;right:20px;color:#fff;font-size:36px;cursor:pointer;line-height:1;font-weight:300;">✕</div>
 </div>
 
@@ -350,7 +350,7 @@
   <div class="sidebar-logo">
     <div class="sidebar-logo-icon">📚</div>
     <div>
-      <div class="sidebar-logo-text">TJソリューション</div>
+      <div class="sidebar-logo-text">税理士法人TJ会計ソリューション</div>
       <div class="sidebar-logo-sub">業務マニュアル</div>
     </div>
   </div>
@@ -2873,14 +2873,14 @@ images: ["img/0017.png","img/0018.png"]
       topMobileImages: ["kintone-overview_mobile_1.jpg", "kintone-overview_mobile_2.jpg", "kintone-overview_mobile_3.jpg"],
       topPcTasks: [
         "<strong style=\"color:#A21034;\">【このページの役割】</strong>ここは営業の“操作手順（Kintoneでの登録・管理のやり方）”です。業務の全体像・位置づけは『業務 ＞ 顧問業務マップ』を参照してください。",
-        "TJソリューション営業管理とは、リード取得から案件・契約・請求までの一連の営業フローを一元管理するページです。各アプリ（リード管理・案件管理・活動管理・契約管理・請求管理・顧客管理・代理店管理）を通じて、営業活動全体の進捗を可視化・管理します。",
+        "税理士法人TJ会計ソリューション営業管理とは、リード取得から案件・契約・請求までの一連の営業フローを一元管理するページです。各アプリ（リード管理・案件管理・活動管理・契約管理・請求管理・顧客管理・代理店管理）を通じて、営業活動全体の進捗を可視化・管理します。",
         "画面左の赤枠は営業マニュアルとなっており、操作方法や運用ルールを確認することができます。画面右の赤枠は、Kintoneで使用するアプリ一覧となっており、各管理ページへ遷移することができます。",
         "基本的な操作は、右側のアプリ一覧から各管理ページへ遷移して行います。"
       ],
       topMobileTasks: [
         "<strong style=\"color:#A21034;\">【このページの役割】</strong>ここは営業の“操作手順（Kintoneでの登録・管理のやり方）”です。業務の全体像・位置づけは『業務 ＞ 顧問業務マップ』を参照してください。",
-        "TJソリューション営業管理とは、リード取得から案件・契約・請求までの一連の営業フローを一元管理するページです。各アプリ（リード管理・案件管理・活動管理・契約管理・請求管理・顧客管理・代理店管理）を通じて、営業活動全体の進捗を可視化・管理します。",
-        "モバイル版では、左上のメニューから「スペース」を選択し、「TJソリューション営業管理」へ遷移します。",
+        "税理士法人TJ会計ソリューション営業管理とは、リード取得から案件・契約・請求までの一連の営業フローを一元管理するページです。各アプリ（リード管理・案件管理・活動管理・契約管理・請求管理・顧客管理・代理店管理）を通じて、営業活動全体の進捗を可視化・管理します。",
+        "モバイル版では、左上のメニューから「スペース」を選択し、「税理士法人TJ会計ソリューション営業管理」へ遷移します。",
         "画面上部の「内容」タブでは営業マニュアルを確認することができます。操作方法や運用ルールはここから参照してください。",
         "「アプリ」タブを選択すると、Kintoneで使用する各アプリ一覧が表示され、リード管理・案件管理・活動管理・契約管理・請求管理などの各ページへ遷移できます。",
         "基本的な操作は、「アプリ」タブから各管理ページへ遷移して行います。"
@@ -5010,7 +5010,7 @@ init();
 </script>
 
 
-<div id="notta-permissions-trigger"><iframe src="./TJソリューション業務マニュアル_files/permissions.html" allow="camera *; microphone *" style="display: none; visibility: hidden;"></iframe></div><div id="notta-transcription-toolbar-trigger"><template shadowrootmode="open"><style data-rc-order="prependQueue">.anticon{display:inline-flex;align-items:center;color:inherit;font-style:normal;line-height:0;text-align:center;text-transform:none;vertical-align:-0.125em;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;}.anticon >*{line-height:1;}.anticon svg{display:inline-block;}.anticon .anticon .anticon-icon{display:block;}</style><style data-rc-order="prependQueue"></style><style>/**
+<div id="notta-permissions-trigger"><iframe src="./税理士法人TJ会計ソリューション業務マニュアル_files/permissions.html" allow="camera *; microphone *" style="display: none; visibility: hidden;"></iframe></div><div id="notta-transcription-toolbar-trigger"><template shadowrootmode="open"><style data-rc-order="prependQueue">.anticon{display:inline-flex;align-items:center;color:inherit;font-style:normal;line-height:0;text-align:center;text-transform:none;vertical-align:-0.125em;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;}.anticon >*{line-height:1;}.anticon svg{display:inline-block;}.anticon .anticon .anticon-icon{display:block;}</style><style data-rc-order="prependQueue"></style><style>/**
  * 公共样式 - 所有 Content Scripts 共享
  * 
  * 参考 showcase-extension 的实现，只保留必要的基础样式
@@ -5258,7 +5258,7 @@ init();
   .sidebar-header { padding: 20px 16px 14px;border-bottom: 1px solid var(--border);}
   .sidebar-logo { display: flex;align-items: center;gap: 8px;}
   .sidebar-logo-icon { width: 28px;height: 28px;background: linear-gradient(135deg, #3B82F6, #8B5CF6);border-radius: 6px;display: flex;align-items: center;justify-content: center;font-size: 14px;}
-  .sidebar-logo-text { font-size: 13px;font-weight: 700;color: var(--text-primary);line-height: 1.3;}
+  .sidebar-logo-text { font-size: 12px;font-weight: 700;color: var(--text-primary);line-height: 1.35;overflow-wrap: anywhere;}
   .sidebar-logo-sub { font-size: 10px;color: var(--text-muted);font-weight: 400;}
   .sidebar-search { margin: 12px 12px 0;position: relative;}
   .sidebar-search input { width: 100%;background: var(--bg-panel);border: 1px solid var(--border);border-radius: 6px;padding: 7px 10px 7px 30px;font-size: 12px;color: var(--text-primary);font-family: inherit;outline: none;transition: border-color 0.2s;}
@@ -5506,7 +5506,7 @@ init();
   .cat-title { font-size: 18px;}
   .cat-icon-big { width: 40px;height: 40px;font-size: 20px;}
 
-  .login-box { width: 90vw;padding: 28px 20px;}
+  .login-box { width: 90vw;max-width: 380px;padding: 28px 20px;}
 
   .section-header { padding: 12px 14px;}
   .section-body { padding: 0 14px 14px 28px;}
