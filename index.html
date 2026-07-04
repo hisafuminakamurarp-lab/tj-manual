@@ -2809,6 +2809,7 @@ const data = [
     {
       title: "営業管理（Kintone）",
       kintoneTabs: true,
+      mapImage: "kintone-eigyo-map.png",
       topImage: "kintone-overview.jpg",
       topMobileImages: ["kintone-overview_mobile_1.jpg", "kintone-overview_mobile_2.jpg", "kintone-overview_mobile_3.jpg"],
       topPcTasks: [
@@ -4478,6 +4479,7 @@ function renderContent(cat) {
     imgHtml = `<img alt="${sec.title || '画像'}" loading="lazy" src="${sec.image}" class="section-img" onclick="openLightbox('${lbKey}')" style="width:100%;max-width:520px;border-radius:8px;margin-top:12px;border:1px solid #E5E7EB;display:block;">`;
   }
 
+  if (sec.mapImage) _lbSrcs["map_" + i] = sec.mapImage;
   card.innerHTML = `
     <div class="section-header" onclick="toggleSection(${i},this)">
       <span class="section-dot" style="background:${cat.color}"></span>
@@ -4486,6 +4488,7 @@ function renderContent(cat) {
       <span class="section-toggle ${isOpen ? "open" : ""}">+</span>
     </div>
     <div class="section-body ${isOpen ? "open" : ""}">
+      ${sec.mapImage ? `<img alt="${sec.title || ''}全体図" loading="lazy" src="${sec.mapImage}" onclick="openLightbox('map_${i}')" style="width:100%;max-width:1000px;border-radius:10px;border:1px solid #E5E7EB;display:block;margin:0 auto 18px;cursor:zoom-in;">` : ""}
       ${sec.image ? `<div style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;">
         <div style="flex:1.2;min-width:220px;">${imgHtml}</div>
         <div style="flex:1;min-width:200px;">${renderTasks(sec.tasks)}</div>
