@@ -4284,28 +4284,13 @@ function renderContent(cat) {
 
   let subsHtml = "";
   if (sec.subsections && sec.subsections.length > 0) {
-    subsHtml = `<div class="subsection-list">${sec.kintoneTabs ? `<div class="img-tabs" style="margin-bottom:12px;">
-        <button class="img-tab active" data-mode="pc" onclick="switchKintoneMode('pc')"><span class="img-tab-icon">🖥️</span>PC版</button>
-        <button class="img-tab" data-mode="mobile" onclick="switchKintoneMode('mobile')"><span class="img-tab-icon">📱</span>モバイル版</button>
-      </div>${sec.topImage ? (() => {
+    subsHtml = `<div class="subsection-list">${sec.kintoneTabs && sec.topImage ? (() => {
         const tk = `top_${i}`;
-        // PC版：単一画像
         _lbSrcs[tk] = sec.topImage;
-        const pcImg = `<img alt="${sec.title || ''}（PC版）" loading="lazy" src="${sec.topImage}" data-lb-key="${tk}" class="section-img kintone-top-pc" onclick="openLightbox('${tk}')" style="border-radius:8px;border:1px solid #E5E7EB;cursor:zoom-in;margin-bottom:16px;">`;
-        // PC版テキスト（画像の下）
-        const pcText = sec.topPcTasks && sec.topPcTasks.length > 0 ? `<div class="task-list kintone-top-pc" style="margin-bottom:16px;">${sec.topPcTasks.map(t=>`<div class="task-item">${t}</div>`).join("")}</div>` : '';
-        // モバイル版：複数画像対応（topMobileImages配列 or topMobileImage単体 or PCにフォールバック）
-        const mobileImgs = sec.topMobileImages || (sec.topMobileImage ? [sec.topMobileImage] : [sec.topImage]);
-        const mobileImgsHtml = mobileImgs.map((src, mi) => {
-          const mk = `top_${i}_m${mi}`;
-          _lbSrcs[mk] = src;
-          return `<img alt="${sec.title || ''}（モバイル版${mi+1}）" loading="lazy" src="${src}" data-lb-key="${mk}" class="section-img kintone-top-mobile-img" onclick="openLightbox('${mk}')" style="border-radius:8px;border:1px solid #E5E7EB;cursor:zoom-in;">`;
-        }).join("");
-        const mobileHtml = `<div class="kintone-top-mobile kintone-top-mobile-row" style="margin-bottom:16px;">${mobileImgsHtml}</div>`;
-        // モバイル版テキスト（画像群の下）
-        const mobileText = sec.topMobileTasks && sec.topMobileTasks.length > 0 ? `<div class="task-list kintone-top-mobile" style="margin-bottom:16px;">${sec.topMobileTasks.map(t=>`<div class="task-item">${t}</div>`).join("")}</div>` : '';
-        return pcImg + pcText + mobileHtml + mobileText;
-      })() : ''}` : ''}` +
+        const pcImg = `<img alt="${sec.title || ''}" loading="lazy" src="${sec.topImage}" data-lb-key="${tk}" class="section-img" onclick="openLightbox('${tk}')" style="width:100%;border-radius:8px;border:1px solid #E5E7EB;cursor:zoom-in;margin-bottom:16px;">`;
+        const pcText = sec.topPcTasks && sec.topPcTasks.length > 0 ? `<div class="task-list" style="margin-bottom:16px;">${sec.topPcTasks.map(t=>`<div class="task-item">${t}</div>`).join("")}</div>` : '';
+        return pcImg + pcText;
+      })() : ''}` +
       sec.subsections.map((sub, si) => `
         <div class="subsection-card">
           <div class="subsection-header" onclick="toggleSubsection(event,'${i}-${si}')">
