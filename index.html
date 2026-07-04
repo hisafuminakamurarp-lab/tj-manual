@@ -547,7 +547,6 @@ const data = [
               items: [
                 "【動画で学ぶ】<a href=\"https://www.youtube.com/watch?v=Y4jhkGLONaU\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#16A34A;text-decoration:underline;\">請求書作成・入金確認の方法【法人版：会計freee使い方3】</a>（freee公式YouTube）",
                 "請求書を発行 → 売上が売掛金（未決済）で計上 → 入金確認 → 消込。「請求書を作った／売上が立った」はここから。",
-                "【前提】銀行口座がfreeeに同期済みであること（手順5で入金明細を自動取得）。未同期なら先に 業務 ＞ 顧問業務マップ ＞ <span class=\"tool-link\" onclick=\"jumpToKaikei()\" style=\"cursor:pointer;color:#16A34A;text-decoration:underline;\">freee会計 ＞ L 設定</span> で設定。",
                 "【公式ヘルプ】<a href=\"https://support.freee.co.jp/hc/ja/articles/12513731930649\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#16A34A;text-decoration:underline;\">見積書・納品書・請求書を作成する</a>"
               ]
             },
@@ -768,13 +767,8 @@ const data = [
               items: [
                 "【動画で学ぶ】<a href=\"https://www.youtube.com/watch?v=_mX4GaAMNMs\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#16A34A;text-decoration:underline;\">支払管理・経費精算【法人版：会計freee使い方4】</a>（freee公式YouTube）",
                 "受け取った請求書をファイルボックスに取込 → 買掛金／未払金（未決済）で登録 → 支払 → 消込、までが仕入業務です。社員の入口『請求書をもらった』→ここ。",
-                "【用語】買掛金と未払金の違い：商品・材料・外注など『仕入そのもの』の未払いは『買掛金』、家賃・備品・通信費など『仕入以外の経費』の未払いは『未払金』です。取引登録の勘定科目で選び分けます。迷ったら〈仕入関連＝買掛金／それ以外＝未払金〉。",
-                "【前提】手順4の消込は、freee に銀行口座が同期済みであることが前提です（支払った明細を自動取得します）。口座同期がまだなら、先に freee会計 ＞ L 設定（口座連携）を済ませてください。",
                 "【インボイス】受け取った請求書にインボイス登録番号（T＋13桁）があるか必ず確認します。番号があれば仕入税額控除ができます。番号がない取引は当面『経過措置（8割控除など）』の対象で、税区分の選び方が変わります（手順2④参照）。",
-                "【関連学習】①債権債務管理 ／ ②取引登録 ／ ④仕入　→ <span class=\"tool-link\" onclick=\"jumpToKaikei('学習ガイド')\" style=\"cursor:pointer;color:#16A34A;text-decoration:underline;\">学習ガイドで深掘り</span>",
-                "※掲載画像はfreee公式ヘルプの操作例です。実際の画面・ボタン名・金額は更新により異なる場合があります。",
                 "【公式ヘルプ】<a href=\"https://support.freee.co.jp/hc/ja/articles/203524410\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#16A34A;text-decoration:underline;\">レシートや請求書の書類データを取り込む</a>（各手順に帳簿付け・未決済取引・総合振込の個別リンクあり）",
-                "【やり直し（取消・修正）】入力を間違えたら［取引］→［取引の一覧・登録］で対象を開き『編集』『削除』で直せます。消込済み・年度締め済みは先に解除してから直します。直せない時は→<a href=\"https://support.freee.co.jp/hc/ja/articles/217937303\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#16A34A;text-decoration:underline;\">取引の編集・削除ができないのはなぜ？</a>"
               ]
             },
             {
@@ -1124,10 +1118,7 @@ const data = [
               items: [
                 "【動画で学ぶ】<a href=\"https://go.freee.co.jp/usersguide_movie_receipt-organize.html\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#16A34A;text-decoration:underline;\">日々の記帳〜領収書の整理〜</a>（freee法人ムービー）",
                 "クレカ・領収証・レシート・役員立替などの経費入力業務です。社員の入口『領収証をもらった／役員が立替した』→ここ。",
-                "【関連学習】②取引登録 ／ ④仕入　→ <span class=\"tool-link\" onclick=\"jumpToKaikei('学習ガイド')\" style=\"cursor:pointer;color:#16A34A;text-decoration:underline;\">学習ガイドで深掘り</span>",
-                "※掲載画像はfreee公式ヘルプの操作例です。実際の画面・ボタン名・金額は更新により異なる場合があります。",
                 "【公式ヘルプ】<a href=\"https://support.freee.co.jp/hc/ja/articles/115005326706\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#16A34A;text-decoration:underline;\">自動で経理の使い方（明細を元にした帳簿付け）</a>（各手順にファイルボックス・電子帳簿保存法・未決済取引の個別リンクあり）",
-                "【やり直し（取消・修正）】入力を間違えたら［取引］→［取引の一覧・登録］で対象を開き『編集』『削除』で直せます。消込済み・年度締め済みは先に解除してから直します。直せない時は→<a href=\"https://support.freee.co.jp/hc/ja/articles/217937303\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#16A34A;text-decoration:underline;\">取引の編集・削除ができないのはなぜ？</a>"
               ]
             },
             {
@@ -1279,9 +1270,6 @@ const data = [
                 "【最初に分岐】給与の進め方は2パターンあります。まず自分がどちらかを確認します。〈パターンA〉freee人事労務で給与計算から行う → 下の手順1〜7（マニュアル通りに進めればOK）。〈パターンB〉ミロク等の他社ツールで計算した／顧問先が用意した給与明細を会計に入れるだけ → 末尾の『（パターンB）』へ。",
                 "下の手順1〜7はパターンAの標準フロー（基本設定→勤怠→給与計算→確定→振込・会計連携→年末調整→各種書類）。パターンBは末尾の専用ページを参照します。",
                 "【公式ガイド全体】<a href=\"https://support.freee.co.jp/hc/ja/articles/203084474\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#16A34A;text-decoration:underline;\">freee人事労務 使い方ガイド（全手順の原典）</a>",
-                "【関連学習】②取引登録　→ <span class=\"tool-link\" onclick=\"jumpToKaikei('学習ガイド')\" style=\"cursor:pointer;color:#16A34A;text-decoration:underline;\">学習ガイドで深掘り</span>",
-                "※掲載画像はfreee公式ヘルプの操作例です。実際の画面・ボタン名・金額は更新により異なる場合があります。",
-                "【やり直し（取消・修正）】給与を間違えたら、確定前なら［給与計算］で金額を直して再計算、確定後は対象月の給与明細を開いて修正し再確定します。会計連携まで済んでいる場合は、連携された取引も［取引］→［取引の一覧・登録］で『編集』『削除』して直します（消込済み・締め済みは先に解除）。→<a href=\"https://support.freee.co.jp/hc/ja/articles/217937303\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#16A34A;text-decoration:underline;\">取引の編集・削除ができないのはなぜ？</a>"
               ]
             },
             {
@@ -1532,7 +1520,6 @@ const data = [
                 "【入力する仕訳のかたち（基本形）】支給日：（借）給与手当 ××／（貸）預り金〔社会保険・源泉所得税・住民税〕××・普通預金〔差引支給額〕××。納付日：（借）預り金 ××／（貸）普通預金 ××（社会保険・源泉・住民税を実際に納めたときに消し込む）。会社負担の社会保険（法定福利費）も忘れずに計上します。",
                 "【入力場所】freee会計の［取引］→『振替伝票』（または各口座からの取引登録）で、上のかたちのとおり入力します。毎月ほぼ同じ金額なら、前月の伝票を複製すると速いです。",
                 "【初心者の注意】(1) 金額はツール側で計算済みなので“転記”が基本、勝手に直さない。(2) 預り金（控除分）の入れ忘れに注意（納付時に残高が合わなくなります）。(3) 差引支給額＝実際に振り込む金額と一致しているか必ず確認。",
-                "【関連学習】②取引登録（仕訳の基本）／⑥インポート（明細をまとめて取り込む）　→ <span class=\"tool-link\" onclick=\"jumpToKaikei('学習ガイド')\" style=\"cursor:pointer;color:#16A34A;text-decoration:underline;\">学習ガイドで深掘り</span>"
               ]
             }
           ]
@@ -1546,9 +1533,6 @@ const data = [
                 "【動画で学ぶ】<a href=\"https://www.youtube.com/watch?v=k207Roaf-Kw\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#16A34A;text-decoration:underline;\">固定資産の入力【freee会計使い方：確定申告編3】</a>（freee公式YouTube）",
                 "固定資産・減価償却の入力業務。社員の入口『10万円以上の資産を買った』→ここ。ゴールは法人税申告書の別表（固定資産・減価償却）への正しい反映です。",
                 "freeeでは①取引（支出）と②固定資産台帳の両方に登録します。①で取得を計上、②で取得後の減価償却費を毎期自動計上します（二重計上ではありません）。",
-                "【関連学習】⑥インポート ／ ⑦経営支援　→ <span class=\"tool-link\" onclick=\"jumpToKaikei('学習ガイド')\" style=\"cursor:pointer;color:#16A34A;text-decoration:underline;\">学習ガイドで深掘り</span>",
-                "※掲載画像はfreee公式ヘルプの操作例です。実際の画面・ボタン名・金額は更新により異なる場合があります。",
-                "【やり直し（取消・修正）】入力を間違えたら［取引］→［取引の一覧・登録］で対象を開き『編集』『削除』で直せます。消込済み・年度締め済みは先に解除してから直します。直せない時は→<a href=\"https://support.freee.co.jp/hc/ja/articles/217937303\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#16A34A;text-decoration:underline;\">取引の編集・削除ができないのはなぜ？</a>"
               ]
             },
             {
@@ -1684,10 +1668,7 @@ const data = [
                 "法人税・地方税・消費税などの『税金』の記帳業務。社員の入口『税金を納付した／中間申告の通知が来た』→ここ。",
                 "前期決算で確定した未払法人税等の納付、期中の中間納付、消費税の期末処理などをfreee会計に記帳します。申告書の作成自体はJ 申告書（freee申告）で行います。",
                 "【基本パターン（これだけ覚える）】どの税金も〈① 先に税額を“未払（未決済）”で入力 → ② 実際に支払ったときに消込〉の2段階で処理します。先に入力しておくことで未払残高が正しく管理でき、二重計上や払い忘れを防げます。",
-                "【関連学習】⑦経営支援 ／ ③設定　→ <span class=\"tool-link\" onclick=\"jumpToKaikei('学習ガイド')\" style=\"cursor:pointer;color:#16A34A;text-decoration:underline;\">学習ガイドで深掘り</span>",
-                "※掲載画像はfreee公式ヘルプの操作例です。実際の画面・ボタン名・金額は更新により異なる場合があります。",
                 "【公式ヘルプ】<a href=\"https://support.freee.co.jp/hc/ja/articles/203455370\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#16A34A;text-decoration:underline;\">【法人】決算と税務申告の流れ</a>",
-                "【やり直し（取消・修正）】入力を間違えたら［取引］→［取引の一覧・登録］で対象を開き『編集』『削除』で直せます。消込済み・年度締め済みは先に解除してから直します。直せない時は→<a href=\"https://support.freee.co.jp/hc/ja/articles/217937303\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#16A34A;text-decoration:underline;\">取引の編集・削除ができないのはなぜ？</a>"
               ]
             },
             {
@@ -1781,10 +1762,7 @@ const data = [
                 "freeeでは『口座振替』として登録します。通常の取引（収入／支出）で登録すると売上・経費に誤計上されるため注意します。",
                 "【これは“口座振替”になる取引の例】次のような『お金の移動・付け替え』が口座振替の対象です。①登録した銀行口座間の資金移動（例：A銀行→B銀行へ振込）／②現金の引き出し・預け入れ（例：A銀行から現金を引き出した）／③クレジットカード利用分の銀行口座からの引き落とし／④購入履歴を同期しているサービス（Amazon等）への支払い／⑤売上データを同期しているサービス（ユビレジ等）から銀行口座への入金／⑥交通系IC・電子マネー口座へのチャージ（例：Suicaにチャージ）／⑦クレジットカードの再発行で旧カードから新カードへ変更したとき／⑧小口現金口座への補充／⑨役員借入金・立替金を口座管理している場合の借入・貸付や返済の動き。逆に“モノやサービスを買った”支出そのものは口座振替ではなく取引登録（支出）です。",
                 "【最重要・二重仕訳に注意】送金元・送金先の両方の口座をfreeeに連携していると、1回の送金が“両方の明細”に出るため、同じ取引が2回登録されてしまいます（二重仕訳）。これを防ぐ正解が、下の手順2の『振替』口座を使う方法です（片方の明細を“無視”する方法は消し忘れの原因になりオススメしません）。",
-                "【関連学習】①債権債務管理 ／ ②取引登録　→ <span class=\"tool-link\" onclick=\"jumpToKaikei('学習ガイド')\" style=\"cursor:pointer;color:#16A34A;text-decoration:underline;\">学習ガイドで深掘り</span>",
-                "※掲載画像はfreee公式ヘルプの操作例です。実際の画面・ボタン名・金額は更新により異なる場合があります。",
                 "【公式ヘルプ】<a href=\"https://support.freee.co.jp/hc/ja/articles/202847420\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#16A34A;text-decoration:underline;\">資金の移動を登録する（口座振替）</a>",
-                "【やり直し（取消・修正）】入力を間違えたら［取引］→［取引の一覧・登録］で対象を開き『編集』『削除』で直せます。消込済み・年度締め済みは先に解除してから直します。直せない時は→<a href=\"https://support.freee.co.jp/hc/ja/articles/217937303\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#16A34A;text-decoration:underline;\">取引の編集・削除ができないのはなぜ？</a>"
               ]
             },
             {
@@ -1854,12 +1832,8 @@ const data = [
                 "経過勘定とは、お金を払った／もらったタイミングと、費用・収益を計上すべき期間がズレるときに、正しい期間に合わせる調整のことです。",
                 "ここで扱うのは2つだけです。①前払費用＝先に“払った”お金（資産としてあずけておく）／②前受金＝先に“もらった”お金（負債としてあずかっておく）。",
                 "【なぜ必要】会社の利益（＝法人税の計算のもと）を、その期に対応する分だけで正しく出すためです。来期分の費用や来期分の売上を当期に混ぜないようにします。",
-                "【用語】振替（ふりかえ）＝［取引］→［振替伝票］で、借方・貸方の仕訳のかたちで入力することです。経過勘定はこの振替伝票で入れます。",
                 "【いつやる】基本は決算（期末）で1回。月次でこまめにやってもOKです（I 決算整理仕訳 とも連動します）。",
-                "【関連学習】①債権債務管理 ／ ②取引登録　→ <span class=\"tool-link\" onclick=\"jumpToKaikei('学習ガイド')\" style=\"cursor:pointer;color:#16A34A;text-decoration:underline;\">学習ガイドで深掘り</span>",
-                "※掲載画像はfreee公式ヘルプの操作例です。実際の画面・ボタン名・金額は更新により異なる場合があります。",
                 "【公式ヘルプ】<a href=\"https://support.freee.co.jp/hc/ja/articles/202848040\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#16A34A;text-decoration:underline;\">振替伝票を作成する（仕訳形式で記帳する）</a>",
-                "【やり直し（取消・修正）】入力を間違えたら［決算］→該当の振替伝票（または［取引］→［取引の一覧・登録］）で対象を開き『編集』『削除』で直せます。年度締め済みは先に解除してから直します。直せない時は→<a href=\"https://support.freee.co.jp/hc/ja/articles/217937303\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#16A34A;text-decoration:underline;\">取引の編集・削除ができないのはなぜ？</a>"
               ],
             },
             {
@@ -1946,10 +1920,7 @@ const data = [
                 "【動画で学ぶ】<a href=\"https://www.youtube.com/watch?v=RC-W1K-5ZEU\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#16A34A;text-decoration:underline;\">お急ぎの決算【法人版：会計freee使い方】</a>（freee公式YouTube）",
                 "期末に帳簿を実態へ合わせる『決算整理』の記帳業務です。減価償却・経過勘定・残高確認などを行います。",
                 "freeeは年度締めで一部の決算整理仕訳を自動作成します。自動分と手動分を切り分けて漏れなく処理します。",
-                "【関連学習】①債権債務管理 ／ ⑦経営支援　→ <span class=\"tool-link\" onclick=\"jumpToKaikei('学習ガイド')\" style=\"cursor:pointer;color:#16A34A;text-decoration:underline;\">学習ガイドで深掘り</span>",
-                "※掲載画像はfreee公式ヘルプの操作例です。実際の画面・ボタン名・金額は更新により異なる場合があります。",
                 "【公式ヘルプ】<a href=\"https://support.freee.co.jp/hc/ja/articles/360001217206\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#16A34A;text-decoration:underline;\">年度締めすると自動で作成される決算整理仕訳にはどんなものがありますか？</a>",
-                "【やり直し（取消・修正）】入力を間違えたら［取引］→［取引の一覧・登録］（振替伝票は［決算］→該当伝票）で対象を開き『編集』『削除』で直せます。年度締め済みは先に締めを解除してから直します。直せない時は→<a href=\"https://support.freee.co.jp/hc/ja/articles/217937303\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#16A34A;text-decoration:underline;\">取引の編集・削除ができないのはなぜ？</a>"
               ],
             },
             {
@@ -1989,8 +1960,6 @@ const data = [
                 "申告書の作成業務。会計データをもとに、法人税・地方税・消費税の申告書を作成し、提出・納税まで行います（freee申告）。",
                 "前提：一年間の取引が全て登録済みで、残高・勘定科目・消費税区分が整っていること。提出前に税理士／責任者の確認を必須にします。",
                 "【公式ガイド全体】<a href=\"https://support.freee.co.jp/hc/ja/sections/14943814712729\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#16A34A;text-decoration:underline;\">freee 法人向け申告ガイド（全手順の原典）</a>",
-                "【関連学習】⑥インポート ／ ⑦経営支援　→ <span class=\"tool-link\" onclick=\"jumpToKaikei('学習ガイド')\" style=\"cursor:pointer;color:#16A34A;text-decoration:underline;\">学習ガイドで深掘り</span>",
-                "※掲載画像はfreee公式ヘルプの操作例です。実際の画面・ボタン名・金額は更新により異なる場合があります。"
               ]
             },
             {
@@ -2088,7 +2057,6 @@ const data = [
             {
               heading: "補足　申告書を作る4つの方法／決算書の出力／他社ソフト連携（法人税の達人・A-SaaS）",
               items: [
-                "【前提】法人は期末日の翌日から2か月以内に法人税の確定申告を行います。申告書類は各種別表＋適用額明細書＋（株主総会承認後の）決算書＋勘定科目内訳明細書＋法人事業概況説明書で構成されます。freee会計が出力できるのは<b>決算書と勘定科目内訳明細書</b>で、別表・適用額明細書・概況説明書は<b>freee申告</b>側で作成します。",
                 "【申告書を作る4つの方法】①freeeに対応した税理士・会計士に依頼する（会計データを共有でき効率的。『freee税理士検索』で条件検索も可＝下の画像②）／②freee会計の決算書データを<b>freee申告</b>へ連携して作成（要：freee申告 法人税の購入）／③決算書データを『法人税の達人』『A-SaaS』へ連携／④その他の法人税申告ソフトへ手動で転記。当事務所はfreee申告または達人連携が中心です。",
                 "【決算書を出力する】実務では“仮決算で税引前利益まで確定→申告書で税額確定→決算書を確定”の順。出力は［決算申告］→［決算書］→［プレビュー・調整］→［PDFで出力］（下の画像①：貸借対照表のPDF出力例）。※Safariはプレビューと異なる形式で出力されるため注意。",
                 "【法人税の達人へ連携（XML）】freeeの決算書データを『法人税の達人』（Professional / Standard Edition）へインポートできます。手順：①freee会計［決算申告］→［連携用データの作成］→［インポート用ファイルのダウンロード（XML形式）］でXMLを出力（下の画像③）→②達人の［業務メニュー］→［データのインポート］（下の画像④）→③『中間ファイル（決算書用）からのインポート』を選び［確定］（下の画像⑤）→④freeeで出力したXMLを選び［開く］でインポート（下の画像⑥：データインポート画面でhoujinzei_no_tatsujin…のXMLを選択して［開く］）。",
@@ -2110,7 +2078,6 @@ const data = [
                 "月次クローズ＝『その月の帳簿を締めて、数字が正しいか確認する』毎月の作業です。社員の入口『今月分の経理が一通り終わった』→ここで最終チェック。",
                 "目的は、月末時点で（1）通帳・カードの残高と帳簿が一致している、（2）登録漏れ・二重登録がない、（3）売掛・買掛などの残高が説明できる、の3点を担保することです。",
                 "下のチェックは上から順に進めればOK。1つでも合わない箇所があれば、原因を直してから次へ進みます。迷ったら責任者・税理士に相談します。",
-                "※掲載画像はfreee公式ヘルプの操作例です。実際の画面・ボタン名・金額は更新により異なる場合があります。"
               ]
             },
             {
@@ -2150,7 +2117,6 @@ const data = [
                 "□ 違和感のある科目は総勘定元帳で中身を確認し、誤った科目・税区分があれば直します。",
                 "□ 問題なければ、月次の数字を責任者・税理士へ共有します。判断に迷う点は必ず確認します。",
                 "<a href=\"https://support.freee.co.jp/hc/ja/articles/203293920\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#16A34A;text-decoration:underline;\">月次推移（損益計算書・貸借対照表）を確認する</a>",
-                "【やり直し（取消・修正）】間違いを見つけたら［取引］→［取引の一覧・登録］で対象を開き『編集』『削除』で直せます。消込済み・年度締め済みは先に解除してから直します。直せない時は→<a href=\"https://support.freee.co.jp/hc/ja/articles/217937303\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#16A34A;text-decoration:underline;\">取引の編集・削除ができないのはなぜ？</a>"
               ]
             }
           ]
@@ -2164,10 +2130,7 @@ const data = [
                 "【動画で学ぶ】<a href=\"https://go.freee.co.jp/usersguide_movie_automation.html\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#16A34A;text-decoration:underline;\">日々の記帳〜自動化（自動登録ルール）〜</a>（freee法人ムービー）",
                 "口座連携（同期）や、繰り返し発生する明細の自動化（自動登録ルール）など、freeeを効率よく回すための設定業務です。経過勘定（前払・前受）は H 経過勘定入力 を参照してください。",
                 "ルールを整えると毎月の記帳が『推測→確認→登録』だけで済み、入力ミスと作業時間を減らせます。",
-                "【関連学習】②取引登録 ／ ③設定　→ <span class=\"tool-link\" onclick=\"jumpToKaikei('学習ガイド')\" style=\"cursor:pointer;color:#16A34A;text-decoration:underline;\">学習ガイドで深掘り</span>",
-                "※掲載画像はfreee公式ヘルプの操作例です。実際の画面・ボタン名・金額は更新により異なる場合があります。",
                 "【公式ヘルプ】<a href=\"https://support.freee.co.jp/hc/ja/articles/115005326706\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#16A34A;text-decoration:underline;\">自動で経理の使い方（明細を元にした帳簿付け）</a>",
-                "【やり直し（取消・修正）】入力を間違えたら［取引］→［取引の一覧・登録］で対象を開き『編集』『削除』で直せます。消込済み・年度締め済みは先に解除してから直します。直せない時は→<a href=\"https://support.freee.co.jp/hc/ja/articles/217937303\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#16A34A;text-decoration:underline;\">取引の編集・削除ができないのはなぜ？</a>"
               ],
             },
             {
@@ -2236,7 +2199,6 @@ const data = [
                 "【指導のコツ】freeeのインポートは簡単なので、顧問先自身にやってもらえるよう“導入時に”指導します（途中から教えるのは難しいので、最初が肝心）。初期指導の際に勘定科目の定義をすり合わせ、その流れで取り込み方をレクチャーします。",
                 "【テンプレが命】配布するエクセルテンプレートは、勘定科目を“プルダウン（ドロップダウンリスト）”方式にします。科目名が1文字でも違うとインポートでエラーになるためです。",
                 "【運用ルール】取込みは月1回（または週1回）に決め、レシートはエクセルの並び順どおりにひとまとめで保存してもらうと、突合・確認がスムーズです。",
-                "【関連学習】⑥インポート・エクスポート　→ <span class=\"tool-link\" onclick=\"jumpToKaikei('学習ガイド')\" style=\"cursor:pointer;color:#16A34A;text-decoration:underline;\">学習ガイドで深掘り</span>"
               ]
             }
           ]
