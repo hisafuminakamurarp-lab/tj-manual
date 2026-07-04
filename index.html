@@ -94,6 +94,27 @@
   .task-heading.step-main { font-size: 15px;font-weight: 700;color: var(--accent, #A21034);border-top: 2px solid var(--accent, #A21034);padding-top: 14px;margin-top: 18px;}
   .task-heading.step-sub { font-size: 12px;font-weight: 600;color: #6B7280;border-top: 1px dashed #E5E7EB;}
   .phase-sub { margin-left: 22px;border-left: 3px solid #EEF0F4;padding-left: 16px;}
+  .step-shot { max-width: 760px; }
+  .step-shot img { box-shadow: 0 1px 2px rgba(20,30,45,.04), 0 6px 18px rgba(20,30,45,.07); }
+  /* freee風・手順目次 */
+  .step-toc { background:#F5F8FC;border:1px solid #E3E9F1;border-radius:10px;padding:12px 14px;margin:10px 0 6px; }
+  .step-toc-t { font-size:11px;font-weight:700;letter-spacing:.06em;color:#64748B;margin-bottom:8px; }
+  .step-toc ol { list-style:none;margin:0;padding:0;counter-reset:stoc; }
+  .step-toc li { counter-increment:stoc;margin:1px 0; }
+  .step-toc a { display:flex;gap:8px;align-items:baseline;padding:3px 6px;border-radius:6px;color:#334155;font-size:12.5px;line-height:1.45;cursor:pointer;text-decoration:none; }
+  .step-toc a::before { content:counter(stoc);color:#2563EB;font-weight:700;font-variant-numeric:tabular-nums;flex-shrink:0;min-width:15px;text-align:right; }
+  .step-toc a:hover { background:#E9F1FB;color:#0F172A; }
+  .step-toc li.sub a::before { content:"＋";color:#94A3B8; }
+  /* freee風・ポイント/注意ボックス */
+  .callout { display:flex;gap:10px;align-items:flex-start;border-radius:9px;padding:10px 13px;margin:10px 0; }
+  .callout-ic { flex-shrink:0;font-size:14px;line-height:1.6; }
+  .callout-body { flex:1;min-width:0; }
+  .callout-label { font-weight:700;font-size:12.5px;margin-bottom:2px; }
+  .callout .task-list { margin-top:2px; }
+  .callout.warn { background:#FEF4E7;border:1px solid #F3D6A6; }
+  .callout.warn .callout-label { color:#B45309; }
+  .callout.info { background:#EAF2FD;border:1px solid #C6DCF7; }
+  .callout.info .callout-label { color:#1D4ED8; }
 
   /* NESTED SUBSECTIONS */
   .subsection-list { margin: 10px 0 4px 0;display: flex;flex-direction: column;gap: 6px;}
@@ -4219,7 +4240,19 @@ function buildNav() {
 
 // phases（手順＋画像）の描画。child/grandchild/great-grandchild から再利用する。
 function renderPhases(phases, title, notice, keyPrefix, isKintone) {
-  return phases.map((ph, phi) => {
+  const anchor = (i) => `${keyPrefix}_ph${i}`;
+  // ---- 手順目次（見出しが4つ以上ある長いノードのみ表示）----
+  const headed = phases.map((p, i) => ({ i, h: p.heading })).filter(x => x.h);
+  let tocHtml = "";
+  if (headed.length >= 4) {
+    tocHtml = `<div class="step-toc"><div class="step-toc-t">このページの手順</div><ol>` +
+      headed.map(x => {
+        const sub = /^(補足|（|\()/.test(x.h);
+        return `<li class="${sub ? 'sub' : ''}"><a role="link" tabindex="0" onclick="jumpToPhase('${anchor(x.i)}')" onkeydown="if(event.key==='Enter')jumpToPhase('${anchor(x.i)}')">${x.h}</a></li>`;
+      }).join("") + `</ol></div>`;
+  }
+
+  const body = phases.map((ph, phi) => {
     const phImgs = ph.images || (ph.image ? [ph.image] : []);
     const phMobile = ph.mobileImages || (ph.mobileImage ? [ph.mobileImage] : []);
     const mkImg = (ii) => {
@@ -4229,7 +4262,6 @@ function renderPhases(phases, title, notice, keyPrefix, isKintone) {
       _lbSrcs[k2] = src;
       return `<img alt="${ph.heading || title}" loading="lazy" src="${src}" data-pc-src="${src}" data-mobile-src="${mobileSrc}" data-lb-key="${k2}" class="section-img${isKintone ? ' kintone-img' : ''}" onerror="if(this.src!==this.dataset.pcSrc){this.src=this.dataset.pcSrc;}" onclick="openLightbox('${k2}')" style="width:100%;border-radius:8px;border:1px solid #E5E7EB;display:block;cursor:zoom-in;margin-bottom:8px;">`;
     };
-    const phImgHtmls = phImgs.map((_, ii) => mkImg(ii)).join("");
     const _hd = ph.heading || '';
     const isMainStep = /^(手順|チェック\d|はじめに)/.test(_hd);
     const isSub = /^補足/.test(_hd);
@@ -4239,50 +4271,66 @@ function renderPhases(phases, title, notice, keyPrefix, isKintone) {
     const noticeHtml = isLast ? renderNotice(notice) : "";
     const items = ph.items || [];
     const _CIRC = "①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳㉑㉒㉓㉔㉕㉖㉗㉘㉙㉚㉛㉜㉝㉞㉟";
-    const imgToItem = {};
-    const itemToImgs = {};
+    const imgToItem = {}; const itemToImgs = {};
     if (phImgs.length > 0 && items.length > 0) {
       const re = /(?:画像|同)\s*([①-⑳㉑-㉟])/g;
       items.forEach((t, it) => {
-        let m;
-        re.lastIndex = 0;
+        let m; re.lastIndex = 0;
         while ((m = re.exec(t)) !== null) {
           const idx = _CIRC.indexOf(m[1]);
           if (idx >= 0 && idx < phImgs.length && imgToItem[idx] === undefined) {
-            imgToItem[idx] = it;
-            (itemToImgs[it] = itemToImgs[it] || []).push(idx);
+            imgToItem[idx] = it; (itemToImgs[it] = itemToImgs[it] || []).push(idx);
           }
         }
       });
     }
-    const hasPairing = Object.keys(imgToItem).length > 0;
-    if (phImgHtmls && hasPairing) {
-      const rows = items.map((t, it) => {
-        const txt = `<div class="task-list" style="margin-top:0;"><div class="task-item"><span style="flex:1;min-width:0;">${styleLeadingLabel(t)}</span></div></div>`;
-        const imgs = itemToImgs[it];
-        if (imgs && imgs.length > 0) {
-          const imgHtml = imgs.map(ix => mkImg(ix)).join("");
-          return `<div style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;margin-top:12px;">
-            <div class="img-container" style="flex:1.2;min-width:200px;">${imgHtml}</div>
-            <div style="flex:1;min-width:180px;">${txt}</div>
-          </div>`;
+    const shot = (ixs) => `<div class="img-container step-shot" style="margin-top:8px;">${ixs.map(ix => mkImg(ix)).join("")}</div>`;
+    const line = (t) => `<div class="task-list" style="margin-top:2px;"><div class="task-item"><span style="flex:1;min-width:0;">${styleLeadingLabel(t)}</span></div></div>`;
+    let out = headingHtml;
+    let boxType = null; let buf = [];
+    const flush = () => {
+      if (buf.length) {
+        if (boxType) {
+          const ic = boxType === 'warn' ? '⚠️' : '💡';
+          out += `<div class="callout ${boxType}"><span class="callout-ic">${ic}</span><div class="callout-body">${buf.join("")}</div></div>`;
+        } else { out += buf.join(""); }
+      }
+      buf = []; boxType = null;
+    };
+    const push = (html) => { if (boxType) buf.push(html); else out += html; };
+    items.forEach((t, it) => {
+      const lm = (typeof t === 'string') ? t.match(/^【([^】]+)】/) : null;
+      const label = lm ? lm[1] : null;
+      let type = null;
+      if (label) {
+        if (/注意|警告|禁止|ミス/.test(label)) type = 'warn';
+        else if (/^(前提|ポイント|コツ|いつ使う|使いどころ|この機能の使いどころ)/.test(label)) type = 'info';
+      }
+      if (label) {
+        flush();
+        if (type) {
+          boxType = type; buf = [];
+          buf.push(`<div class="callout-label">${lm[0]}</div>`);
+          const rest = t.slice(lm[0].length).replace(/^[\s　]+/, "");
+          if (rest) buf.push(`<div class="task-list" style="margin-top:2px;"><div class="task-item"><span style="flex:1;min-width:0;">${rest}</span></div></div>`);
+        } else {
+          out += `<div class="task-list" style="margin-top:6px;"><div class="task-item"><span style="flex:1;min-width:0;">${styleLeadingLabel(t)}</span></div></div>`;
         }
-        return `<div style="margin-top:12px;">${txt}</div>`;
-      }).join("");
-      const leftover = phImgs.map((_, ii) => ii).filter(ii => imgToItem[ii] === undefined);
-      const leftoverHtml = leftover.length > 0 ? `<div class="img-container" style="margin-top:12px;">${leftover.map(ii => mkImg(ii)).join("")}</div>` : "";
-      return `<div class="${subClass.trim()}" style="margin-top:${phi===0 ? '8px' : '20px'};">${headingHtml}${rows}${leftoverHtml}${noticeHtml}</div>`;
-    }
-    const itemsHtml = items.length > 0 ? `<div class="task-list" style="margin-top:4px;">${items.map(t=>`<div class="task-item"><span style="flex:1;min-width:0;">${styleLeadingLabel(t)}</span></div>`).join("")}</div>` : '';
-    if (phImgHtmls) {
-      return `<div class="${subClass.trim()}" style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;margin-top:${phi===0 ? '8px' : '20px'};">
-        <div class="img-container" style="flex:1.2;min-width:200px;">${phImgHtmls}</div>
-        <div style="flex:1;min-width:180px;">${headingHtml}${itemsHtml}${noticeHtml}</div>
-      </div>`;
-    } else {
-      return `<div class="${subClass.trim()}" style="margin-top:${phi===0 ? '8px' : '20px'};">${headingHtml}${itemsHtml}${noticeHtml}</div>`;
-    }
+      } else {
+        push(line(t));
+      }
+      const imgs = itemToImgs[it];
+      if (imgs && imgs.length) push(shot(imgs));
+    });
+    flush();
+    const leftover = phImgs.map((_, ii) => ii).filter(ii => imgToItem[ii] === undefined);
+    if (leftover.length) out += shot(leftover);
+    out += noticeHtml;
+    return `<div class="${subClass.trim()}" id="${anchor(phi)}" style="scroll-margin-top:74px;margin-top:${phi===0 ? '8px' : '20px'};">${out}</div>`;
   }).join("");
+
+  return tocHtml + body;
+
 }
 
 function renderContent(cat) {
@@ -4699,6 +4747,11 @@ function jumpToShouzaiSection() {
 
 // 業務 ＞ 顧問業務マップ ＞ 全体図 ＞ 会計（freee会計）を開いてスクロール（freee会計の移行先）
 // childTitle を渡すと配下の孫ノード（A〜L・学習ガイド）まで開いてスクロールする
+function jumpToPhase(id) {
+  var el = document.getElementById(id);
+  if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
 function jumpToKaikei(childTitle) {
   const isKaikei = (sub) => sub.children && sub.children.some(ch => ch.title === "会計（freee会計）");
   const cat = data.find(c => c.sections && c.sections.some(s => s.subsections && s.subsections.some(isKaikei)));
@@ -5325,6 +5378,8 @@ init();
   .task-heading.step-main { font-size: 15px;font-weight: 700;color: var(--accent, #A21034);border-top: 2px solid var(--accent, #A21034);padding-top: 14px;margin-top: 18px;}
   .task-heading.step-sub { font-size: 12px;font-weight: 600;color: #6B7280;border-top: 1px dashed #E5E7EB;}
   .phase-sub { margin-left: 22px;border-left: 3px solid #EEF0F4;padding-left: 16px;}
+  .step-shot { max-width: 760px; }
+  .step-shot img { box-shadow: 0 1px 2px rgba(20,30,45,.04), 0 6px 18px rgba(20,30,45,.07); }
 
   /* NESTED SUBSECTIONS */
   .subsection-list { margin: 10px 0 4px 0;display: flex;flex-direction: column;gap: 6px;}
