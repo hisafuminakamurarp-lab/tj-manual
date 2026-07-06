@@ -4,7 +4,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>税理士法人TJ会計ソリューション業務マニュアル</title>
-<link rel="preconnect" href="https://fonts.googleapis.com/"><link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin=""><link href="./TJソリューション業務マニュアル_files/css2" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com/"><link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin=""><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
   --bg-dark: #111827;
@@ -325,8 +325,27 @@
   .kintone-top-mobile-row { display: none; justify-content: center; gap: 12px; flex-wrap: nowrap; }
   body.kintone-mobile-mode .kintone-top-mobile-row { display: flex; }
   .kintone-top-mobile-img { flex: 1 1 0; min-width: 0; max-width: 33.333%; height: auto; object-fit: contain; }
+  /* --- フェーズチェックリスト（I 決算整理・K 月次クローズ） --- */
+  .phase-chk { width:16px;height:16px;margin-right:8px;accent-color:#16A34A;cursor:pointer;flex-shrink:0;vertical-align:-2px; }
+  .task-heading.done { opacity:.55;text-decoration:line-through;text-decoration-color:#16A34A;text-decoration-thickness:1.5px; }
+  .chk-bar { display:flex;align-items:center;gap:10px;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:10px;padding:8px 14px;margin:10px 0 4px;font-size:12.5px;color:#166534;font-weight:600; }
+  .chk-reset { margin-left:auto;color:#94A3B8;cursor:pointer;font-weight:500;text-decoration:underline;font-size:11.5px; }
+  .chk-reset:hover { color:#64748B; }
+  .verify-badge { font-size:11px;color:#64748B;margin:8px 0 0; }
+  /* --- 上に戻るボタン --- */
+  #backToTop { position:fixed;right:22px;bottom:22px;width:42px;height:42px;border-radius:50%;background:#1F2937;color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;opacity:0;pointer-events:none;transition:opacity .2s;z-index:900;box-shadow:0 4px 12px rgba(0,0,0,.25); }
+  #backToTop.show { opacity:.85;pointer-events:auto; }
+  #backToTop:hover { opacity:1; }
+  /* --- 印刷用 --- */
+  @media print {
+    #sidebar, .sidebar-overlay, .topbar, #backToTop, #lightbox, .chk-reset, #loginScreen { display:none !important; }
+    #main { width:100% !important; }
+    .content-area { overflow:visible !important;padding:0 !important; }
+    body { background:#fff !important; }
+    .section-card, .subsection-card { break-inside:avoid;box-shadow:none !important; }
+  }
 </style>
-<style type="text/css" data-comment-style=""></style><style type="text/css" data-comment-style=""></style><style type="text/css" data-comment-style=""></style><style type="text/css" data-comment-style=""></style><style type="text/css" data-comment-style=""></style></head>
+</head>
 <body>
 
 <!-- LOGIN SCREEN -->
@@ -363,7 +382,7 @@
 
 <!-- LIGHTBOX -->
 <div id="lightbox" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.88);z-index:99999;align-items:center;justify-content:center;">
-  <img id="lightboxImg" src="./TJソリューション業務マニュアル_files/税務キーパー業務マニュアル.html" alt="" style="max-width:90vw;max-height:90vh;object-fit:contain;border-radius:10px;box-shadow:0 20px 60px rgba(0,0,0,0.6);">
+  <img id="lightboxImg" src="" alt="" style="max-width:90vw;max-height:90vh;object-fit:contain;border-radius:10px;box-shadow:0 20px 60px rgba(0,0,0,0.6);">
   <div onclick="closeLightbox()" style="position:fixed;top:14px;right:20px;color:#fff;font-size:36px;cursor:pointer;line-height:1;font-weight:300;">✕</div>
 </div>
 
@@ -469,6 +488,62 @@ function closeLightbox() {
 }
 
 document.addEventListener("keydown", e => { if (e.key === "Escape") closeLightbox(); });
+
+// --- フェーズチェックリスト（I 決算整理・K 月次クローズ） ---
+const CHECKLIST_NODES = ["I 決算整理仕訳", "K 月次クローズ（毎月の締めチェック）"];
+// freee公式ヘルプと本文を照合した日（ノード単位）
+const VERIFIED_DATES = {
+  "A 売上": "2026-07-06",
+  "C 経費": "2026-07-06",
+  "E 固定資産": "2026-07-06",
+  "F 税金": "2026-07-06",
+  "G 口座間資金移動": "2026-07-06",
+  "H 経過勘定入力": "2026-07-06",
+  "I 決算整理仕訳": "2026-07-06",
+  "K 月次クローズ（毎月の締めチェック）": "2026-07-06"
+};
+
+function togglePhaseCheck(el) {
+  const key = el.dataset.ck;
+  if (el.checked) localStorage.setItem(key, "1"); else localStorage.removeItem(key);
+  const h = el.closest(".task-heading");
+  if (h) h.classList.toggle("done", el.checked);
+  updateChkProgress(key.slice(0, key.lastIndexOf("_")));
+}
+
+function updateChkProgress(prefix) {
+  let total = 0, done = 0;
+  document.querySelectorAll(".phase-chk").forEach(b => {
+    if (b.dataset.ck.indexOf(prefix + "_") === 0) { total++; if (b.checked) done++; }
+  });
+  document.querySelectorAll(".chk-progress").forEach(s => {
+    if (s.dataset.ckprefix === prefix) s.textContent = done + " / " + total + " 完了";
+  });
+}
+
+function resetPhaseChecks(title) {
+  const prefix = "ck_" + title;
+  document.querySelectorAll(".phase-chk").forEach(b => {
+    if (b.dataset.ck.indexOf(prefix + "_") === 0) {
+      b.checked = false; localStorage.removeItem(b.dataset.ck);
+      const h = b.closest(".task-heading"); if (h) h.classList.remove("done");
+    }
+  });
+  updateChkProgress(prefix);
+}
+
+// --- 上に戻るボタン ---
+document.addEventListener("scroll", (e) => {
+  const t = e.target;
+  if (!t || !t.classList || !t.classList.contains("content-area")) return;
+  const btn = document.getElementById("backToTop");
+  if (btn) btn.classList.toggle("show", t.scrollTop > 400);
+}, true);
+
+function scrollContentTop() {
+  const ca = document.querySelector(".content-area");
+  if (ca) ca.scrollTo({ top: 0, behavior: "smooth" });
+}
 
 const data = [
   {
@@ -738,8 +813,9 @@ const data = [
               heading: "（応用）源泉徴収される売上・値引・返品（赤伝）を処理する",
               items: [
                 "源泉徴収される報酬売上（士業・デザイン等）は、収入取引の源泉徴収欄で源泉税を差し引いて計上し、入金時に差引後の金額で消し込みます。",
+                "【注意】下記の公式記事は【個人】プラン向けです。法人が受け取る報酬は原則源泉徴収されませんが、源泉された場合は差額を『仮払税金』等で処理し、法人税申告で税額控除します（顧問先が個人事業主の場合はそのまま記事の手順でOK）。",
                 "値引きは明細で値引行を入れるか『売上値引』勘定で処理します。返品・返金は赤伝（マイナス取引）で登録できます。",
-                "<a href=\"https://support.freee.co.jp/hc/ja/articles/202847390\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">源泉徴収の対象となる収入取引を登録する</a>",
+                "<a href=\"https://support.freee.co.jp/hc/ja/articles/202847390\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">【個人】源泉徴収の対象となる収入取引を登録する</a>",
                 "<a href=\"https://support.freee.co.jp/hc/ja/articles/204891596\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">値引きを記帳する</a>",
                 "<a href=\"https://support.freee.co.jp/hc/ja/articles/4402148650009\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">登録済みの未決済取引に対して返品・返金（赤伝）の仕訳を登録する</a>",
               ]
@@ -1658,7 +1734,7 @@ const data = [
                 "補助金・助成金で固定資産を取得した場合は、圧縮記帳で取得価額を圧縮し、当期の税負担を平準化できます（受贈益は『雑収入（対象外）』で計上）。",
                 "<a href=\"https://support.freee.co.jp/hc/ja/articles/360025744711\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">固定資産の圧縮記帳を登録する</a>",
                 "<a href=\"https://support.freee.co.jp/hc/ja/articles/203480134\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">固定資産をローンで購入した場合の記帳方法</a>",
-                "<a href=\"https://support.freee.co.jp/hc/ja/articles/900000791246\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">給付金・支援金・補助金等の登録方法は？</a>",
+                "<a href=\"https://support.freee.co.jp/hc/ja/articles/900000791246\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">給付金・支援金・補助金等の登録方法は？（コロナ関連の記事ですが入金登録の考え方は共通）</a>",
               ]
             }
           ]
@@ -1839,9 +1915,13 @@ const data = [
             {
               heading: "手順4　借入金の入金・返済を記帳する（元本＋利息）",
               items: [
-                "借入時：入金明細から『短期借入金』または『長期借入金』（1年以内＝短期／超＝長期）で収入取引を登録します。",
-                "返済時：支出取引の1行目に元本を『短期／長期借入金』、2行目に利息を『支払利息』で登録します（口座振替ではなく通常取引）。",
-                "固定資産をローン・割賦で購入した場合は、資産計上と未払金／借入金を分けて記帳します。",
+                "【短期／長期の区別】借入日の翌年度期首から1年以内に返済期限が来るものは『短期借入金』、1年を超えるものは『長期借入金』です。",
+                "【借入時】入金されたら［自動で経理］の明細（または手動登録）から、収入・決済完了・勘定科目『短期借入金／長期借入金』で登録。『取引先』欄に金融機関名を入れておくと金融機関別の残高管理ができます（後述）。",
+                "【返済時】［自動で経理］で返済明細の［取引登録］タブ→［＋行を追加］で2行にし、1行目＝元本を『短期／長期借入金』（借入時と同じ科目・同じ取引先）、2行目＝利息を『支払利息』で入力。明細との差額0円を確認して登録（手動なら［詳細登録］→行追加で同様）。",
+                "【残高確認】［会計帳簿］→［貸借対照表］で『〇〇借入金』行をクリック→［取引先別］。借方＝返済累計・貸方＝借入額・月末列＝返済すべき残高です。",
+                "【期末の振替】長期借入金のうち翌期1年以内に返済する分は、振替伝票で『長期借入金（借方）／短期借入金（貸方）』に振り替えます（1年内返済長期借入金の管理）。",
+                "【ローンで固定資産を購入】①頭金を『車両運搬具』等で支出登録→②残額も同じ科目で支出登録→③同額を『長期借入金』の収入で登録（＝借入の計上）。固定資産台帳の取得価額は頭金込みの全額。残価設定型自動車ローンは『長期未払金』で処理します。",
+                "【自動化】freee公式『借入金管理アプリ』：契約条件（借入額・利率・償還方法など）を登録すると完済までの元金・利息を自動計算し、毎回の返済予定を未決済取引としてfreee会計に一括登録できます。毎月の引き落としは消込だけでOK。返済予定は資金繰り・支払管理レポートにも反映。※借入時（入金）の取引は自動登録されないため個別に登録します。",
                 "<a href=\"https://support.freee.co.jp/hc/ja/articles/204753184\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">借入金・キャッシングの借入と返済を記帳する</a>",
                 "<a href=\"https://support.freee.co.jp/hc/ja/articles/203480134\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">固定資産をローンで購入した場合の記帳方法</a>",
                 "<a href=\"https://support.freee.co.jp/hc/ja/articles/900000554106\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">借入金管理アプリ 使い方ガイド</a>",
@@ -1982,25 +2062,35 @@ const data = [
             {
               heading: "手順4　棚卸資産を登録し、売上原価を確定する",
               items: [
-                "freeeは期中の仕入をすべて『仕入高』で計上し、期末に在庫（棚卸資産）を差し引いて売上原価を確定します（期末棚卸）。",
-                "決算日時点の在庫金額を数え、期末棚卸として『商品／棚卸資産』を計上し、翌期首に振り戻します。",
+                "freeeは『棚卸計算法』：期中の在庫購入をすべて『仕入高』で費用計上し、期末在庫を控除して売上原価を計算します。計算式＝仕入高＋期首商品棚卸高－期末商品棚卸高（期首分は前年末の在庫棚卸から自動反映。導入初年度は開始残高の『商品』勘定の金額）。",
+                "日頃から商品受払簿などの管理台帳で入出庫を管理し、期末（または月末）に実地棚卸で数量を確認します。数量減分は棚卸減耗として処理します。",
+                "登録手順：［決算申告］→［在庫棚卸］→［＋新しい期末処理を入力］。月次なら『月末』＋対象月、年度末なら『決算時』を選び、棚卸資産の金額を入力して保存。【注意】金額は売価ではなく原価（売上原価ベース）で入力します。",
+                "仕訳は登録後の棚卸一覧の［詳細］から確認。【月次棚卸】月次の売上原価を正しく出すには毎月末の棚卸登録が必要。翌月月初の戻し仕訳は『期末商品棚卸高』勘定です（『期首商品棚卸高』ではない点に注意）。",
+                "【製造業】［その他設定］→［事業所の詳細設定］で製造業向け機能を『使用する』にすると、商品・製品・半製品・仕掛品・原材料の区分ごとに棚卸登録できます。",
+                "【注意2つ】①開始残高に棚卸資産を入力した場合、期首振替仕訳を『つくる／つくらない』を選べます。他ソフトからの仕訳インポートに期首棚卸が含まれるなら『つくらない』で二重計上を防止。②仕訳承認フロー有効時は、棚卸仕訳が『未承認』で作成されるため帳簿反映に承認操作が必要。",
                 "<a href=\"https://support.freee.co.jp/hc/ja/articles/204929740\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">【法人】棚卸資産の残高を登録する（在庫棚卸）</a>",
               ]
             },
             {
               heading: "手順5　貸倒引当金を計上する（繰入・洗替）",
               items: [
-                "売掛金・受取手形などの期末残高に対し、回収不能見込みを『貸倒引当金』として計上します（法人は法定繰入率など）。",
-                "洗替法では前期の引当金を戻し入れ、当期末残高で再計上します。freeeは洗替の自動仕訳作成に対応しています。",
+                "【繰入・洗替（法人）】売掛金・受取手形などの期末残高に対し回収不能見込み額を『貸倒引当金』として計上します（法定繰入率など）。法人は繰入・戻入とも［取引入力］→［振替伝票］で期末日付にて登録します（繰入：貸倒引当金繰入額／貸倒引当金、洗替の戻入：貸倒引当金／貸倒引当金戻入益）。",
+                "【個人のみ自動作成】個人事業主は［確定申告］→［所得税申告書類の作成］→［確認］→［直接入力編集へ］→『青色申告決算書』タブ→『貸倒引当金確認』で繰入額を入力すると、期末日付の洗替仕訳が自動作成されます。※法人はこの機能の対象外のため、上記の振替伝票で入力します。",
+                "【貸倒発生時（引当なし）】取引先の倒産などで回収不能が確実になったら、該当する売掛金取引の詳細画面→『決済』欄の［＋更新］→勘定科目『貸倒損失』で消し込みます。法人は販管費なら『貸倒損失(販)』、営業外費用なら『貸倒損失(外)』を選択。",
+                "【貸倒発生時（前期に引当あり）】同じく決済欄の［＋更新］で、1行目に『貸倒引当金』（引当済みの金額）、［行を追加］して2行目に『貸倒損失』（不足分）を入力して保存します。※期首残高に貸倒引当金が登録されていることが前提（未登録なら開始残高から）。",
                 "<a href=\"https://support.freee.co.jp/hc/ja/articles/202847410\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">貸倒損失の計上・経過勘定などの振替を行う(+更新)</a>",
-                "<a href=\"https://support.freee.co.jp/hc/ja/articles/360001228586\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">貸倒引当金の洗替処理の仕訳を自動で作成することはできますか？</a>",
+                "<a href=\"https://support.freee.co.jp/hc/ja/articles/360001228586\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">貸倒引当金の洗替仕訳を自動作成する（個人・確定申告）</a>",
               ]
             },
             {
               heading: "手順6　消費税・法人税等を確定計上する（未払計上）",
               items: [
-                "本則／簡易／2割特例で消費税額を確定し『未払消費税等』を計上します（税抜経理は仮受・仮払を相殺し差額を未払計上）。",
-                "確定した法人税・住民税・事業税は『法人税、住民税及び事業税／未払法人税等』で当期に計上します。",
+                "消費税の決算処理は経理方式（税込／税抜）で変わります。まず［決算申告］→［消費税申告書］で申告書を作成し、確定納税額（申告書の㉖欄）を確定させます（本則／簡易／2割特例の税額計算はここで反映）。",
+                "【税抜経理】［決算申告］→［決算書］→［プレビュー・調整］の『「仮払消費税」または「仮受消費税」の残高が残っています』メッセージをクリック→仮払・仮受消費税を『未払金』へ振り替える伝票が自動で仮作成されます。この『未払金』を『未払消費税等』に変更し、金額を申告書の確定納税額に修正（貸借差額は『雑収入』／『雑損失』で処理。中間納付があれば納付時に計上した『仮払金』残高を貸方で振替）。",
+                "【税込経理（特例）】期末日付の振替伝票で『租税公課（借方）／未払消費税等（貸方）』を登録します。年度締めの前に登録が必要。【税込経理（原則）】期末仕訳は不要で、納付日に『租税公課』で費用計上します。",
+                "納付時は『未払消費税等』勘定の支出取引で消し込みます（→F税金 手順5）。【還付】期末に『未収入金／雑収入（税区分：対象外）』を計上し、翌期の入金は未収入金の消込で処理します。",
+                "【法人税等】確定した法人税・住民税・事業税は、期末日付の振替伝票で『法人税、住民税及び事業税（借方）／未払法人税等（貸方）』と計上します（税額はJ申告書の手順5『税額を確認する』で確定）。",
+                "【自動と手動の線引き】年度締めでfreeeが自動作成する決算整理仕訳は①固定資産の減価償却②繰越利益剰余金③棚卸の3種類（法人版）だけ。消費税・法人税等の未払計上は自動作成されないため、本手順の手動登録が必須です。仕訳帳の絞り込み『決算整理仕訳のみ』で確認できます。",
                 "<a href=\"https://support.freee.co.jp/hc/ja/articles/204614754\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">消費税の中間納付・期末の処理を行う</a>",
                 "<a href=\"https://support.freee.co.jp/hc/ja/articles/360001217206\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">年度締めすると自動で作成される決算整理仕訳にはどんなものがありますか？</a>",
               ]
@@ -2174,9 +2264,11 @@ const data = [
             {
               heading: "チェック5　月次レポートで経営数値を読む（推移・試算表・資金繰り・予実）",
               items: [
-                "月次推移で損益・貸借の推移を見て、異常値（急増・急減・マイナス残高）が無いか確認します。",
-                "試算表で当月・累計のPL/BSを確認し、資金繰りレポートで入出金と今後の資金過不足を把握します。",
-                "予算を登録していれば予実管理で計画対比を確認し、責任者・顧問先へ共有します（経営ダッシュボードが便利）。",
+                "【月次推移】［会計帳簿］→［月次推移］で損益・貸借の推移を確認し、異常値（急増・急減・マイナス残高）が無いかチェック。気になるセルはクリックで内訳（総勘定元帳）までドリルダウンできます。",
+                "【試算表】当月・累計のPL/BSを確認します。表示タグ（取引先・品目・部門）を切り替えると内訳分析ができます。",
+                "【資金繰りレポート】現預金残高の推移と、未決済取引・借入返済予定などから今後の入出金・資金過不足を把握します。",
+                "【予実管理（経営ナビゲーション）】※アドバンスプラン以上。予算は『経営プランニング』で登録し、実績・着地予測・計画を対比します。着地予測＝月締め済み月の達成率×未締め月の計画で自動算出されるため、月締め運用とセットで使うと精度が上がります。［損益計算書をコピー］でExcel／スプレッドシートに貼り付けて月次報告資料に流用できます。",
+                "【共有】数字が固まったら月次推移・経営ダッシュボードを責任者・顧問先へ共有します。経営系メニューはセンシティブなため、メンバー権限（閲覧／操作）の設定も確認しましょう。",
                 "<a href=\"https://support.freee.co.jp/hc/ja/articles/203293920\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">月次推移（損益計算書・貸借対照表）を確認する</a>",
                 "<a href=\"https://support.freee.co.jp/hc/ja/articles/203059914\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">試算表（損益計算書・貸借対照表）を確認する</a>",
                 "<a href=\"https://support.freee.co.jp/hc/ja/articles/203059904\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">資金繰りレポートでキャッシュフローを確認する</a>",
@@ -4256,6 +4348,15 @@ function renderPhases(phases, title, notice, keyPrefix, isKintone) {
   const anchor = (i) => `${keyPrefix}_ph${i}`;
   // ---- 手順目次（見出しが4つ以上ある長いノードのみ表示）----
   const headed = phases.map((p, i) => ({ i, h: p.heading })).filter(x => x.h);
+  const checklist = CHECKLIST_NODES.indexOf(title) !== -1;
+  const vd = VERIFIED_DATES[title];
+  const vdHtml = vd ? `<div class="verify-badge">✅ freee公式ヘルプ照合日：${vd}</div>` : "";
+  let progHtml = "";
+  if (checklist) {
+    const mains = phases.map((p, i) => ({ p, i })).filter(x => x.p.heading && /^(手順|チェック\d|はじめに)/.test(x.p.heading));
+    const doneN = mains.filter(x => localStorage.getItem(`ck_${title}_${x.i}`) === "1").length;
+    progHtml = `<div class="chk-bar"><span>☑</span><span class="chk-progress" data-ckprefix="ck_${title}">${doneN} / ${mains.length} 完了</span><a class="chk-reset" role="button" tabindex="0" onclick="resetPhaseChecks('${title}')">チェックをリセット</a></div>`;
+  }
   let tocHtml = "";
   if (headed.length >= 4) {
     tocHtml = `<div class="step-toc"><div class="step-toc-t">このページの手順</div><ol>` +
@@ -4279,7 +4380,11 @@ function renderPhases(phases, title, notice, keyPrefix, isKintone) {
     const isMainStep = /^(手順|チェック\d|はじめに)/.test(_hd);
     const isSub = /^補足/.test(_hd);
     const subClass = isSub ? ' phase-sub' : '';
-    const headingHtml = ph.heading ? `<div class="task-heading${isMainStep ? ' step-main' : ''}${isSub ? ' step-sub' : ''}" style="${phi===0 ? 'border-top:none;padding-top:0;margin-top:0;' : ''}">${ph.heading}</div>` : '';
+    const ckKey = `ck_${title}_${phi}`;
+    const ckOn = checklist && isMainStep;
+    const ckDone = ckOn && localStorage.getItem(ckKey) === "1";
+    const ckBox = ckOn ? `<input type="checkbox" class="phase-chk" data-ck="${ckKey}"${ckDone ? " checked" : ""} onchange="togglePhaseCheck(this)">` : "";
+    const headingHtml = ph.heading ? `<div class="task-heading${isMainStep ? ' step-main' : ''}${isSub ? ' step-sub' : ''}${ckDone ? ' done' : ''}" style="${phi===0 ? 'border-top:none;padding-top:0;margin-top:0;' : ''}">${ckBox}${ph.heading}</div>` : '';
     const isLast = phi === phases.length - 1;
     const noticeHtml = isLast ? renderNotice(notice) : "";
     const items = ph.items || [];
@@ -4342,7 +4447,7 @@ function renderPhases(phases, title, notice, keyPrefix, isKintone) {
     return `<div class="${subClass.trim()}" id="${anchor(phi)}" style="scroll-margin-top:74px;margin-top:${phi===0 ? '8px' : '20px'};">${out}</div>`;
   }).join("");
 
-  return tocHtml + body;
+  return vdHtml + progHtml + tocHtml + body;
 
 }
 
@@ -5065,529 +5170,4 @@ init();
 </script>
 
 
-<div id="notta-permissions-trigger"><iframe src="./TJソリューション業務マニュアル_files/permissions.html" allow="camera *; microphone *" style="display: none; visibility: hidden;"></iframe></div><div id="notta-transcription-toolbar-trigger"><template shadowrootmode="open"><style data-rc-order="prependQueue">.anticon{display:inline-flex;align-items:center;color:inherit;font-style:normal;line-height:0;text-align:center;text-transform:none;vertical-align:-0.125em;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;}.anticon >*{line-height:1;}.anticon svg{display:inline-block;}.anticon .anticon .anticon-icon{display:block;}</style><style data-rc-order="prependQueue"></style><style>/**
- * 公共样式 - 所有 Content Scripts 共享
- * 
- * 参考 showcase-extension 的实现，只保留必要的基础样式
- * antd 5 会通过 CSS-in-JS 动态注入组件样式
- */
-/* 基础 box-sizing 设置 - 确保 antd 组件在 Shadow DOM 中正确渲染 */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
-}
-/* 
- * Shadow DOM 中 antd 的 spin 动画修复
- * 
- * 问题：antd 的全局 anticon-spin 类的动画定义在 Shadow DOM 中丢失
- * 解决：手动添加 spin 动画定义
- */
-@keyframes anticon-spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
-.anticon-spin {
-  animation: anticon-spin 1s linear infinite;
-}
-
-._transcription_toolbar_1kv88_1 {
-  display: flex;
-  flex-direction: row;
-  position: fixed;
-  right: 45px;
-  height: 48px;
-  width: fit-content;
-  cursor: pointer;
-  z-index: 99999999;
-  border-radius: 40px;
-  background: var(--color-background-neutral-white, #fff);
-  box-shadow: 0px 0px 1px 0px rgba(15, 26, 38, 0.12), 0px 6px 24px 0px rgba(15, 26, 38, 0.12);
-  display: inline-flex;
-  padding: 6px var(--spacing-100, 8px);
-  align-items: center;
-  flex-shrink: 0;
-}
-._transcription_toolbar_1kv88_1 ._tips_1kv88_18 {
-  position: absolute;
-  top: -55px;
-  left: 55px;
-  display: flex;
-  align-items: center;
-  padding: 8px;
-  background-color: #fff;
-  border-radius: 6px;
-  gap: 8px;
-  box-shadow: 0px 8px 32px 0px rgba(15, 26, 38, 0.08), 0px 2px 20px 0px rgba(15, 26, 38, 0.04);
-}
-._transcription_toolbar_1kv88_1 ._tips_1kv88_18 ._text_1kv88_30 {
-  white-space: nowrap;
-  color: #05080d;
-}
-._transcription_toolbar_1kv88_1 ._drag_box_1kv88_34 {
-  display: flex;
-  box-sizing: border-box;
-  width: 36px;
-  height: 36px;
-  padding: 10px;
-  justify-content: center;
-  align-items: center;
-  gap: 10px;
-  border-radius: 50%;
-  cursor: grab;
-}
-._transcription_toolbar_1kv88_1 ._drag_box_1kv88_34:hover {
-  background: var(--color-background-neutral-hovered, #eeeff0);
-}
-._transcription_toolbar_1kv88_1 ._stop_recording_1kv88_49 {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  box-sizing: border-box;
-  height: 36px;
-  margin: 0 8px;
-  padding: 0px var(--spacing-100, 8px) 0px var(--spacing-50, 4px);
-  align-items: center;
-  gap: var(--spacing-50, 4px);
-  border-radius: var(--radius-full, 999px);
-  color: var(--color-text-neutral-primary, #05080d);
-  font-feature-settings: 'clig' off, 'liga' off;
-  /* English/Paragaraph/Emphasized/XXL & XL */
-  font-family: 'Noto Sans';
-  font-size: 14px;
-  font-style: normal;
-  font-weight: 500;
-  line-height: 22px;
-  /* 157.143% */
-  cursor: pointer;
-}
-._transcription_toolbar_1kv88_1 ._stop_recording_1kv88_49 ._red_box_1kv88_71 {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-._transcription_toolbar_1kv88_1 ._stop_recording_1kv88_49:hover {
-  background: var(--color-background-neutral-hovered, #eeeff0);
-}
-._transcription_toolbar_1kv88_1 ._divider_1kv88_79 {
-  width: 5px;
-  height: 20px;
-  border-left: 1px solid var(--color-divider-neutral-weak, #eeeff0);
-  margin-left: 4px;
-}
-._transcription_toolbar_1kv88_1 ._pause_recording_1kv88_85 {
-  display: flex;
-  box-sizing: border-box;
-  width: 36px;
-  height: 36px;
-  padding: 10px;
-  justify-content: center;
-  align-items: center;
-  gap: 10px;
-  border-radius: 50%;
-  cursor: pointer;
-}
-._transcription_toolbar_1kv88_1 ._bookmark_btn_1kv88_97 {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 10px;
-  cursor: pointer;
-  border-radius: var(--radius-full, 999px);
-  user-select: none;
-}
-._transcription_toolbar_1kv88_1 ._bookmark_btn_1kv88_97 span {
-  color: #05080d;
-}
-._transcription_toolbar_1kv88_1 ._bookmark_btn_1kv88_97._disabled_1kv88_109 {
-  cursor: not-allowed;
-  opacity: 0.5;
-}
-._transcription_toolbar_1kv88_1 ._pause_recording_1kv88_85:hover,
-._transcription_toolbar_1kv88_1 ._bookmark_btn_1kv88_97:hover {
-  background: var(--color-background-neutral-hovered, #eeeff0);
-}
-._transcription_toolbar_1kv88_1 ._hover_area_1kv88_117 {
-  display: none;
-  position: absolute;
-  width: 48px;
-  height: 20px;
-  top: -14px;
-}
-._transcription_toolbar_1kv88_1 ._bottom_1kv88_124 {
-  top: auto;
-  /* 取消 top 设置 */
-  bottom: -50px;
-  /* 设置 bottom */
-}
-._transcription_toolbar_1kv88_1 ._bottom_1kv88_124._hover_area_1kv88_117 {
-  bottom: -14px;
-}
-._transcription_toolbar_1kv88_1:hover ._hover_area_1kv88_117 {
-  display: block;
-}
-._transcription_toolbar_1kv88_1:hover ._close_1kv88_136 {
-  display: block;
-}
-._transcription_toolbar_1kv88_1:hover ._start_transcript_1kv88_139 {
-  display: flex;
-}
-._transcription_toolbar_1kv88_1 img {
-  width: 25px;
-  height: 25px;
-}
-
-._tooltip_container_13fol_1 {
-  display: flex;
-  position: relative;
-  box-sizing: border-box;
-}
-._tooltip_text_13fol_6 {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  justify-content: center;
-  align-items: center;
-  height: var(--spacing-400, 32px);
-  padding: 8px 12px;
-  gap: 12px;
-  color: #fff;
-  text-wrap: nowrap;
-  position: absolute;
-  z-index: 1;
-  bottom: 125%;
-  left: 50%;
-  transform: translateX(-50%);
-  color: var(--color-palettes-black-white-white, #fff);
-  text-align: center;
-  font-feature-settings: 'clig' off, 'liga' off;
-  font-family: 'Noto Sans';
-  font-size: 12px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: 18px;
-  visibility: visible;
-  border-radius: 6px;
-  background: var(--Color-Palettes-Grey-Light-800, #0f1a26);
-}
-._tooltip_text_13fol_6::after {
-  content: '';
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  margin-left: -5px;
-  border-width: 5px;
-  border-style: solid;
-  border-color: #000 transparent transparent transparent;
-}
-._tooltip_trigger_13fol_44 {
-  display: flex;
-}
-</style><style data-rc-order="prependQueue" data-css-hash="ifat8r" data-token-hash="1p9qdg">.anticon{display:inline-flex;align-items:center;color:inherit;font-style:normal;line-height:0;text-align:center;text-transform:none;vertical-align:-0.125em;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;}.anticon >*{line-height:1;}.anticon svg{display:inline-block;}.anticon .anticon .anticon-icon{display:block;}</style><style>
-  :root {
-  --bg-dark: #111827;
-  --bg-panel: #1F2937;
-  --bg-hover: #374151;
-  --bg-active: #1E3A5F;
-  --text-primary: #F9FAFB;
-  --text-secondary: #9CA3AF;
-  --text-muted: #6B7280;
-  --border: #374151;
-  --content-bg: #F9FAFB;
-  --content-text: #111827;
-  --content-secondary: #4B5563;
-  --content-border: #E5E7EB;
-  --sidebar-width: 240px;
-  }
-  * { box-sizing: border-box;margin: 0;padding: 0;}
-  body { font-family: "Noto Sans JP", sans-serif;background: var(--content-bg);color: var(--content-text);display: flex;height: 100vh;height: 100dvh;overflow: hidden;}
-
-  /* SIDEBAR */
-  #sidebar { width: var(--sidebar-width);background: var(--bg-dark);display: flex;flex-direction: column;height: 100vh;height: 100dvh;flex-shrink: 0;}
-  .sidebar-header { padding: 20px 16px 14px;border-bottom: 1px solid var(--border);}
-  .sidebar-logo { display: flex;align-items: center;gap: 8px;}
-  .sidebar-logo-icon { width: 28px;height: 28px;background: linear-gradient(135deg, #3B82F6, #8B5CF6);border-radius: 6px;display: flex;align-items: center;justify-content: center;font-size: 14px;}
-  .sidebar-logo-text { font-size: 12px;font-weight: 700;color: var(--text-primary);line-height: 1.35;overflow-wrap: anywhere;}
-  .sidebar-logo-sub { font-size: 10px;color: var(--text-muted);font-weight: 400;}
-  .sidebar-search { margin: 12px 12px 0;position: relative;}
-  .sidebar-search input { width: 100%;background: var(--bg-panel);border: 1px solid var(--border);border-radius: 6px;padding: 7px 10px 7px 30px;font-size: 12px;color: var(--text-primary);font-family: inherit;outline: none;transition: border-color 0.2s;}
-  .sidebar-search input:focus { border-color: #3B82F6;}
-  .sidebar-search input::placeholder { color: var(--text-muted);}
-  .sidebar-search-icon { position: absolute;left: 9px;top: 50%;transform: translateY(-50%);color: var(--text-muted);font-size: 12px;}
-  .sidebar-nav { flex: 1;overflow-y: auto;padding: 8px 0 16px;}
-  .sidebar-nav::-webkit-scrollbar { width: 4px;}
-  .sidebar-nav::-webkit-scrollbar-thumb { background: var(--border);border-radius: 2px;}
-  .nav-section-label { padding: 10px 16px 4px;font-size: 10px;font-weight: 700;color: var(--text-muted);letter-spacing: 0.08em;text-transform: uppercase;}
-  .nav-item { display: flex;align-items: center;gap: 10px;padding: 9px 14px;cursor: pointer;border-left: 3px solid transparent;transition: all 0.15s;color: var(--text-secondary);font-size: 13px;font-weight: 500;position: relative;}
-  .nav-item:hover { background: var(--bg-hover);color: var(--text-primary);}
-  .nav-item.active { background: var(--bg-active);color: var(--text-primary);}
-  .nav-item-icon { font-size: 15px;width: 20px;text-align: center;flex-shrink: 0;}
-  .nav-item-label { flex: 1;}
-  .nav-item-badge { font-size: 10px;background: var(--bg-hover);color: var(--text-muted);padding: 1px 6px;border-radius: 10px;}
-  .nav-item.active .nav-item-badge { background: rgba(255,255,255,0.1);color: var(--text-secondary);}
-  .nav-accent-bar { position: absolute;left: 0;top: 0;bottom: 0;width: 3px;border-radius: 0 2px 2px 0;display: none;}
-  .nav-item.active .nav-accent-bar { display: block;}
-  .nav-subitem { display: flex;align-items: center;gap: 8px;padding: 6px 14px 6px 32px;cursor: pointer;color: var(--text-muted);font-size: 12px;transition: all 0.15s;line-height: 1.3;}
-  .nav-subitem:hover { background: var(--bg-hover);color: var(--text-primary);}
-  .nav-subitem.active { color: var(--text-primary);font-weight: 600;}
-  .nav-subitem-dot { width: 5px;height: 5px;border-radius: 50%;flex-shrink: 0;opacity: 0.7;}
-
-  /* MAIN */
-  #main { flex: 1;display: flex;flex-direction: column;overflow: hidden;}
-  .topbar { background: #fff;border-bottom: 1px solid var(--content-border);padding: 0 28px;height: 54px;display: flex;align-items: center;gap: 12px;flex-shrink: 0;}
-  .breadcrumb { display: flex;align-items: center;gap: 6px;font-size: 13px;color: var(--content-secondary);}
-  .breadcrumb-sep { color: #D1D5DB;}
-  .breadcrumb-current { color: var(--content-text);font-weight: 600;}
-  .topbar-badge { margin-left: auto;font-size: 11px;padding: 3px 10px;border-radius: 20px;font-weight: 600;}
-  .content-area { flex: 1;overflow-y: auto;padding: 32px 36px;}
-  .content-area::-webkit-scrollbar { width: 6px;}
-  .content-area::-webkit-scrollbar-thumb { background: #D1D5DB;border-radius: 3px;}
-
-  /* CATEGORY HEADER */
-  .cat-header { display: flex;align-items: flex-start;gap: 16px;margin-bottom: 28px;padding-bottom: 24px;border-bottom: 1px solid var(--content-border);}
-  .cat-icon-big { width: 52px;height: 52px;border-radius: 12px;display: flex;align-items: center;justify-content: center;font-size: 24px;flex-shrink: 0;}
-  .cat-title { font-size: 22px;font-weight: 700;margin-bottom: 4px;}
-  .cat-desc { font-size: 13px;color: var(--content-secondary);line-height: 1.6;}
-
-  /* SECTION CARDS */
-  .sections-grid { display: grid;gap: 12px;}
-  .section-card { background: #fff;border: 1px solid var(--content-border);border-radius: 10px;overflow: hidden;transition: box-shadow 0.2s;}
-  .section-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.08);}
-  .section-header { display: flex;align-items: center;gap: 12px;padding: 14px 18px;cursor: pointer;user-select: none;}
-  .section-dot { width: 8px;height: 8px;border-radius: 50%;flex-shrink: 0;}
-  .section-title { flex: 1;font-size: 14px;font-weight: 600;color: var(--content-text);}
-  .section-toggle { font-size: 18px;color: #9CA3AF;transition: transform 0.2s;line-height: 1;}
-  .section-toggle.open { transform: rotate(45deg);}
-  .section-body { display: none;padding: 0 18px 16px 38px;border-top: 1px solid var(--content-border);}
-  .section-body.open { display: block;}
-  .task-list { margin-top: 12px;display: flex;flex-direction: column;gap: 4px;}
-  .task-item { display: flex;align-items: flex-start;gap: 8px;padding: 5px 0;font-size: 13px;color: var(--content-secondary);line-height: 1.5;}
-  .task-heading { font-size: 12px;font-weight: 700;color: var(--accent, #A21034);letter-spacing: 0.04em;margin-top: 12px;margin-bottom: 2px;padding: 4px 0 4px 0;border-bottom: 1px solid rgba(162,16,52,0.15);}
-  .task-heading:first-child { margin-top: 0;}
-  .task-item::before { content: "";width: 5px;height: 5px;border-radius: 50%;background: #D1D5DB;flex-shrink: 0;margin-top: 7px;}
-  /* タスク内見出し（フェーズ区切り用） */
-  .task-heading { font-size: 13px;font-weight: 600;color: #1A1F36;padding: 12px 0 4px 0;margin-top: 6px;border-top: 1px solid #E5E7EB;}
-  .task-heading:first-child { margin-top: 0;border-top: none;padding-top: 0;}
-  /* 業務の背骨＝手順を強調、補足はその配下にネスト */
-  .task-heading.step-main { font-size: 15px;font-weight: 700;color: var(--accent, #A21034);border-top: 2px solid var(--accent, #A21034);padding-top: 14px;margin-top: 18px;}
-  .task-heading.step-sub { font-size: 12px;font-weight: 600;color: #6B7280;border-top: 1px dashed #E5E7EB;}
-  .phase-sub { margin-left: 22px;border-left: 3px solid #EEF0F4;padding-left: 16px;}
-  .step-shot { max-width: 760px; }
-  .step-shot img { box-shadow: 0 1px 2px rgba(20,30,45,.04), 0 6px 18px rgba(20,30,45,.07); }
-
-  /* NESTED SUBSECTIONS */
-  .subsection-list { margin: 10px 0 4px 0;display: flex;flex-direction: column;gap: 6px;}
-  .subsection-card { background: #F8FAFF;border: 1px solid #E5E7EB;border-radius: 8px;overflow: hidden;}
-  .subsection-header { display: flex;align-items: center;gap: 10px;padding: 10px 14px;cursor: pointer;user-select: none;}
-  .subsection-dot { width: 6px;height: 6px;border-radius: 50%;flex-shrink: 0;opacity: 0.6;}
-  .subsection-title { flex: 1;font-size: 13px;font-weight: 600;color: #374151;}
-  .subsection-count { font-size: 10px;color: #9CA3AF;margin-right: 6px;}
-  .subsection-toggle { font-size: 15px;color: #9CA3AF;transition: transform 0.2s;line-height: 1;}
-  .subsection-toggle.open { transform: rotate(45deg);}
-  .subsection-body { display: none;padding: 0 14px 10px 30px;border-top: 1px solid #E5E7EB;}
-  .subsection-body.open { display: block;}
-
-  /* SECTION IMAGE */
-  .section-img { cursor: zoom-in;transition: opacity 0.15s, transform 0.15s;}
-  .section-img:hover { opacity: 0.9;transform: scale(1.01);}
-  /* CLS (Cumulative Layout Shift) 対策：画像ロード前にスペース確保 */
-  /* PC kintoneスクリーンショット（横長 約1.73:1） */
-  img.section-img.kintone-img[data-pc-src],
-  img.kintone-top-pc { aspect-ratio: 1.73 / 1; }
-  /* モバイルkintoneスクリーンショット（縦長 約0.5:1） */
-  img.kintone-top-mobile-img { aspect-ratio: 0.5 / 1; }
-  /* モバイルモード時の画像も縦長 */
-  body.kintone-mobile-mode img.section-img.kintone-img { aspect-ratio: 0.5 / 1; }
-
-  /* SEARCH */
-  .search-empty { text-align: center;padding: 60px 0;color: var(--content-secondary);font-size: 14px;}
-  .search-result-item { background: #fff;border: 1px solid var(--content-border);border-radius: 10px;padding: 14px 18px;margin-bottom: 10px;border-left-width: 3px;cursor: pointer;transition: box-shadow 0.15s;}
-  .search-result-item:hover { box-shadow: 0 2px 10px rgba(0,0,0,0.08);}
-  .search-result-cat { font-size: 11px;font-weight: 700;margin-bottom: 4px;}
-  .search-result-title { font-size: 14px;font-weight: 600;color: var(--content-text);margin-bottom: 4px;}
-  .search-result-preview { font-size: 12px;color: var(--content-secondary);line-height: 1.6;}
-  mark { background: #FEF08A;border-radius: 2px;padding: 0 1px;}
-
-  /* ===== LOGIN SCREEN ===== */
-  #loginScreen {
-  position: fixed;
-  inset: 0;
-  background: #111827;
-  z-index: 99998;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  }
-
-  .login-box {
-  background: #1F2937;
-  border: 1px solid #374151;
-  border-radius: 16px;
-  padding: 40px 36px;
-  width: 340px;
-  text-align: center;
-  }
-
-  .login-logo {
-  width: 48px;height: 48px;
-  background: linear-gradient(135deg, #3B82F6, #8B5CF6);
-  border-radius: 12px;
-  display: flex;align-items: center;justify-content: center;
-  font-size: 22px;
-  margin: 0 auto 16px;
-  }
-
-  .login-title {
-  font-size: 17px;
-  font-weight: 700;
-  color: #F9FAFB;
-  margin-bottom: 4px;
-  line-height: 1.4;
-  overflow-wrap: anywhere;
-  }
-
-  .login-sub {
-  font-size: 12px;
-  color: #6B7280;
-  margin-bottom: 28px;
-  }
-
-  .login-label {
-  font-size: 11px;
-  font-weight: 700;
-  color: #6B7280;
-  letter-spacing: 0.08em;
-  text-align: left;
-  margin-bottom: 10px;
-  }
-
-  /* サイドバーのユーザー表示 */
-  .sidebar-user {
-  padding: 10px 12px;
-  border-top: 1px solid #374151;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  transition: background 0.15s;
-  flex-shrink: 0;
-  }
-
-  .sidebar-user:hover { background: #1F2937;}
-
-  .sidebar-user-avatar {
-  width: 26px;height: 26px;
-  border-radius: 50%;
-  display: flex;align-items: center;justify-content: center;
-  font-size: 11px;
-  font-weight: 700;
-  color: #fff;
-  flex-shrink: 0;
-  }
-
-  .sidebar-user-name {
-  font-size: 12px;
-  color: #9CA3AF;
-  flex: 1;
-  }
-
-  .sidebar-user-switch {
-  font-size: 10px;
-  color: #4B5563;
-  }
-
-  /* ハンバーガーボタン */
-  .hamburger {
-  display: none;
-  position: fixed;
-  top: 12px;left: 12px;
-  z-index: 1000;
-  width: 38px;height: 38px;
-  background: #1F2937;
-  border: 1px solid #374151;
-  border-radius: 8px;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  flex-direction: column;
-  gap: 5px;
-  }
-
-  .hamburger span {
-  display: block;
-  width: 18px;height: 2px;
-  background: #9CA3AF;
-  border-radius: 2px;
-  transition: all 0.2s;
-  }
-
-  .sidebar-overlay {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.5);
-  z-index: 998;
-  }
-
-  @media (max-width: 768px) {
-  :root { --sidebar-width: 260px;}
-
-  .hamburger { display: flex;}
-
-  #sidebar {
-  position: fixed;
-  left: -280px;
-  top: 0;
-  height: 100vh;
-  height: 100dvh;
-  z-index: 999;
-  transition: left 0.25s ease;
-  padding-bottom: env(safe-area-inset-bottom);
-  }
-
-  #sidebar.open { left: 0;}
-
-  .sidebar-overlay.open { display: block;}
-
-  #main { width: 100%;}
-
-  .topbar { padding: 0 16px 0 58px;height: 50px;}
-
-  .content-area { padding: 20px 16px;}
-
-  .cat-title { font-size: 18px;}
-  .cat-icon-big { width: 40px;height: 40px;font-size: 20px;}
-
-  .login-box { width: 90vw;max-width: 380px;padding: 28px 20px;}
-
-  .section-header { padding: 12px 14px;}
-  .section-body { padding: 0 14px 14px 28px;}
-  }
-.tool-link{color:#0EA5E9;font-weight:600;text-decoration:none;}
-  /* PC/Mobile Tabs */
-  .img-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--content-border); margin-bottom: 12px; }
-  .img-tab { padding: 8px 16px; font-size: 12px; font-weight: 600; color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.15s; user-select: none; background: none; border-top: none; border-left: none; border-right: none; font-family: inherit; }
-  .img-tab:hover { color: var(--content-text); }
-  .img-tab.active { color: #3B82F6; border-bottom-color: #3B82F6; }
-  .img-tab-icon { margin-right: 6px; font-size: 13px; }
-  body.kintone-mobile-mode .kintone-img { max-height: 400px; width: auto; max-width: 100%; display: block; }
-  body.kintone-mobile-mode .img-container { flex: 0 0 auto !important; min-width: 0 !important; max-width: 240px; }
-  /* セクショントップ画像：PCモード時はPC画像のみ表示、モバイルモード時はモバイル画像のみ表示 */
-  .kintone-top-pc { display: block; }
-  .kintone-top-mobile { display: none; }
-  body.kintone-mobile-mode .kintone-top-pc { display: none !important; }
-  body.kintone-mobile-mode .kintone-top-mobile { display: block; }
-  /* img専用のサイズ調整（task-listには適用されない） */
-  img.kintone-top-pc { width: 100%; }
-  /* モバイル画像3枚を横並びでレスポンシブ表示（画面幅1/3ずつ） */
-  .kintone-top-mobile-row { display: none; justify-content: center; gap: 12px; flex-wrap: nowrap; }
-  body.kintone-mobile-mode .kintone-top-mobile-row { display: flex; }
-  .kintone-top-mobile-img { flex: 1 1 0; min-width: 0; max-width: 33.333%; height: auto; object-fit: contain; }
-</style><style type="text/css" data-comment-style=""></style></template></div><div id="notta-transcription-global-message"></div><div class="notta-extension-modal-root"></div></body></html>
+<div id="backToTop" onclick="scrollContentTop()" title="上に戻る">↑</div></body></html>
