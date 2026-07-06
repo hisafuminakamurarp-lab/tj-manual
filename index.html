@@ -812,13 +812,15 @@ const data = [
             {
               heading: "（応用）源泉徴収される売上・値引・返品（赤伝）を処理する",
               items: [
-                "源泉徴収される報酬売上（士業・デザイン等）は、収入取引の源泉徴収欄で源泉税を差し引いて計上し、入金時に差引後の金額で消し込みます。",
+                "源泉徴収される報酬売上（士業・デザイン等）は、収入取引の源泉徴収欄で源泉税を差し引いて計上し、入金時に差引後の金額で消し込みます（画像①・画像②）。",
                 "【注意】下記の公式記事は【個人】プラン向けです。法人が受け取る報酬は原則源泉徴収されませんが、源泉された場合は差額を『仮払税金』等で処理し、法人税申告で税額控除します（顧問先が個人事業主の場合はそのまま記事の手順でOK）。",
-                "値引きは明細で値引行を入れるか『売上値引』勘定で処理します。返品・返金は赤伝（マイナス取引）で登録できます。",
+                "値引きは明細で値引行を入れるか『売上値引』勘定で処理します（画像③）。返品・返金は赤伝（マイナス取引）で登録できます（画像④）。",
                 "<a href=\"https://support.freee.co.jp/hc/ja/articles/202847390\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">【個人】源泉徴収の対象となる収入取引を登録する</a>",
                 "<a href=\"https://support.freee.co.jp/hc/ja/articles/204891596\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">値引きを記帳する</a>",
                 "<a href=\"https://support.freee.co.jp/hc/ja/articles/4402148650009\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">登録済みの未決済取引に対して返品・返金（赤伝）の仕訳を登録する</a>",
-              ]
+                "画像出典：<a href=\"https://support.freee.co.jp/hc/ja\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#64748B;text-decoration:underline;\">freeeヘルプセンター</a>（freee株式会社）※転載許可取得済み",
+              ],
+              images: ["img/0655.png", "img/0656.png", "img/0657.png", "img/0658.png"]
             }
           ]
         },
@@ -1320,13 +1322,15 @@ const data = [
             {
               heading: "手順5　経費申請→承認→精算のワークフロー（従業員の立替）",
               items: [
-                "従業員が経費を申請 → 承認者が承認 → 申請日を発生日に未決済の支出取引を登録 → 精算（振込）時に決済を登録、の流れです。",
-                "申請経路（ワークフロー）を設定すると、部門・役職に応じた承認者へ自動でまわせます。経費を給与明細に合算することも可能です。",
+                "従業員が経費を申請 → 承認者が承認 → 申請日を発生日に未決済の支出取引を登録 → 精算（振込）時に決済を登録、の流れです（申請：画像②、承認・取引登録：画像③、精算：画像⑤）。",
+                "申請経路（ワークフロー）を設定すると、部門・役職に応じた承認者へ自動でまわせます（画像①）。経費を給与明細に合算することも可能です（画像④）。",
                 "<a href=\"https://support.freee.co.jp/hc/ja/articles/203309580\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">freee会計を使った経費精算の流れ</a>",
                 "<a href=\"https://support.freee.co.jp/hc/ja/articles/215932203\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">経費などの申請経路を設定する</a>",
                 "<a href=\"https://support.freee.co.jp/hc/ja/articles/203071964\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">申請された経費精算を処理する</a>",
                 "<a href=\"https://support.freee.co.jp/hc/ja/articles/10312834789145\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">経費精算マニュアル（従業員向け）</a>",
-              ]
+                "画像出典：<a href=\"https://support.freee.co.jp/hc/ja\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#64748B;text-decoration:underline;\">freeeヘルプセンター</a>（freee株式会社）※転載許可取得済み",
+              ],
+              images: ["img/0650.png", "img/0651.png", "img/0652.png", "img/0653.png", "img/0654.png"]
             }
           ]
         },
@@ -1731,11 +1735,13 @@ const data = [
               heading: "補足　リース・割賦／補助金の圧縮記帳",
               items: [
                 "所有権移転外ファイナンスリースは原則、資産計上（リース資産）＋リース債務で処理します（少額・短期は賃借料処理も可）。割賦購入は資産＋未払金で計上します。",
-                "補助金・助成金で固定資産を取得した場合は、圧縮記帳で取得価額を圧縮し、当期の税負担を平準化できます（受贈益は『雑収入（対象外）』で計上）。",
+                "補助金・助成金で固定資産を取得した場合は、圧縮記帳で取得価額を圧縮し、当期の税負担を平準化できます（受贈益は『雑収入（対象外）』で計上）。手順：補助金受領の取引登録（画像①）→固定資産取得の取引登録（画像②）→圧縮損の計上（画像③）→圧縮後の価額で固定資産台帳へ登録（画像④）。",
                 "<a href=\"https://support.freee.co.jp/hc/ja/articles/360025744711\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">固定資産の圧縮記帳を登録する</a>",
                 "<a href=\"https://support.freee.co.jp/hc/ja/articles/203480134\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">固定資産をローンで購入した場合の記帳方法</a>",
                 "<a href=\"https://support.freee.co.jp/hc/ja/articles/900000791246\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">給付金・支援金・補助金等の登録方法は？（コロナ関連の記事ですが入金登録の考え方は共通）</a>",
-              ]
+                "画像出典：<a href=\"https://support.freee.co.jp/hc/ja\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#64748B;text-decoration:underline;\">freeeヘルプセンター</a>（freee株式会社）※転載許可取得済み",
+              ],
+              images: ["img/0659.png", "img/0660.png", "img/0661.png", "img/0662.png"]
             }
           ]
         },
@@ -1830,20 +1836,26 @@ const data = [
             {
               heading: "手順5　消費税を納付・処理する（未払消費税等）",
               items: [
-                "期末に消費税額を確定して『未払消費税等』を計上し、納付時にその口座からの支出取引で消し込みます（本則／簡易／2割特例）。",
+                "【前提】［設定］→消費税の設定で経理方式（税込／税抜）・課税方式（本則／簡易／2割特例）を先に確認します（画像①）。",
+                "期末に消費税額を確定して『未払消費税等』を計上し、納付時にその口座からの支出取引で消し込みます（納付時の登録例は画像②・画像③）。",
                 "税抜経理では期末に仮受消費税・仮払消費税を相殺し、差額を未払消費税等へ振り替えます。",
                 "<a href=\"https://support.freee.co.jp/hc/ja/articles/204614754\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">消費税の中間納付・期末の処理を行う</a>",
                 "<a href=\"https://support.freee.co.jp/hc/ja/articles/204255504\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">消費税の確定申告を行う</a>",
-              ]
+                "画像出典：<a href=\"https://support.freee.co.jp/hc/ja\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#64748B;text-decoration:underline;\">freeeヘルプセンター</a>（freee株式会社）※転載許可取得済み",
+              ],
+              images: ["img/0641.png", "img/0642.png", "img/0643.png"]
             },
             {
               heading: "手順6　源泉所得税を納付する（給与・報酬）",
               items: [
                 "給与・士業報酬などで預かった源泉所得税は『預り金』で計上し、納付月（原則翌月10日／納期特例は年2回）に『預り金』からの支出取引で納付します。",
-                "報酬の源泉は、支出取引の源泉徴収欄で自動計算・記帳できます。",
+                "報酬の源泉は、支出取引の源泉徴収欄で自動計算・記帳できます（画像①・画像②）。",
+                "【納付書】納付書（所得税徴収高計算書）の作成画面から国税・地方税の納付書を出力できます（国税：画像③、地方税：画像④）。",
                 "<a href=\"https://support.freee.co.jp/hc/ja/articles/202847370\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">源泉徴収の対象となる支出取引を登録する</a>",
                 "<a href=\"https://support.freee.co.jp/hc/ja/articles/360027207652\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">納付書を作成する</a>",
-              ]
+                "画像出典：<a href=\"https://support.freee.co.jp/hc/ja\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#64748B;text-decoration:underline;\">freeeヘルプセンター</a>（freee株式会社）※転載許可取得済み",
+              ],
+              images: ["img/0644.png", "img/0645.png", "img/0646.png", "img/0647.png"]
             }
           ]
         },
@@ -1916,16 +1928,18 @@ const data = [
               heading: "手順4　借入金の入金・返済を記帳する（元本＋利息）",
               items: [
                 "【短期／長期の区別】借入日の翌年度期首から1年以内に返済期限が来るものは『短期借入金』、1年を超えるものは『長期借入金』です。",
-                "【借入時】入金されたら［自動で経理］の明細（または手動登録）から、収入・決済完了・勘定科目『短期借入金／長期借入金』で登録。『取引先』欄に金融機関名を入れておくと金融機関別の残高管理ができます（後述）。",
-                "【返済時】［自動で経理］で返済明細の［取引登録］タブ→［＋行を追加］で2行にし、1行目＝元本を『短期／長期借入金』（借入時と同じ科目・同じ取引先）、2行目＝利息を『支払利息』で入力。明細との差額0円を確認して登録（手動なら［詳細登録］→行追加で同様）。",
-                "【残高確認】［会計帳簿］→［貸借対照表］で『〇〇借入金』行をクリック→［取引先別］。借方＝返済累計・貸方＝借入額・月末列＝返済すべき残高です。",
+                "【借入時】入金されたら［自動で経理］の明細（または手動登録）から、収入・決済完了・勘定科目『短期借入金／長期借入金』で登録（画像①）。『取引先』欄に金融機関名を入れておくと金融機関別の残高管理ができます（後述）。",
+                "【返済時】［自動で経理］で返済明細の［取引登録］タブ→［＋行を追加］で2行にし、1行目＝元本を『短期／長期借入金』（借入時と同じ科目・同じ取引先）、2行目＝利息を『支払利息』で入力。明細との差額0円を確認して登録（画像②。手動なら［詳細登録］→行追加で同様：画像③）。",
+                "【残高確認】［会計帳簿］→［貸借対照表］で『〇〇借入金』行をクリック→［取引先別］。借方＝返済累計・貸方＝借入額・月末列＝返済すべき残高です（画像④・画像⑤）。",
                 "【期末の振替】長期借入金のうち翌期1年以内に返済する分は、振替伝票で『長期借入金（借方）／短期借入金（貸方）』に振り替えます（1年内返済長期借入金の管理）。",
                 "【ローンで固定資産を購入】①頭金を『車両運搬具』等で支出登録→②残額も同じ科目で支出登録→③同額を『長期借入金』の収入で登録（＝借入の計上）。固定資産台帳の取得価額は頭金込みの全額。残価設定型自動車ローンは『長期未払金』で処理します。",
                 "【自動化】freee公式『借入金管理アプリ』：契約条件（借入額・利率・償還方法など）を登録すると完済までの元金・利息を自動計算し、毎回の返済予定を未決済取引としてfreee会計に一括登録できます。毎月の引き落としは消込だけでOK。返済予定は資金繰り・支払管理レポートにも反映。※借入時（入金）の取引は自動登録されないため個別に登録します。",
                 "<a href=\"https://support.freee.co.jp/hc/ja/articles/204753184\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">借入金・キャッシングの借入と返済を記帳する</a>",
                 "<a href=\"https://support.freee.co.jp/hc/ja/articles/203480134\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">固定資産をローンで購入した場合の記帳方法</a>",
                 "<a href=\"https://support.freee.co.jp/hc/ja/articles/900000554106\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">借入金管理アプリ 使い方ガイド</a>",
-              ]
+                "画像出典：<a href=\"https://support.freee.co.jp/hc/ja\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#64748B;text-decoration:underline;\">freeeヘルプセンター</a>（freee株式会社）※転載許可取得済み",
+              ],
+              images: ["img/0616.png", "img/0617.png", "img/0618.png", "img/0619.png", "img/0620.png"]
             }
           ]
         },
@@ -2016,10 +2030,12 @@ const data = [
               heading: "手順7　未払費用・未収収益を計上する（費用/収益側の期ズレ）",
               items: [
                 "前払・前受に加え、決算では『未払費用（当期の費用でまだ払っていない分）』『未収収益（当期の収益でまだ受け取っていない分）』も計上します。",
-                "例：当期分の未払利息・未払家賃は『未払費用』、当期分の未収利息・未収家賃は『未収収益』で振替伝票を入れ、翌期首に振り戻します。",
+                "例：当期分の未払利息・未払家賃は『未払費用』、当期分の未収利息・未収家賃は『未収収益』で振替伝票を入れ（画像①・画像②）、翌期首に振り戻します。",
                 "<a href=\"https://support.freee.co.jp/hc/ja/articles/202847410\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">貸倒損失の計上・経過勘定などの振替を行う(+更新)</a>",
                 "<a href=\"https://support.freee.co.jp/hc/ja/articles/202848040\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">振替伝票を作成する（仕訳形式で記帳する）</a>",
-              ]
+                "画像出典：<a href=\"https://support.freee.co.jp/hc/ja\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#64748B;text-decoration:underline;\">freeeヘルプセンター</a>（freee株式会社）※転載許可取得済み",
+              ],
+              images: ["img/0648.png", "img/0649.png"]
             }
           ]
         },
@@ -2064,36 +2080,42 @@ const data = [
               items: [
                 "freeeは『棚卸計算法』：期中の在庫購入をすべて『仕入高』で費用計上し、期末在庫を控除して売上原価を計算します。計算式＝仕入高＋期首商品棚卸高－期末商品棚卸高（期首分は前年末の在庫棚卸から自動反映。導入初年度は開始残高の『商品』勘定の金額）。",
                 "日頃から商品受払簿などの管理台帳で入出庫を管理し、期末（または月末）に実地棚卸で数量を確認します。数量減分は棚卸減耗として処理します。",
-                "登録手順：［決算申告］→［在庫棚卸］→［＋新しい期末処理を入力］。月次なら『月末』＋対象月、年度末なら『決算時』を選び、棚卸資産の金額を入力して保存。【注意】金額は売価ではなく原価（売上原価ベース）で入力します。",
-                "仕訳は登録後の棚卸一覧の［詳細］から確認。【月次棚卸】月次の売上原価を正しく出すには毎月末の棚卸登録が必要。翌月月初の戻し仕訳は『期末商品棚卸高』勘定です（『期首商品棚卸高』ではない点に注意）。",
+                "登録手順：［決算申告］→［在庫棚卸］→［＋新しい期末処理を入力］。月次なら『月末』＋対象月、年度末なら『決算時』を選び、棚卸資産の金額を入力して保存（画像①・画像②・画像③）。【注意】金額は売価ではなく原価（売上原価ベース）で入力します。",
+                "仕訳は登録後の棚卸一覧の［詳細］から確認（画像④）。【月次棚卸】月次の売上原価を正しく出すには毎月末の棚卸登録が必要。翌月月初の戻し仕訳は『期末商品棚卸高』勘定です（『期首商品棚卸高』ではない点に注意。損益計算書（月次）での見え方は画像⑤）。",
                 "【製造業】［その他設定］→［事業所の詳細設定］で製造業向け機能を『使用する』にすると、商品・製品・半製品・仕掛品・原材料の区分ごとに棚卸登録できます。",
                 "【注意2つ】①開始残高に棚卸資産を入力した場合、期首振替仕訳を『つくる／つくらない』を選べます。他ソフトからの仕訳インポートに期首棚卸が含まれるなら『つくらない』で二重計上を防止。②仕訳承認フロー有効時は、棚卸仕訳が『未承認』で作成されるため帳簿反映に承認操作が必要。",
                 "<a href=\"https://support.freee.co.jp/hc/ja/articles/204929740\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">【法人】棚卸資産の残高を登録する（在庫棚卸）</a>",
-              ]
+                "画像出典：<a href=\"https://support.freee.co.jp/hc/ja\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#64748B;text-decoration:underline;\">freeeヘルプセンター</a>（freee株式会社）※転載許可取得済み",
+              ],
+              images: ["img/0601.png", "img/0602.png", "img/0603.png", "img/0604.png", "img/0605.png"]
             },
             {
               heading: "手順5　貸倒引当金を計上する（繰入・洗替）",
               items: [
                 "【繰入・洗替（法人）】売掛金・受取手形などの期末残高に対し回収不能見込み額を『貸倒引当金』として計上します（法定繰入率など）。法人は繰入・戻入とも［取引入力］→［振替伝票］で期末日付にて登録します（繰入：貸倒引当金繰入額／貸倒引当金、洗替の戻入：貸倒引当金／貸倒引当金戻入益）。",
                 "【個人のみ自動作成】個人事業主は［確定申告］→［所得税申告書類の作成］→［確認］→［直接入力編集へ］→『青色申告決算書』タブ→『貸倒引当金確認』で繰入額を入力すると、期末日付の洗替仕訳が自動作成されます。※法人はこの機能の対象外のため、上記の振替伝票で入力します。",
-                "【貸倒発生時（引当なし）】取引先の倒産などで回収不能が確実になったら、該当する売掛金取引の詳細画面→『決済』欄の［＋更新］→勘定科目『貸倒損失』で消し込みます。法人は販管費なら『貸倒損失(販)』、営業外費用なら『貸倒損失(外)』を選択。",
-                "【貸倒発生時（前期に引当あり）】同じく決済欄の［＋更新］で、1行目に『貸倒引当金』（引当済みの金額）、［行を追加］して2行目に『貸倒損失』（不足分）を入力して保存します。※期首残高に貸倒引当金が登録されていることが前提（未登録なら開始残高から）。",
+                "【貸倒発生時（引当なし）】取引先の倒産などで回収不能が確実になったら、該当する売掛金取引の詳細画面→『決済』欄の［＋更新］→勘定科目『貸倒損失』で消し込みます（画像①・画像②・画像③）。法人は販管費なら『貸倒損失(販)』、営業外費用なら『貸倒損失(外)』を選択。",
+                "【貸倒発生時（前期に引当あり）】同じく決済欄の［＋更新］で、1行目に『貸倒引当金』（引当済みの金額）、［行を追加］して2行目に『貸倒損失』（不足分）を入力して保存します（画像④・画像⑤）。※期首残高に貸倒引当金が登録されていることが前提（未登録なら開始残高から）。",
                 "<a href=\"https://support.freee.co.jp/hc/ja/articles/202847410\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">貸倒損失の計上・経過勘定などの振替を行う(+更新)</a>",
                 "<a href=\"https://support.freee.co.jp/hc/ja/articles/360001228586\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">貸倒引当金の洗替仕訳を自動作成する（個人・確定申告）</a>",
-              ]
+                "画像出典：<a href=\"https://support.freee.co.jp/hc/ja\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#64748B;text-decoration:underline;\">freeeヘルプセンター</a>（freee株式会社）※転載許可取得済み",
+              ],
+              images: ["img/0606.png", "img/0607.png", "img/0608.png", "img/0609.png", "img/0610.png"]
             },
             {
               heading: "手順6　消費税・法人税等を確定計上する（未払計上）",
               items: [
-                "消費税の決算処理は経理方式（税込／税抜）で変わります。まず［決算申告］→［消費税申告書］で申告書を作成し、確定納税額（申告書の㉖欄）を確定させます（本則／簡易／2割特例の税額計算はここで反映）。",
-                "【税抜経理】［決算申告］→［決算書］→［プレビュー・調整］の『「仮払消費税」または「仮受消費税」の残高が残っています』メッセージをクリック→仮払・仮受消費税を『未払金』へ振り替える伝票が自動で仮作成されます。この『未払金』を『未払消費税等』に変更し、金額を申告書の確定納税額に修正（貸借差額は『雑収入』／『雑損失』で処理。中間納付があれば納付時に計上した『仮払金』残高を貸方で振替）。",
-                "【税込経理（特例）】期末日付の振替伝票で『租税公課（借方）／未払消費税等（貸方）』を登録します。年度締めの前に登録が必要。【税込経理（原則）】期末仕訳は不要で、納付日に『租税公課』で費用計上します。",
+                "消費税の決算処理は経理方式（税込／税抜）で変わります。まず［決算申告］→［消費税申告書］で申告書を作成し、確定納税額（申告書の㉖欄）を確定させます（画像①。本則／簡易／2割特例の税額計算はここで反映）。",
+                "【税抜経理】［決算申告］→［決算書］→［プレビュー・調整］の『「仮払消費税」または「仮受消費税」の残高が残っています』メッセージをクリック→仮払・仮受消費税を『未払金』へ振り替える伝票が自動で仮作成されます。この『未払金』を『未払消費税等』に変更し、金額を申告書の確定納税額に修正（画像③・画像④・画像⑤）（貸借差額は『雑収入』／『雑損失』で処理。中間納付があれば納付時に計上した『仮払金』残高を貸方で振替）。",
+                "【税込経理（特例）】期末日付の振替伝票で『租税公課（借方）／未払消費税等（貸方）』を登録します（画像②）。年度締めの前に登録が必要。【税込経理（原則）】期末仕訳は不要で、納付日に『租税公課』で費用計上します。",
                 "納付時は『未払消費税等』勘定の支出取引で消し込みます（→F税金 手順5）。【還付】期末に『未収入金／雑収入（税区分：対象外）』を計上し、翌期の入金は未収入金の消込で処理します。",
                 "【法人税等】確定した法人税・住民税・事業税は、期末日付の振替伝票で『法人税、住民税及び事業税（借方）／未払法人税等（貸方）』と計上します（税額はJ申告書の手順5『税額を確認する』で確定）。",
                 "【自動と手動の線引き】年度締めでfreeeが自動作成する決算整理仕訳は①固定資産の減価償却②繰越利益剰余金③棚卸の3種類（法人版）だけ。消費税・法人税等の未払計上は自動作成されないため、本手順の手動登録が必須です。仕訳帳の絞り込み『決算整理仕訳のみ』で確認できます。",
                 "<a href=\"https://support.freee.co.jp/hc/ja/articles/204614754\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">消費税の中間納付・期末の処理を行う</a>",
                 "<a href=\"https://support.freee.co.jp/hc/ja/articles/360001217206\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">年度締めすると自動で作成される決算整理仕訳にはどんなものがありますか？</a>",
-              ]
+                "画像出典：<a href=\"https://support.freee.co.jp/hc/ja\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#64748B;text-decoration:underline;\">freeeヘルプセンター</a>（freee株式会社）※転載許可取得済み",
+              ],
+              images: ["img/0611.png", "img/0612.png", "img/0613.png", "img/0614.png", "img/0615.png"]
             }
           ]
         },
@@ -2264,17 +2286,19 @@ const data = [
             {
               heading: "チェック5　月次レポートで経営数値を読む（推移・試算表・資金繰り・予実）",
               items: [
-                "【月次推移】［会計帳簿］→［月次推移］で損益・貸借の推移を確認し、異常値（急増・急減・マイナス残高）が無いかチェック。気になるセルはクリックで内訳（総勘定元帳）までドリルダウンできます。",
-                "【試算表】当月・累計のPL/BSを確認します。表示タグ（取引先・品目・部門）を切り替えると内訳分析ができます。",
-                "【資金繰りレポート】現預金残高の推移と、未決済取引・借入返済予定などから今後の入出金・資金過不足を把握します。",
-                "【予実管理（経営ナビゲーション）】※アドバンスプラン以上。予算は『経営プランニング』で登録し、実績・着地予測・計画を対比します。着地予測＝月締め済み月の達成率×未締め月の計画で自動算出されるため、月締め運用とセットで使うと精度が上がります。［損益計算書をコピー］でExcel／スプレッドシートに貼り付けて月次報告資料に流用できます。",
-                "【共有】数字が固まったら月次推移・経営ダッシュボードを責任者・顧問先へ共有します。経営系メニューはセンシティブなため、メンバー権限（閲覧／操作）の設定も確認しましょう。",
+                "【月次推移】［会計帳簿］→［月次推移］で損益・貸借の推移を確認し、異常値（急増・急減・マイナス残高）が無いかチェック。気になるセルはクリックで内訳（総勘定元帳）までドリルダウンできます（画像①）。",
+                "【試算表】当月・累計のPL/BSを確認します。表示タグ（取引先・品目・部門）を切り替えると内訳分析ができます（画像②）。",
+                "【資金繰りレポート】現預金残高の推移と、未決済取引・借入返済予定などから今後の入出金・資金過不足を把握します（画像③）。",
+                "【予実管理（経営ナビゲーション）】※アドバンスプラン以上。予算は『経営プランニング』で登録し、実績・着地予測・計画を対比します。着地予測＝月締め済み月の達成率×未締め月の計画で自動算出されるため、月締め運用とセットで使うと精度が上がります。［損益計算書をコピー］でExcel／スプレッドシートに貼り付けて月次報告資料に流用できます（画像④）。",
+                "【共有】数字が固まったら月次推移・経営ダッシュボード（画像⑤）を責任者・顧問先へ共有します。経営系メニューはセンシティブなため、メンバー権限（閲覧／操作）の設定も確認しましょう。",
                 "<a href=\"https://support.freee.co.jp/hc/ja/articles/203293920\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">月次推移（損益計算書・貸借対照表）を確認する</a>",
                 "<a href=\"https://support.freee.co.jp/hc/ja/articles/203059914\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">試算表（損益計算書・貸借対照表）を確認する</a>",
                 "<a href=\"https://support.freee.co.jp/hc/ja/articles/203059904\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">資金繰りレポートでキャッシュフローを確認する</a>",
                 "<a href=\"https://support.freee.co.jp/hc/ja/articles/360000952866\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">経営状況を確認する（予実管理）</a>",
                 "<a href=\"https://support.freee.co.jp/hc/ja/articles/21132571600281\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">経営ダッシュボードで各レポートを確認する</a>",
-              ]
+                "画像出典：<a href=\"https://support.freee.co.jp/hc/ja\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#64748B;text-decoration:underline;\">freeeヘルプセンター</a>（freee株式会社）※転載許可取得済み",
+              ],
+              images: ["img/0621.png", "img/0622.png", "img/0623.png", "img/0624.png", "img/0625.png"]
             }
           ]
         },
