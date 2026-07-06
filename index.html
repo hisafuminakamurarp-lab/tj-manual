@@ -325,12 +325,6 @@
   .kintone-top-mobile-row { display: none; justify-content: center; gap: 12px; flex-wrap: nowrap; }
   body.kintone-mobile-mode .kintone-top-mobile-row { display: flex; }
   .kintone-top-mobile-img { flex: 1 1 0; min-width: 0; max-width: 33.333%; height: auto; object-fit: contain; }
-  /* --- フェーズチェックリスト（I 決算整理・K 月次クローズ） --- */
-  .phase-chk { width:16px;height:16px;margin-right:8px;accent-color:#16A34A;cursor:pointer;flex-shrink:0;vertical-align:-2px; }
-  .task-heading.done { opacity:.55;text-decoration:line-through;text-decoration-color:#16A34A;text-decoration-thickness:1.5px; }
-  .chk-bar { display:flex;align-items:center;gap:10px;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:10px;padding:8px 14px;margin:10px 0 4px;font-size:12.5px;color:#166534;font-weight:600; }
-  .chk-reset { margin-left:auto;color:#94A3B8;cursor:pointer;font-weight:500;text-decoration:underline;font-size:11.5px; }
-  .chk-reset:hover { color:#64748B; }
   .verify-badge { font-size:11px;color:#64748B;margin:8px 0 0; }
   /* --- 上に戻るボタン --- */
   #backToTop { position:fixed;right:22px;bottom:22px;width:42px;height:42px;border-radius:50%;background:#1F2937;color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;opacity:0;pointer-events:none;transition:opacity .2s;z-index:900;box-shadow:0 4px 12px rgba(0,0,0,.25); }
@@ -338,7 +332,7 @@
   #backToTop:hover { opacity:1; }
   /* --- 印刷用 --- */
   @media print {
-    #sidebar, .sidebar-overlay, .topbar, #backToTop, #lightbox, .chk-reset, #loginScreen { display:none !important; }
+    #sidebar, .sidebar-overlay, .topbar, #backToTop, #lightbox, #loginScreen { display:none !important; }
     #main { width:100% !important; }
     .content-area { overflow:visible !important;padding:0 !important; }
     body { background:#fff !important; }
@@ -489,8 +483,6 @@ function closeLightbox() {
 
 document.addEventListener("keydown", e => { if (e.key === "Escape") closeLightbox(); });
 
-// --- フェーズチェックリスト（I 決算整理・K 月次クローズ） ---
-const CHECKLIST_NODES = ["I 決算整理仕訳", "K 月次クローズ（毎月の締めチェック）"];
 // freee公式ヘルプと本文を照合した日（ノード単位）
 const VERIFIED_DATES = {
   "A 売上": "2026-07-06",
@@ -503,35 +495,6 @@ const VERIFIED_DATES = {
   "J 申告書": "2026-07-06",
   "K 月次クローズ（毎月の締めチェック）": "2026-07-06"
 };
-
-function togglePhaseCheck(el) {
-  const key = el.dataset.ck;
-  if (el.checked) localStorage.setItem(key, "1"); else localStorage.removeItem(key);
-  const h = el.closest(".task-heading");
-  if (h) h.classList.toggle("done", el.checked);
-  updateChkProgress(key.slice(0, key.lastIndexOf("_")));
-}
-
-function updateChkProgress(prefix) {
-  let total = 0, done = 0;
-  document.querySelectorAll(".phase-chk").forEach(b => {
-    if (b.dataset.ck.indexOf(prefix + "_") === 0) { total++; if (b.checked) done++; }
-  });
-  document.querySelectorAll(".chk-progress").forEach(s => {
-    if (s.dataset.ckprefix === prefix) s.textContent = done + " / " + total + " 完了";
-  });
-}
-
-function resetPhaseChecks(title) {
-  const prefix = "ck_" + title;
-  document.querySelectorAll(".phase-chk").forEach(b => {
-    if (b.dataset.ck.indexOf(prefix + "_") === 0) {
-      b.checked = false; localStorage.removeItem(b.dataset.ck);
-      const h = b.closest(".task-heading"); if (h) h.classList.remove("done");
-    }
-  });
-  updateChkProgress(prefix);
-}
 
 // --- 上に戻るボタン ---
 document.addEventListener("scroll", (e) => {
@@ -4387,15 +4350,8 @@ function renderPhases(phases, title, notice, keyPrefix, isKintone) {
   const anchor = (i) => `${keyPrefix}_ph${i}`;
   // ---- 手順目次（見出しが4つ以上ある長いノードのみ表示）----
   const headed = phases.map((p, i) => ({ i, h: p.heading })).filter(x => x.h);
-  const checklist = CHECKLIST_NODES.indexOf(title) !== -1;
   const vd = VERIFIED_DATES[title];
   const vdHtml = vd ? `<div class="verify-badge">✅ freee公式ヘルプ照合日：${vd}</div>` : "";
-  let progHtml = "";
-  if (checklist) {
-    const mains = phases.map((p, i) => ({ p, i })).filter(x => x.p.heading && /^(手順|チェック\d|はじめに)/.test(x.p.heading));
-    const doneN = mains.filter(x => localStorage.getItem(`ck_${title}_${x.i}`) === "1").length;
-    progHtml = `<div class="chk-bar"><span>☑</span><span class="chk-progress" data-ckprefix="ck_${title}">${doneN} / ${mains.length} 完了</span><a class="chk-reset" role="button" tabindex="0" onclick="resetPhaseChecks('${title}')">チェックをリセット</a></div>`;
-  }
   let tocHtml = "";
   if (headed.length >= 4) {
     tocHtml = `<div class="step-toc"><div class="step-toc-t">このページの手順</div><ol>` +
@@ -4419,11 +4375,7 @@ function renderPhases(phases, title, notice, keyPrefix, isKintone) {
     const isMainStep = /^(手順|チェック\d|はじめに)/.test(_hd);
     const isSub = /^補足/.test(_hd);
     const subClass = isSub ? ' phase-sub' : '';
-    const ckKey = `ck_${title}_${phi}`;
-    const ckOn = checklist && isMainStep;
-    const ckDone = ckOn && localStorage.getItem(ckKey) === "1";
-    const ckBox = ckOn ? `<input type="checkbox" class="phase-chk" data-ck="${ckKey}"${ckDone ? " checked" : ""} onchange="togglePhaseCheck(this)">` : "";
-    const headingHtml = ph.heading ? `<div class="task-heading${isMainStep ? ' step-main' : ''}${isSub ? ' step-sub' : ''}${ckDone ? ' done' : ''}" style="${phi===0 ? 'border-top:none;padding-top:0;margin-top:0;' : ''}">${ckBox}${ph.heading}</div>` : '';
+    const headingHtml = ph.heading ? `<div class="task-heading${isMainStep ? ' step-main' : ''}${isSub ? ' step-sub' : ''}" style="${phi===0 ? 'border-top:none;padding-top:0;margin-top:0;' : ''}">${ph.heading}</div>` : '';
     const isLast = phi === phases.length - 1;
     const noticeHtml = isLast ? renderNotice(notice) : "";
     const items = ph.items || [];
@@ -4486,7 +4438,7 @@ function renderPhases(phases, title, notice, keyPrefix, isKintone) {
     return `<div class="${subClass.trim()}" id="${anchor(phi)}" style="scroll-margin-top:74px;margin-top:${phi===0 ? '8px' : '20px'};">${out}</div>`;
   }).join("");
 
-  return vdHtml + progHtml + tocHtml + body;
+  return vdHtml + tocHtml + body;
 
 }
 
