@@ -1,7 +1,7 @@
 // Vercel Edge Middleware — サイト全体にBasic認証をかける
 // 認証情報を変えたいときはこのファイルの USER / PASS を書き換えて push する
-const USER = 'tj';
-const PASS = 'TJkaikei#2026';
+const USER = 'info-tokyo@ztjas.com';
+const PASS = 'tjadmin';
 
 export default function middleware(request) {
   const auth = request.headers.get('authorization');
