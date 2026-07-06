@@ -733,6 +733,16 @@ const data = [
                 "<a href=\"https://support.freee.co.jp/hc/ja/articles/203317600\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">未決済の取引を登録する・消し込む（売掛金・買掛金など）</a>"
               ],
               images: ["img/0069.png", "img/0070.png", "img/0071.png", "img/0072.png", "img/0073.png"]
+            },
+            {
+              heading: "（応用）源泉徴収される売上・値引・返品（赤伝）を処理する",
+              items: [
+                "源泉徴収される報酬売上（士業・デザイン等）は、収入取引の源泉徴収欄で源泉税を差し引いて計上し、入金時に差引後の金額で消し込みます。",
+                "値引きは明細で値引行を入れるか『売上値引』勘定で処理します。返品・返金は赤伝（マイナス取引）で登録できます。",
+                "<a href=\"https://support.freee.co.jp/hc/ja/articles/202847390\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">源泉徴収の対象となる収入取引を登録する</a>",
+                "<a href=\"https://support.freee.co.jp/hc/ja/articles/204891596\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">値引きを記帳する</a>",
+                "<a href=\"https://support.freee.co.jp/hc/ja/articles/4402148650009\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">登録済みの未決済取引に対して返品・返金（赤伝）の仕訳を登録する</a>",
+              ]
             }
           ]
         },
@@ -1640,6 +1650,16 @@ const data = [
                 "弥生会計など他の会計ソフトから乗り換える場合は、固定資産台帳をインポートで移行できます。",
                 "<a href=\"https://support.freee.co.jp/hc/ja/articles/205355530\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">【法人】その他の会計ソフトから固定資産台帳を移行する</a>"
               ]
+            },
+            {
+              heading: "補足　リース・割賦／補助金の圧縮記帳",
+              items: [
+                "所有権移転外ファイナンスリースは原則、資産計上（リース資産）＋リース債務で処理します（少額・短期は賃借料処理も可）。割賦購入は資産＋未払金で計上します。",
+                "補助金・助成金で固定資産を取得した場合は、圧縮記帳で取得価額を圧縮し、当期の税負担を平準化できます（受贈益は『雑収入（対象外）』で計上）。",
+                "<a href=\"https://support.freee.co.jp/hc/ja/articles/360025744711\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">固定資産の圧縮記帳を登録する</a>",
+                "<a href=\"https://support.freee.co.jp/hc/ja/articles/203480134\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">固定資産をローンで購入した場合の記帳方法</a>",
+                "<a href=\"https://support.freee.co.jp/hc/ja/articles/900000791246\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">給付金・支援金・補助金等の登録方法は？</a>",
+              ]
             }
           ]
         },
@@ -1911,6 +1931,15 @@ const data = [
                 "<a href=\"https://support.freee.co.jp/hc/ja/articles/202847350\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">freeeヘルプ：手付金（前払金・前受金など）がある取引を登録する</a>",
               ],
               images: ["img/0404.png","img/0405.png"]
+            },
+            {
+              heading: "手順7　未払費用・未収収益を計上する（費用/収益側の期ズレ）",
+              items: [
+                "前払・前受に加え、決算では『未払費用（当期の費用でまだ払っていない分）』『未収収益（当期の収益でまだ受け取っていない分）』も計上します。",
+                "例：当期分の未払利息・未払家賃は『未払費用』、当期分の未収利息・未収家賃は『未収収益』で振替伝票を入れ、翌期首に振り戻します。",
+                "<a href=\"https://support.freee.co.jp/hc/ja/articles/202847410\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">貸倒損失の計上・経過勘定などの振替を行う(+更新)</a>",
+                "<a href=\"https://support.freee.co.jp/hc/ja/articles/202848040\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">振替伝票を作成する（仕訳形式で記帳する）</a>",
+              ]
             }
           ]
         },
@@ -2235,6 +2264,16 @@ const data = [
                 "【指導のコツ】freeeのインポートは簡単なので、顧問先自身にやってもらえるよう“導入時に”指導します（途中から教えるのは難しいので、最初が肝心）。初期指導の際に勘定科目の定義をすり合わせ、その流れで取り込み方をレクチャーします。",
                 "【テンプレが命】配布するエクセルテンプレートは、勘定科目を“プルダウン（ドロップダウンリスト）”方式にします。科目名が1文字でも違うとインポートでエラーになるためです。",
                 "【運用ルール】取込みは月1回（または週1回）に決め、レシートはエクセルの並び順どおりにひとまとめで保存してもらうと、突合・確認がスムーズです。",
+              ]
+            },
+            {
+              heading: "（導入）新規顧問先の初期設定（事業所・開始残高・マスタ）",
+              items: [
+                "新しい事業所は、事業所情報 → 勘定科目・取引先マスタ → メンバー招待（権限）→ 口座連携、の順にセットアップします。",
+                "会計1年目は『開始残高』を前期末の貸借対照表と一致させて設定します（口座・売掛/買掛・固定資産・借入金など）。",
+                "<a href=\"https://support.freee.co.jp/hc/ja/articles/203077364\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">freee会計の初期設定の流れ</a>",
+                "<a href=\"https://support.freee.co.jp/hc/ja/articles/204930810\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">【法人】開始残高を設定する（設立2期目以降法人）</a>",
+                "<a href=\"https://support.freee.co.jp/hc/ja/articles/202847220\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">freee会計の事業所の設定を行う</a>",
               ]
             }
           ]
