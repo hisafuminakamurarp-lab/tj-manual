@@ -3014,76 +3014,65 @@ const data = [
             {
               title: "日常業務",
               tasks: [
-                "毎日〜数日おきにくり返す記帳まわりのルーティンです。たまった分をまとめて回してもOK（月末に慌てないために日常的に消化します）。操作手順はツール側へ誘導します。",
-                "明細の同期確認・記帳（自動で経理で取引登録）→ 業務 ＞ 顧問業務マップ ＞ <span class=\"tool-link\" onclick=\"jumpToKaikei()\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">freee会計＞A 売上・B 仕入請求書・C 経費</span>",
-                "領収証・レシート・請求書をファイルボックスへ取込（証憑整理）→ 業務 ＞ 顧問業務マップ ＞ <span class=\"tool-link\" onclick=\"jumpToKaikei()\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">freee会計＞C 経費</span>",
-                "売上の請求書発行・送付、入金の確認 → 業務 ＞ 顧問業務マップ ＞ <span class=\"tool-link\" onclick=\"jumpToKaikei()\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">freee会計＞A 売上</span>",
-                "仕入・経費の支払処理、支払予定の確認 → 業務 ＞ 顧問業務マップ ＞ <span class=\"tool-link\" onclick=\"jumpToKaikei()\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">freee会計＞B 仕入請求書・C 経費</span>",
-                "売掛金・買掛金（未決済）の消込、入出金の照合 → 業務 ＞ 顧問業務マップ ＞ <span class=\"tool-link\" onclick=\"jumpToKaikei()\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">freee会計＞A 売上</span>",
-                "口座・現預金残高の確認（実残高とのズレに気づいたら早めに対応）",
-                "顧問先からの問い合わせ・依頼への対応、ToDoの消化 → 業務 ＞ <span class=\"tool-link\" onclick=\"jumpToKintoneSection()\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">営業管理（Kintone）＞ ⑧ToDo管理</span>",
-                "【注意点】",
-                "日々ためずに記帳・証憑整理を回すほど、月次クローズ（締め）が軽くなります。",
-                "月初・月末の締め作業は『月次業務』、年に一度の作業は『年次業務』を参照。",
-                "【関連業務】",
-                "業務 ＞ 顧問業務マップ ＞ 7. 年間運用 ＞ 月次業務",
-                "業務 ＞ 顧問業務マップ ＞ <span class=\"tool-link\" onclick=\"jumpToKaikei()\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">freee会計（A〜L の操作手順）</span>"
+                "毎日（またはたまっても週2〜3回）、<b>上から順に</b>回すルーティンです。1顧問先あたり15〜30分が目安。ためるほど月次の締めが重くなります。",
+                "<b>① 明細の同期確認</b>（毎日）：freeeの口座一覧で同期エラー・最終同期日時をチェック。エラーがあれば再認証 → <span class=\"tool-link\" onclick=\"jumpToKaikeiStep('L 設定','（基礎）口座を登録')\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">L設定（口座の同期）</span>",
+                "<b>② 証憑の取込</b>（毎日／届き次第）：レシート・請求書をファイルボックスへ（スマホ撮影・スキャン・メール転送）→ <span class=\"tool-link\" onclick=\"jumpToKaikeiStep('B 仕入請求書','手順1')\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">B仕入 手順1（ファイルボックス取込）</span>",
+                "<b>③ 記帳</b>（毎日〜週2・3回）：『自動で経理』で新着明細を取引登録。自動登録ルールに乗っているものは内容確認のみでOK → <span class=\"tool-link\" onclick=\"jumpToKaikeiStep('C 経費','手順2')\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">C経費 手順2（自動で経理）</span>",
+                "<b>④ 消込</b>（毎日〜週2・3回）：入金があれば売掛金の消込 → <span class=\"tool-link\" onclick=\"jumpToKaikeiStep('A 売上','手順5')\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">A売上 手順5</span>、支払があれば買掛金の消込 → <span class=\"tool-link\" onclick=\"jumpToKaikeiStep('B 仕入請求書','手順4')\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">B仕入 手順4</span>",
+                "<b>⑤ 請求・支払の発生対応</b>（発生都度）：請求書の発行・送付 → <span class=\"tool-link\" onclick=\"jumpToKaikeiStep('A 売上','手順2')\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">A売上 手順2</span>／受取請求書の支払予定の確認 → <span class=\"tool-link\" onclick=\"jumpToKaikeiStep('B 仕入請求書','手順3')\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">B仕入 手順3</span>",
+                "<b>⑥ ToDo・問い合わせ対応</b>（毎日）：顧問先からの依頼・質問、KintoneのToDo消化 → 業務 ＞ 営業管理（Kintone）＞ ⑧ToDo管理",
+                "【注意点】現預金残高のズレに気づいたら<b>その日のうちに</b>原因を確認（月次でまとめて調査すると倍時間がかかります）。",
+                "【関連業務】月初・月末の締めは『月次業務』、年に一度の作業は『年次業務』へ。操作の詳細はすべて <span class=\"tool-link\" onclick=\"jumpToKaikei('A 売上')\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">freee会計（A〜L）</span> に手順があります。",
               ]
             },
             {
               title: "月次業務",
               tasks: [
-                "毎月くり返す定例業務です。決算月に関係なく毎月回します（年に一度の作業は『年次業務』を参照）。",
-                "明細の同期・取込と記帳（自動で経理）／証憑（レシート・請求書）の整理・保管",
-                "口座・カード残高の照合（月次クローズ）→ ツール ＞ freee会計 ＞ K 月次クローズ",
-                "売掛金・買掛金（未決済）の消込、入出金の確認",
-                "月次試算表（試算表・月次推移）の作成・確認 → 顧問先へ月次報告",
-                "給与計算・給与支払、勤怠の締め（freee人事労務）",
-                "源泉所得税の納付（原則 翌月10日まで。納期特例の場合は年2回＝1月・7月にまとめて納付）",
-                "住民税（特別徴収）の納付（翌月10日まで）",
-                "社会保険料の納付（前月分を当月末の口座振替）",
-                "資金繰り・預金残高の確認、必要なら顧問先へアラート",
-                "【注意点】",
-                "納付期限（10日・月末）が土日祝のときは翌平日に繰り越し",
-                "源泉所得税の納期特例は給与の支給人数が常時10名未満の場合のみ対象",
-                "【関連業務】",
-                "業務 ＞ 顧問業務マップ ＞ 7. 年間運用 ＞ 年次業務",
-                "業務 ＞ 顧問業務マップ ＞ 4. 税務",
-                "業務 ＞ 顧問業務マップ ＞ 5. 労務"
+                "毎月の定例業務です。<b>期限がある順</b>に3ブロックに分けています。ブロック内も上から順に実施してください。",
+                "<b>■ 月初〜10日【期限厳守ブロック】</b>",
+                "（〜10日）<b>源泉所得税の納付</b>：前月の給与・報酬から預かった分。納期特例（常時10人未満・届出済み）の場合は1月・7月のみ → <span class=\"tool-link\" onclick=\"jumpToKaikeiStep('F 税金','手順6')\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">F税金 手順6</span>。※遅れると不納付加算税（原則10%・自主納付なら5%）",
+                "（〜10日）<b>住民税（特別徴収）の納付</b>：従業員から預かった前月分。",
+                "（給与支給日まで）<b>勤怠の締め → 給与計算 → 振込・明細発行</b> → <span class=\"tool-link\" onclick=\"jumpToKaikeiStep('D 給与','手順2')\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">D給与 手順2〜5</span>",
+                "<b>■ 月中【平準化ブロック】</b>",
+                "記帳・証憑整理の遅れを回収（『日常業務』①〜④のたまり分をゼロに）。",
+                "定例の請求書発行：定期請求書（自動作成予約）分の内容確認と送付 → <span class=\"tool-link\" onclick=\"jumpToKaikeiStep('A 売上','手順2')\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">A売上 手順2</span>",
+                "<b>■ 月末〜翌月5営業日【締めブロック】</b>",
+                "（月末）社会保険料の口座振替を確認（前月分が当月末に引き落とし）。残高不足に注意。",
+                "<b>月次クローズ</b>：残高照合 → 登録漏れ・二重登録 → 売掛・買掛残高 → 月次推移の確認、の順でチェック1〜5を実施 → <span class=\"tool-link\" onclick=\"jumpToKaikeiStep('K 月次クローズ（毎月の締めチェック）','チェック1')\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">K月次クローズ チェック1〜5</span>",
+                "<b>試算表・月次レポートの作成</b> → 数字を読んで気づきをメモ → <span class=\"tool-link\" onclick=\"jumpToKaikeiStep('K 月次クローズ（毎月の締めチェック）','チェック5')\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">K チェック5（月次レポート）</span>",
+                "<b>顧問先へ月次報告</b>：試算表＋資金繰りの状況＋アラート（売掛滞留・残高減少など）をセットで共有。",
+                "【注意点】10日・月末が土日祝の場合は翌平日に繰り越し。源泉の納期特例は給与の支給人数が<b>常時10人未満</b>の場合のみ。",
+                "【関連業務】年に一度の作業は『年次業務』へ。税務の詳細は 4. 税務、労務は 5. 労務。",
               ]
             },
             {
               title: "年次業務",
               tasks: [
-                "年に一度（または特定の月）に行う作業です。決算月で時期がずれる項目は顧問先ごとに調整します。毎月の作業は『月次業務』を参照。",
-                "【年次の中核作業（毎年必ず行う）】カレンダー上の時期は決算月で変わるため、各社の決算月に合わせて実施します。",
-                "決算・申告（法人税・地方税・消費税）。申告・納付期限は決算月の2ヶ月後（例：3月決算→5月末）→ ツール ＞ freee会計 ＞ I 決算整理仕訳・J 申告書",
-                "年末調整（10月準備→11月実施→12月確定、源泉徴収票の作成）→ ツール ＞ freee会計 ＞ D 給与",
-                "法定調書合計表・給与支払報告書の提出、償却資産申告（いずれも1月末まで）",
-                "社会保険の算定基礎届（7/10まで）、随時改定（月額変更）の確認",
-                "労働保険の年度更新（7/10まで）",
-                "固定資産税・償却資産税の納付（通知到着後、年4期）",
-                "株主総会・決算承認、役員報酬の改定（事業年度開始から3ヶ月以内）",
-                "【年間カレンダー（月別の目安）】決算月により時期が前後します（下記は3月決算を基準とした一例）。",
-                "【1月】源泉所得税(納期特例)、給与支払報告書提出、法定調書合計表提出、償却資産申告(〜1月末)",
-                "【2月】個人住民税の特別徴収開始準備",
-                "【3月】3月決算法人の決算準備開始",
-                "【4月】固定資産税通知書の確認、新年度の住民税特別徴収開始",
-                "【5月】3月決算法人の法人税・消費税申告(〜5月末)",
-                "【6月】社会保険算定基礎届の準備、源泉所得税(納期特例)準備",
-                "【7月】社会保険算定基礎届(〜7/10)、源泉所得税(納期特例 〜7/10)、労働保険年度更新(〜7/10)",
-                "【8月】夏季業務調整、9月決算法人準備",
-                "【9月】9月決算法人の準備、社会保険標準報酬月額改定",
-                "【10月】年末調整書類準備開始",
-                "【11月】年末調整実施、税理士へ資料提供",
-                "【12月】年末調整最終確定、源泉徴収票作成、源泉所得税(納期特例)準備",
-                "【注意点】",
-                "決算月によって申告タイミングがずれる(申告期限は決算月から2ヶ月後)",
-                "祝日と申告期限が重なる場合は翌平日に繰り越し",
-                "【関連業務】",
-                "業務 ＞ 顧問業務マップ ＞ 7. 年間運用 ＞ 月次業務",
-                "業務 ＞ 顧問業務マップ ＞ 4. 税務",
-                "業務 ＞ 顧問業務マップ ＞ 5. 労務"
+                "年に一度（または特定の月）に行う作業です。<b>時期は『決算月からの逆算』と『暦で固定』の2種類</b>があるため、まず中核作業でトリガーを確認し、月別カレンダーで実施時期を掴んでください。毎月の作業は『月次業務』へ。",
+                "<b>■ 中核作業（毎年必ず行う）</b>",
+                "<b>決算・申告</b>（法人税・地方税・消費税）：期限＝<b>決算月の2ヶ月後の末日</b> → 決算整理は <span class=\"tool-link\" onclick=\"jumpToKaikeiStep('I 決算整理仕訳','手順1')\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">I 決算整理仕訳</span>、申告書作成〜電子申告は <span class=\"tool-link\" onclick=\"jumpToKaikei('J 申告書')\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">J 申告書</span>、考え方は <span class=\"tool-link\" onclick=\"jumpToKaikei('教科書（法人税・消費税・監査の虎の巻）')\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">教科書</span>。",
+                "<b>年末調整</b>：10月準備 → 11月実施 → 12月確定・源泉徴収票作成 → <span class=\"tool-link\" onclick=\"jumpToKaikeiStep('D 給与','手順6')\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">D給与 手順6</span>",
+                "<b>法定調書合計表・給与支払報告書の提出、償却資産申告</b>：いずれも<b>1月末まで</b> → <span class=\"tool-link\" onclick=\"jumpToKaikeiStep('D 給与','手順7')\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">D給与 手順7</span>・<span class=\"tool-link\" onclick=\"jumpToKaikeiStep('E 固定資産','手順6')\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">E固定資産 手順6</span>",
+                "<b>社会保険の算定基礎届</b>（〜7/10）と随時改定（月額変更）の確認、<b>労働保険の年度更新</b>（〜7/10）→ 5. 労務",
+                "<b>株主総会・決算承認、役員報酬の改定</b>：事業年度開始から<b>3ヶ月以内</b>（定期同額給与の要件。期中改定は原則NG）。",
+                "<b>固定資産税・償却資産税の納付</b>：通知到着後、年4期。",
+                "<b>■ 決算月→申告期限の早見</b>",
+                "1月決算→3月末｜2月→4月末｜3月→5月末｜4月→6月末｜5月→7月末｜6月→8月末｜7月→9月末｜8月→10月末｜9月→11月末｜10月→12月末｜11月→1月末｜12月→2月末（いずれも申告・納付とも決算月の2ヶ月後の末日。土日祝なら翌平日）",
+                "<b>■ 年間カレンダー（暦で固定の作業）</b>",
+                "【1月】源泉所得税（納期特例 〜1/20）→ <span class=\"tool-link\" onclick=\"jumpToKaikeiStep('F 税金','手順6')\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">F手順6</span>／給与支払報告書・法定調書合計表の提出、償却資産申告（〜1月末）→ <span class=\"tool-link\" onclick=\"jumpToKaikeiStep('E 固定資産','手順6')\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">E手順6</span>",
+                "【2月】個人住民税の特別徴収関連の準備",
+                "【3月】3月決算法人の決算準備開始（実地棚卸の手配 → <span class=\"tool-link\" onclick=\"jumpToKaikeiStep('I 決算整理仕訳','手順4')\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">I手順4</span>）",
+                "【4月】固定資産税通知書の確認／新年度の住民税特別徴収額に更新（6月徴収分から）",
+                "【5月】3月決算法人の法人税・消費税申告（〜5月末）→ <span class=\"tool-link\" onclick=\"jumpToKaikei('J 申告書')\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">J 申告書</span>",
+                "【6月】社会保険算定基礎届の準備／住民税の新年度額で徴収開始",
+                "【7月】算定基礎届（〜7/10）・労働保険年度更新（〜7/10）・源泉所得税（納期特例 〜7/10）",
+                "【8月】夏季の業務調整、9月決算法人の準備",
+                "【9月】9月決算法人の決算準備／社会保険の標準報酬月額改定（算定結果の反映）",
+                "【10月】年末調整の書類準備・従業員への案内 → <span class=\"tool-link\" onclick=\"jumpToKaikeiStep('D 給与','手順6')\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">D手順6</span>",
+                "【11月】年末調整の実施・資料回収",
+                "【12月】年末調整の最終確定・源泉徴収票作成／納期特例の準備",
+                "【注意点】決算月により申告時期がずれます（上の早見参照）。期限が土日祝の場合は翌平日。",
+                "【関連業務】毎月の作業は『月次業務』、税務の詳細は 4. 税務、労務は 5. 労務。",
               ]
             }
           ]
@@ -4953,8 +4942,17 @@ function jumpToPhase(id) {
   if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
+// freee会計ノード内の特定手順見出しへジャンプ（年間運用ランシートから使用）
+function jumpToKaikeiStep(nodeTitle, headingText) {
+  jumpToKaikei(nodeTitle);
+  setTimeout(() => {
+    const h = [...document.querySelectorAll(".task-heading")].find(x => x.textContent.indexOf(headingText) !== -1 && x.offsetParent);
+    if (h) h.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, 800);
+}
+
 function jumpToKaikei(childTitle) {
-  const isKaikei = (sub) => sub.children && sub.children.some(ch => ch.title === "会計（freee会計）");
+  const isKaikei = (sub) => sub.children && sub.children.some(ch => ch.title.endsWith("会計（freee会計）"));
   const cat = data.find(c => c.sections && c.sections.some(s => s.subsections && s.subsections.some(isKaikei)));
   if (!cat) return;
   if (currentCat.id !== cat.id) {
@@ -4971,7 +4969,7 @@ function jumpToKaikei(childTitle) {
   if (secIdx === -1) return;
   const sec = currentCat.sections[secIdx];
   const subIdx = sec.subsections.findIndex(isKaikei);
-  const childIdx = sec.subsections[subIdx].children.findIndex(ch => ch.title === "会計（freee会計）");
+  const childIdx = sec.subsections[subIdx].children.findIndex(ch => ch.title.endsWith("会計（freee会計）"));
   const sectionCards = document.querySelectorAll("#sectionsGrid > .section-card");
   const targetCard = sectionCards[secIdx];
   if (!targetCard) return;
