@@ -2030,17 +2030,23 @@ const data = [
               heading: "手順1　自動作成される決算整理仕訳を確認する",
               items: [
                 "年度締め時、freeeが減価償却費の計上などを自動で仕訳します。内容を確認し、二重計上がないかチェックします。",
-                "固定資産台帳の減価償却費は電卓と突き合わせて確認します（E 固定資産 手順4と連動）。"
-              ]
+                "確認方法：［会計帳簿］→［仕訳帳］を開き、絞り込み条件の『決算整理仕訳』で<b>『決算整理仕訳のみ』</b>を選択して［絞り込む］。<b>決算整理</b>バッジ付きの仕訳だけが一覧表示されます（画像①）。",
+                "固定資産台帳の減価償却費は電卓と突き合わせて確認します（E 固定資産 手順4と連動）。",
+                "画像：自社freee画面（2026-07-14撮影・一部ぼかし処理）",
+              ],
+              images: ["img/0631.png"]
             },
             {
               heading: "手順2　手動の整理仕訳を振替伝票で入力する",
               items: [
-                "［取引］→［振替伝票］から、仕訳形式で決算整理仕訳を入力します（未収収益・未払費用・前払費用・前受収益など）。",
+                "［取引入力］→［振替伝票］から、仕訳形式で決算整理仕訳を入力します（未収収益・未払費用・前払費用・前受収益など）（画像①）。",
+                "伝票上部のラジオボタンで<b>『決算整理仕訳』</b>を選んでから登録すると、決算整理として記帳されます（画像①の赤枠。手順1の絞り込みにもこの区分で表示されます）。",
                 "例：貸付金の利息を『未収収益／受取利息』で計上。よく使う仕訳はテンプレート化できます。",
                 "<a href=\"https://support.freee.co.jp/hc/ja/articles/202848040\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">振替伝票を作成する（仕訳形式で記帳する）</a>",
-                "<a href=\"https://support.freee.co.jp/hc/ja/articles/115005881066\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">振替伝票のひな型を作る（振替伝票テンプレート）</a>"
+                "<a href=\"https://support.freee.co.jp/hc/ja/articles/115005881066\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">振替伝票のひな型を作る（振替伝票テンプレート）</a>",
+                "画像：自社freee画面（2026-07-14撮影）",
               ],
+              images: ["img/0632.png"]
             },
             {
               heading: "手順3　期ズレ・残高を確認する",
@@ -2241,9 +2247,12 @@ const data = [
                 "□ 各口座（普通預金・現金・クレジットカード）の月末残高が、通帳・カード明細と一致しているか確認します。",
                 "□ 同期口座は明細が最新まで取り込まれているか確認します。差額が出たら、登録漏れ・二重登録・日付ズレを疑います。",
                 "□ 残高がズレたままにしないこと。原因を特定して直してから次へ進みます。",
+                "確認方法：［マスタ・口座］→［口座］の一覧で<b>『登録残高』と『同期残高』</b>を見比べます（画像①の赤枠）。画面上部の『残高ずれあり』『未登録明細あり』の件数が0になるのが月次の目標です。",
                 "<a href=\"https://support.freee.co.jp/hc/ja/articles/202847720\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">クレジットカード口座の残高ズレを解消する</a>",
-                "<a href=\"https://support.freee.co.jp/hc/ja/articles/207606866\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">口座の詳細を確認・設定する</a>"
-              ]
+                "<a href=\"https://support.freee.co.jp/hc/ja/articles/207606866\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">口座の詳細を確認・設定する</a>",
+                "画像：自社freee画面（2026-07-14撮影・一部ぼかし処理）",
+              ],
+              images: ["img/0633.png"]
             },
             {
               heading: "チェック2　取引の登録漏れ・二重登録を確認する",
@@ -2251,9 +2260,12 @@ const data = [
                 "□ ［自動で経理］に未処理の明細が残っていないか確認します。残っていれば帳簿付けします。",
                 "□ 同じ取引を『明細から』と『手入力』で二重に登録していないか、取引の一覧で絞り込み・重複チェックを使って確認します。",
                 "□ 現金で払った経費・レシートの取り込み漏れがないか確認します。",
+                "重複チェックの場所：［会計帳簿］→［重複チェック］（帳簿チェックのグループ内・β版）。対象期間を指定して<b>［実行］</b>すると、重複の可能性がある取引がグループ表示されます（画像①の赤枠）。",
                 "<a href=\"https://support.freee.co.jp/hc/ja/articles/115005326706\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">自動で経理の使い方（明細を元にした帳簿付け）</a>",
-                "<a href=\"https://support.freee.co.jp/hc/ja/articles/204524174\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">取引の一覧で絞り込み機能・重複チェック機能を活用する</a>"
-              ]
+                "<a href=\"https://support.freee.co.jp/hc/ja/articles/204524174\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">取引の一覧で絞り込み機能・重複チェック機能を活用する</a>",
+                "画像：自社freee画面（2026-07-14撮影）",
+              ],
+              images: ["img/0634.png"]
             },
             {
               heading: "チェック3　売掛金・買掛金（未決済）の残高を確認する",
@@ -2261,9 +2273,12 @@ const data = [
                 "□ 入金されたのに未決済（売掛金）のまま残っている請求がないか、売掛レポートで確認し消し込みます。",
                 "□ 支払ったのに未決済（買掛金・未払金）のまま残っている請求がないか確認し消し込みます。",
                 "□ 残っている未決済が『本当にまだ入金・支払前のもの』だけになっているかを確認します。",
+                "確認方法：［請求・入金］→［入金管理レポート］（ホームの『期日超過 ○○円の入金』通知をクリックしても開けます）。決済状況<b>『未決済』</b>で絞り込むと、<b>期日超過</b>バッジ付きの滞留売掛金が決済期日ごとに一覧できます（画像①）。",
                 "<a href=\"https://support.freee.co.jp/hc/ja/articles/203293810\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">売掛レポートを確認する</a>",
-                "<a href=\"https://support.freee.co.jp/hc/ja/articles/202848050\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">総勘定元帳を確認する</a>"
-              ]
+                "<a href=\"https://support.freee.co.jp/hc/ja/articles/202848050\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">総勘定元帳を確認する</a>",
+                "画像：自社freee画面（2026-07-14撮影・一部ぼかし処理）",
+              ],
+              images: ["img/0635.png"]
             },
             {
               heading: "チェック4　数字を月次推移で確認し、責任者へ共有する",
