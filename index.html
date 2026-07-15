@@ -104,6 +104,14 @@
   .rs-day-link { background: #DCFCE7;color: #15803D;}
   .rs-chips { display: flex;flex-wrap: wrap;gap: 6px;margin: 10px 0 4px;}
   .rs-chip { background: #F1F5F9;color: #64748B;font-size: 11px;font-weight: 600;border-radius: 999px;padding: 3px 10px;}
+  /* 今日やることウィジェット＋今日ハイライト */
+  .today-hero { background: linear-gradient(135deg, #EFF6FF, #F0FDF4);border: 1px solid #BFDBFE;border-radius: 12px;padding: 14px 18px;margin: 6px 0 16px;}
+  .today-hero-date { font-weight: 800;font-size: 14px;color: #1E40AF;margin-bottom: 6px;}
+  .today-hero-none { font-size: 12.5px;color: #64748B;}
+  .today-hero-month { font-size: 12.5px;color: #166534;margin-top: 8px;}
+  .today-hero-note { font-size: 11px;color: #94A3B8;margin-top: 8px;}
+  .rs-row.rs-today { border-color: #F59E0B;box-shadow: 0 0 0 2px rgba(253, 230, 138, 0.5);}
+  .rs-tag-today { background: #FEF3C7;color: #B45309;}
   @media (max-width: 640px) { .rs-row { flex-wrap: wrap;} .rs-day { min-width: 0;} }
   /* タスク内見出し（フェーズ区切り用） */
   .task-heading { font-size: 13px;font-weight: 600;color: #1A1F36;padding: 12px 0 4px 0;margin-top: 6px;border-top: 1px solid #E5E7EB;}
@@ -4826,10 +4834,13 @@ function renderTasks(tasks) {
     if (typeof t === "object" && t.type === "rsblock") {
       return `<div class="rs-head rs-head-${t.theme || "blue"}">${t.icon || ""} ${t.title}${t.sub ? `<span class="rs-sub">${t.sub}</span>` : ""}</div>`;
     }
-    // ランシートのタスク行（日付バッジ＋顧客/内部タグ）
+    // ランシートのタスク行（日付バッジ＋顧客/内部タグ。今日該当ならハイライト）
     if (typeof t === "object" && t.day !== undefined) {
       const tag = t.who ? `<span class="rs-tag ${t.who === "内部" ? "rs-tag-int" : "rs-tag-cli"}">${t.who}</span>` : "";
-      return `<div class="rs-row"><span class="rs-day">${t.day}</span>${tag}<span style="flex:1;min-width:0;"><span class="rs-title">${t.title}</span>${t.body ? `<span class="rs-body">${t.body}</span>` : ""}</span></div>`;
+      const ti = rsTodayInfo();
+      const isToday = rsMatchToday(t.day, ti.d, ti.lastDay) || t.day === ti.m + "月";
+      const todayChip = isToday ? `<span class="rs-tag rs-tag-today">今日</span>` : "";
+      return `<div class="rs-row${isToday ? " rs-today" : ""}"><span class="rs-day">${t.day}</span>${tag}${todayChip}<span style="flex:1;min-width:0;"><span class="rs-title">${t.title}</span>${t.body ? `<span class="rs-body">${t.body}</span>` : ""}</span></div>`;
     }
     // 【...】のみで構成される文字列は見出しとして強調
     if (typeof t === "string" && /^【[^】]+】$/.test(t.trim())) {
@@ -4838,6 +4849,53 @@ function renderTasks(tasks) {
     return `<div class="task-item"><span style="flex:1;min-width:0;">${t}</span></div>`;
   }).join("");
   return `<div class="task-list">${items}</div>`;
+}
+
+// ===== 「今日やること」ウィジェット（年間運用の先頭に自動表示） =====
+function rsMatchToday(dayStr, d, lastDay) {
+  if (!dayStr) return false;
+  switch (dayStr) {
+    case "1日": return d === 1;
+    case "〜10日": return d <= 10;
+    case "15日": return d === 15;
+    case "20日": return d === 20;
+    case "20日ごろ": return d >= 18 && d <= 22;
+    case "月中": return d >= 11 && d <= 19;
+    case "支給日まで": return d >= 11 && d <= 24;
+    case "月末": case "末日": return d === lastDay;
+    case "〜翌5営業日": return d <= 7;
+  }
+  return false;
+}
+
+function rsTodayInfo() {
+  const now = new Date();
+  const d = now.getDate(), m = now.getMonth() + 1;
+  const lastDay = new Date(now.getFullYear(), m, 0).getDate();
+  return { d, m, lastDay, youbi: ["日","月","火","水","木","金","土"][now.getDay()] };
+}
+
+function renderTodayWidget() {
+  const { d, m, lastDay, youbi } = rsTodayInfo();
+  let monthly = null, yearly = null;
+  (function walk(n) {
+    if (!n || typeof n !== "object") return;
+    if (n.title === "月次業務") monthly = n;
+    if (n.title === "年次業務") yearly = n;
+    ["sections","subsections","children"].forEach(k => (n[k] || []).forEach(walk));
+  })({ sections: data });
+  const hits = ((monthly && monthly.tasks) || []).filter(t => typeof t === "object" && t.day && rsMatchToday(t.day, d, lastDay));
+  const monthRow = ((yearly && yearly.tasks) || []).find(t => typeof t === "object" && t.day === m + "月");
+  const rows = hits.map(t => {
+    const tag = t.who ? `<span class="rs-tag ${t.who === "内部" ? "rs-tag-int" : "rs-tag-cli"}">${t.who}</span>` : "";
+    return `<div class="rs-row" style="margin:6px 0;"><span class="rs-day">${t.day}</span>${tag}<span style="flex:1;min-width:0;"><span class="rs-title">${t.title}</span></span></div>`;
+  }).join("");
+  return `<div class="today-hero">
+    <div class="today-hero-date">📅 今日の定例 — ${m}月${d}日（${youbi}）</div>
+    ${rows || `<div class="today-hero-none">今日が期日の定例タスクはありません（日常業務①〜⑥は毎日どおり）</div>`}
+    ${monthRow ? `<div class="today-hero-month">📆 今月（${m}月）の年次業務：<b>${monthRow.title}</b></div>` : ""}
+    <div class="today-hero-note">※10日・月末が土日祝の場合は翌平日に繰り越し。詳細は下の月次業務・年次業務を参照</div>
+  </div>`;
 }
 
 // 【主な操作】などの定型見出しを持つ手順ページを自動でカード表示に変換する
@@ -5139,6 +5197,7 @@ function renderContent(cat) {
             <span class="subsection-toggle" id="stog-${i}-${si}">+</span>
           </div>
           <div class="subsection-body" id="sbod-${i}-${si}">
+            ${sub.title === "年間運用" ? renderTodayWidget() : ""}
             ${(sub.image || (sub.images && sub.images.length > 0)) ? (() => {
               const pcImgs = sub.images || (sub.image ? [sub.image] : []);
               const mobileImgs = sub.mobileImages || (sub.mobileImage ? [sub.mobileImage] : []);
