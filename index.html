@@ -5733,32 +5733,95 @@ function matchAllTokens(text, tokens) {
 
 // セクション/サブセクション/孫を再帰的に走査してヒットを集める
 // パス：[セクション名, サブ名, 孫名, ...]
-function collectHits(node, tokens, pathLabels, hits, cat, sectionIndex) {
-  // node には title, tasks, subsections|children がある可能性
+// タスク要素（文字列／ランシートカード等のオブジェクト）から検索用テキストを取り出す
+function taskSearchText(t) {
+  if (typeof t === "string") return t;
+  if (t && typeof t === "object") {
+    if (t.type === "rsblock") return [t.title, t.sub].filter(Boolean).join(" ");
+    return [t.day, t.who, t.title, t.body, t.text].filter(Boolean).join(" ");
+  }
+  return "";
+}
+
+function collectHits(node, tokens, pathLabels, hits, cat, sectionIndex, idxPath = []) {
+  // node には title, tasks, phases, notice, subsections|children がある可能性
   const title = node.title || "";
   const titleHit = title && matchAllTokens(title, tokens);
-  const matchedTasks = (node.tasks || []).filter(t => matchAllTokens(t, tokens));
+  const texts = (node.tasks || []).map(taskSearchText);
+  // phases（freee会計A〜L・Kintone等）と notice も検索対象に含める
+  (node.phases || []).forEach(p => {
+    if (p.heading) texts.push(p.heading);
+    (p.items || []).forEach(it => texts.push(it));
+  });
+  if (node.notice) texts.push([node.notice.title, node.notice.body, ...(node.notice.items || [])].filter(Boolean).join(" "));
+  const matchedTasks = texts.filter(t => t && matchAllTokens(t, tokens));
 
   if (titleHit || matchedTasks.length > 0) {
   hits.push({
     cat,
     sectionIndex,
+    idx: idxPath.slice(),
     path: [...pathLabels, title].filter(Boolean),
     title,
     titleHit,
     matchedTasks,
-    allTasks: node.tasks || []
+    allTasks: texts
   });
   }
 
   const subKeys = ["subsections", "children"];
   for (const k of subKeys) {
   if (Array.isArray(node[k])) {
-    node[k].forEach(child => {
-      collectHits(child, tokens, [...pathLabels, title].filter(Boolean), hits, cat, sectionIndex);
+    node[k].forEach((child, ci) => {
+      collectHits(child, tokens, [...pathLabels, title].filter(Boolean), hits, cat, sectionIndex, [...idxPath, ci]);
     });
   }
   }
+}
+
+// 検索結果から該当ノードまで直接ジャンプ（セクション→サブ→子…と順に展開してスクロール）
+function jumpToSearchHit(catId, secIdx, idxArr) {
+  const cat = data.find(c => c.id === catId);
+  if (!cat) return;
+  document.getElementById("searchInput").value = "";
+  searchQuery = "";
+  currentCat = cat;
+  openSections.clear();
+  const filtered = currentMember && currentMember.categories ? data.filter(c => currentMember.categories.includes(c.id)) : data;
+  buildFilteredNav(filtered);
+  renderContent(cat);
+  updateHash([cat.id]);
+  document.querySelectorAll(".nav-item").forEach(el => el.classList.remove("active"));
+  const activeNav = document.querySelector(`.nav-item[data-cat-id="${cat.id}"]`);
+  if (activeNav) activeNav.classList.add("active");
+  const sectionCards = document.querySelectorAll("#sectionsGrid > .section-card");
+  const targetCard = sectionCards[secIdx];
+  if (!targetCard) return;
+  const sectionBody = targetCard.querySelector(".section-body");
+  const sectionToggle = targetCard.querySelector(".section-toggle");
+  if (sectionBody && !sectionBody.classList.contains("open")) {
+    sectionBody.classList.add("open");
+    if (sectionToggle) sectionToggle.classList.add("open");
+    openSections.add(secIdx);
+  }
+  const openBox = (id) => {
+    const b = document.getElementById(`sbod-${id}`), t = document.getElementById(`stog-${id}`);
+    if (b && !b.classList.contains("open")) { b.classList.add("open"); if (t) t.classList.add("open"); }
+    return b;
+  };
+  const prefixes = ["", "ch-", "gc-", "ggc-"];
+  let scrollEl = sectionBody;
+  const idParts = [String(secIdx)];
+  for (let depth = 0; depth < idxArr.length && depth < prefixes.length; depth++) {
+    idParts.push(String(idxArr[depth]));
+    const b = openBox(prefixes[depth] + idParts.join("-"));
+    if (!b) break;
+    scrollEl = b;
+  }
+  setTimeout(() => {
+    const header = scrollEl && scrollEl.previousElementSibling ? scrollEl.previousElementSibling : scrollEl;
+    if (header) header.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, 80);
 }
 
 function handleSearch(query) {
@@ -5781,8 +5844,8 @@ function handleSearch(query) {
     // カテゴリ名／説明だけがヒットして中身ゼロのときも、トップ階層を1件だけ拾う
     if (catHit && hits.length === before) {
       hits.push({
-        cat, sectionIndex: si, path: [sec.title], title: sec.title,
-        titleHit: false, matchedTasks: [], allTasks: sec.tasks || []
+        cat, sectionIndex: si, idx: [], path: [sec.title], title: sec.title,
+        titleHit: false, matchedTasks: [], allTasks: (sec.tasks || []).map(taskSearchText)
       });
     }
   });
@@ -5796,7 +5859,7 @@ function handleSearch(query) {
   area.innerHTML = `<div style="margin-bottom:20px;font-size:13px;color:#6B7280">${hits.length}件 見つかりました</div><div id="searchResults"></div>`;
   const container = document.getElementById("searchResults");
 
-  hits.forEach(({ cat, path, title, matchedTasks, allTasks }) => {
+  hits.forEach(({ cat, sectionIndex, idx, path, title, matchedTasks, allTasks }) => {
   const el = document.createElement("div");
   el.className = "search-result-item";
   el.style.borderLeftColor = cat.color;
@@ -5805,7 +5868,7 @@ function handleSearch(query) {
     ? path.slice(0, -1).map(p => escHtml(p)).join(" › ")
     : "";
 
-  const previewSource = matchedTasks.length > 0 ? matchedTasks : allTasks.slice(0, 3);
+  const previewSource = (matchedTasks.length > 0 ? matchedTasks : allTasks).slice(0, 3);
   const preview = previewSource.length > 0
     ? previewSource.map(t => highlightTokens(stripHtml(t), tokens)).join(" ・ ")
     : "";
@@ -5815,11 +5878,7 @@ function handleSearch(query) {
     <div class="search-result-title">${highlightTokens(title, tokens)}</div>
     ${preview ? `<div class="search-result-preview">${preview}</div>` : ""}
   `;
-  el.onclick = () => {
-    document.getElementById("searchInput").value = ""; searchQuery = "";
-    currentCat = cat; openSections.clear(); buildNav(); renderContent(cat);
-    updateHash([cat.id]);
-  };
+  el.onclick = () => jumpToSearchHit(cat.id, sectionIndex, idx || []);
   container.appendChild(el);
   });
 }
