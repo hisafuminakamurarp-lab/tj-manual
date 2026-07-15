@@ -100,6 +100,10 @@
   .rs-tag-int { background: #F3E8FF;color: #7C3AED;}
   .rs-title { font-weight: 700;color: #1A1F36;}
   .rs-body { display: block;font-size: 12.5px;color: #64748B;margin-top: 3px;}
+  .rs-day-warn { background: #FEE2E2;color: #B91C1C;}
+  .rs-day-link { background: #DCFCE7;color: #15803D;}
+  .rs-chips { display: flex;flex-wrap: wrap;gap: 6px;margin: 10px 0 4px;}
+  .rs-chip { background: #F1F5F9;color: #64748B;font-size: 11px;font-weight: 600;border-radius: 999px;padding: 3px 10px;}
   @media (max-width: 640px) { .rs-row { flex-wrap: wrap;} .rs-day { min-width: 0;} }
   /* タスク内見出し（フェーズ区切り用） */
   .task-heading { font-size: 13px;font-weight: 600;color: #1A1F36;padding: 12px 0 4px 0;margin-top: 6px;border-top: 1px solid #E5E7EB;}
@@ -539,6 +543,7 @@ const data = [
         {
           title: "1. 営業",
           tasks: [
+            "【関連業務】",
             "顧問先を獲得は『<a href=\"kashiwagi-method.pdf\" target=\"_blank\" rel=\"noopener\" class=\"tool-link\" style=\"color:#A21034;text-decoration:underline;\">柏木メソッド</a>』を参照",
             "営業＆顧問管理は『<span class=\"tool-link\" onclick=\"jumpToKintoneSection()\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">営業管理（Kintone）</span>』を参照",
             "提案資料は『<span class=\"tool-link\" onclick=\"jumpToShouzaiSection()\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">商材マニュアル</span>』を参照"
@@ -548,20 +553,21 @@ const data = [
           title: "2. 契約",
           tasks: [
             "顧問契約 / 契約書管理 / 契約書締結",
+            "【関連業務】",
             "詳細は『<span class=\"tool-link\" onclick=\"jumpToShouzaiSection()\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">商材マニュアル ＞ 顧問契約</span>』を参照"
           ],
           children: [
             {
               title: "顧問契約",
-              tasks: ["詳細は『<span class=\"tool-link\" onclick=\"jumpToShouzaiSection()\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">商材マニュアル ＞ 顧問契約</span>』を参照"]
+              tasks: ["【関連業務】", "詳細は『<span class=\"tool-link\" onclick=\"jumpToShouzaiSection()\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">商材マニュアル ＞ 顧問契約</span>』を参照"]
             },
             {
               title: "契約書管理",
-              tasks: ["契約書ファイルの保管・命名規約", "詳細は『<span class=\"tool-link\" onclick=\"jumpToShouzaiSection()\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">商材マニュアル ＞ 顧問契約</span>』『ツール ＞ <span class=\"tool-link\" onclick=\"jumpToFreeeSubsection('freeeサイン')\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">freeeサイン</span>』を参照"]
+              tasks: ["契約書ファイルの保管・命名規約", "【関連業務】", "詳細は『<span class=\"tool-link\" onclick=\"jumpToShouzaiSection()\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">商材マニュアル ＞ 顧問契約</span>』『ツール ＞ <span class=\"tool-link\" onclick=\"jumpToFreeeSubsection('freeeサイン')\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">freeeサイン</span>』を参照"]
             },
             {
               title: "契約書締結",
-              tasks: ["電子契約による締結フロー", "詳細は『ツール ＞ <span class=\"tool-link\" onclick=\"jumpToFreeeSubsection('freeeサイン')\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">freeeサイン</span>』を参照"]
+              tasks: ["電子契約による締結フロー", "【関連業務】", "詳細は『ツール ＞ <span class=\"tool-link\" onclick=\"jumpToFreeeSubsection('freeeサイン')\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">freeeサイン</span>』を参照"]
             }
           ]
         },
@@ -2644,7 +2650,7 @@ const data = [
             "税務対応 / 法人税 / 所得税 / 消費税 / 償却資産 / 税務調査対策"
           ],
           children: [
-            { title: "税務対応", tasks: ["税区分確認", "消費税処理", "法人税対応", "税務申告資料作成", "税理士連携"] },
+            { title: "税務対応", tasks: ["【主な業務】", "税区分確認", "消費税処理", "法人税対応", "税務申告資料作成", "税理士連携"] },
         {
               title: "法人税",
               tasks: [
@@ -2772,7 +2778,7 @@ const data = [
             },
         {
           title: "税務調査対策",
-          tasks: ["Tax Audit Support", "弊社では税務調査対策として様々なサービスを提供", "メニュー1：決算書診断（1期分30万円）否認リスクを徹底チェック", "メニュー2：実践型模擬税務調査（1日100万円〜）本番さながらの臨場感を体験", "メニュー3：税務調査完全立会（300万円）最強の用心棒、国税OBが同席", "メニュー4：安心のアフターケア（顧問契約 月額6.6万円〜）継続サポート"],
+          tasks: ["Tax Audit Support", "弊社では税務調査対策として様々なサービスを提供", "【主な業務】", "メニュー1：決算書診断（1期分30万円）否認リスクを徹底チェック", "メニュー2：実践型模擬税務調査（1日100万円〜）本番さながらの臨場感を体験", "メニュー3：税務調査完全立会（300万円）最強の用心棒、国税OBが同席", "メニュー4：安心のアフターケア（顧問契約 月額6.6万円〜）継続サポート"],
           images: ["18_tax_audit_support_1.png", "19_tax_audit_support_2.png"]
         }
           ]
@@ -2781,13 +2787,13 @@ const data = [
           title: "5. 労務",
           tasks: [
             "勤怠管理 / 給与計算・明細 / 社会保険・雇用保険 / 就業規則・相談 / 年末調整 / 法定調書 / 出張・旅費規定",
-            "ツール操作: 詳細は『ツール ＞ <span class=\"tool-link\" onclick=\"jumpToFreeeSubsection('freee人事労務')\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">freee人事労務</span>』を参照"
+            "【関連業務】", "ツール操作: 詳細は『ツール ＞ <span class=\"tool-link\" onclick=\"jumpToFreeeSubsection('freee人事労務')\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">freee人事労務</span>』を参照"
           ],
           children: [
-            { title: "勤怠管理", tasks: ["勤怠ルール設定", "勤怠システム設定", "勤怠打刻確認", "勤怠修正フロー", "残業管理", "有給管理", "休暇申請フロー", "承認フロー"] },
-        { title: "給与計算・明細", tasks: ["給与計算対象データ整理", "給与計算処理", "給与明細作成", "給与振込"] },
-        { title: "社会保険・雇用保険", tasks: ["社会保険資格取得手続き", "健康保険手続き", "厚生年金手続き", "扶養手続き", "雇用保険手続き"] },
-        { title: "就業規則・相談", tasks: ["労働条件通知書管理", "就業規則管理", "36協定管理", "労務相談対応", "休職対応", "復職対応"] },
+            { title: "勤怠管理", tasks: ["【主な業務】", "勤怠ルール設定", "勤怠システム設定", "勤怠打刻確認", "勤怠修正フロー", "残業管理", "有給管理", "休暇申請フロー", "承認フロー"] },
+        { title: "給与計算・明細", tasks: ["【主な業務】", "給与計算対象データ整理", "給与計算処理", "給与明細作成", "給与振込"] },
+        { title: "社会保険・雇用保険", tasks: ["【主な業務】", "社会保険資格取得手続き", "健康保険手続き", "厚生年金手続き", "扶養手続き", "雇用保険手続き"] },
+        { title: "就業規則・相談", tasks: ["【主な業務】", "労働条件通知書管理", "就業規則管理", "36協定管理", "労務相談対応", "休職対応", "復職対応"] },
         {
           title: "年末調整",
           tasks: [],
@@ -3738,7 +3744,7 @@ const data = [
         },
         {
           title: "税務調査対策",
-          tasks: ["Tax Audit Support", "弊社では税務調査対策として様々なサービスを提供", "メニュー1：決算書診断（1期分30万円）否認リスクを徹底チェック", "メニュー2：実践型模擬税務調査（1日100万円〜）本番さながらの臨場感を体験", "メニュー3：税務調査完全立会（300万円）最強の用心棒、国税OBが同席", "メニュー4：安心のアフターケア（顧問契約 月額6.6万円〜）継続サポート"],
+          tasks: ["Tax Audit Support", "弊社では税務調査対策として様々なサービスを提供", "【主な業務】", "メニュー1：決算書診断（1期分30万円）否認リスクを徹底チェック", "メニュー2：実践型模擬税務調査（1日100万円〜）本番さながらの臨場感を体験", "メニュー3：税務調査完全立会（300万円）最強の用心棒、国税OBが同席", "メニュー4：安心のアフターケア（顧問契約 月額6.6万円〜）継続サポート"],
           images: ["18_tax_audit_support_1.png", "19_tax_audit_support_2.png"]
         },
         {
@@ -4833,6 +4839,44 @@ function renderTasks(tasks) {
   }).join("");
   return `<div class="task-list">${items}</div>`;
 }
+
+// 【主な操作】などの定型見出しを持つ手順ページを自動でカード表示に変換する
+const RS_AUTO_HEADINGS = {
+  "主な操作": { theme: "blue", icon: "🛠️", numbered: true },
+  "主な業務": { theme: "blue", icon: "📋", numbered: true },
+  "使用ツール": { theme: "blue", icon: "🔧", badge: "ツール" },
+  "注意点": { theme: "red", icon: "⚠️", badge: "！", badgeClass: "rs-day-warn" },
+  "関連業務": { theme: "green", icon: "🔗", badge: "→", badgeClass: "rs-day-link" },
+};
+
+const _renderTasksBase = renderTasks;
+renderTasks = function(tasks) {
+  const isAutoHeading = t => typeof t === "string" && /^【[^】]+】$/.test(t.trim()) && RS_AUTO_HEADINGS[t.trim().slice(1, -1)];
+  if (!tasks || !tasks.some(isAutoHeading)) return _renderTasksBase(tasks);
+  let mode = null, n = 0;
+  const items = tasks.map(t => {
+    if (isAutoHeading(t)) {
+      const name = t.trim().slice(1, -1);
+      mode = RS_AUTO_HEADINGS[name];
+      n = 0;
+      return `<div class="rs-head rs-head-${mode.theme}">${mode.icon} ${name}</div>`;
+    }
+    if (typeof t === "string" && /^【[^】]+】$/.test(t.trim())) { mode = null; return `<div class="task-heading">${t}</div>`; }
+    if (typeof t === "string" && /^【タグ】/.test(t.trim())) {
+      const chips = t.trim().replace(/^【タグ】/, "").trim().split(/\s+/).map(x => `<span class="rs-chip">${x}</span>`).join("");
+      return `<div class="rs-chips">${chips}</div>`;
+    }
+    if (typeof t === "string" && mode) {
+      let badge, cls = mode.badgeClass || "";
+      if (mode.numbered) {
+        if (/^事前準備/.test(t.trim())) { badge = "準備"; } else { n++; badge = String(n); }
+      } else { badge = mode.badge; }
+      return `<div class="rs-row"><span class="rs-day ${cls}">${badge}</span><span style="flex:1;min-width:0;">${t}</span></div>`;
+    }
+    return _renderTasksBase([t]).replace(/^<div class="task-list">|<\/div>$/g, "");
+  }).join("");
+  return `<div class="task-list">${items}</div>`;
+};
 
 // notice枠を描画するヘルパー（共通化）
 function renderNotice(notice) {
