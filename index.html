@@ -4898,6 +4898,18 @@ function renderTodayWidget() {
   </div>`;
 }
 
+// 日付が変わったら「今日やること」と今日ハイライトを描き直す（タブ開きっぱなし対策）
+let _todayWidgetDate = new Date().toDateString();
+function refreshTodayIfStale() {
+  const nowDate = new Date().toDateString();
+  if (nowDate === _todayWidgetDate) return;
+  _todayWidgetDate = nowDate;
+  // 検索表示中は触らない。通常表示なら再描画して日付・ハイライトを更新
+  if (!searchQuery && currentCat) renderContent(currentCat);
+}
+setInterval(refreshTodayIfStale, 60 * 1000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) refreshTodayIfStale(); });
+
 // 【主な操作】などの定型見出しを持つ手順ページを自動でカード表示に変換する
 const RS_AUTO_HEADINGS = {
   "主な操作": { theme: "blue", icon: "🛠️", numbered: true },
