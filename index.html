@@ -87,6 +87,20 @@
   .task-heading { font-size: 12px;font-weight: 700;color: var(--accent, #A21034);letter-spacing: 0.04em;margin-top: 12px;margin-bottom: 2px;padding: 4px 0 4px 0;border-bottom: 1px solid rgba(162,16,52,0.15);}
   .task-heading:first-child { margin-top: 0;}
   .task-item::before { content: "";width: 5px;height: 5px;border-radius: 50%;background: #D1D5DB;flex-shrink: 0;margin-top: 7px;}
+  /* ランシート（freeeヘルプ風カード表示） */
+  .rs-head { display: flex;align-items: center;gap: 10px;font-weight: 700;font-size: 13.5px;margin: 18px 0 8px;padding: 10px 16px;border-radius: 10px;}
+  .rs-head .rs-sub { font-weight: 600;font-size: 11px;margin-left: auto;background: rgba(255,255,255,0.65);padding: 3px 12px;border-radius: 999px;white-space: nowrap;}
+  .rs-head-red { background: #FEF2F2;color: #B91C1C;}
+  .rs-head-blue { background: #EFF6FF;color: #1D4ED8;}
+  .rs-head-green { background: #F0FDF4;color: #15803D;}
+  .rs-row { display: flex;align-items: flex-start;gap: 10px;background: #FFFFFF;border: 1px solid #E5E7EB;border-radius: 10px;padding: 11px 14px;margin: 7px 0;font-size: 13px;color: var(--content-secondary);line-height: 1.6;}
+  .rs-day { flex: none;min-width: 62px;text-align: center;background: #F1F5F9;color: #334155;font-weight: 700;font-size: 11.5px;border-radius: 999px;padding: 4px 10px;margin-top: 1px;}
+  .rs-tag { flex: none;font-size: 10.5px;font-weight: 700;border-radius: 5px;padding: 4px 9px;margin-top: 1px;}
+  .rs-tag-cli { background: #DBEAFE;color: #1D4ED8;}
+  .rs-tag-int { background: #F3E8FF;color: #7C3AED;}
+  .rs-title { font-weight: 700;color: #1A1F36;}
+  .rs-body { display: block;font-size: 12.5px;color: #64748B;margin-top: 3px;}
+  @media (max-width: 640px) { .rs-row { flex-wrap: wrap;} .rs-day { min-width: 0;} }
   /* タスク内見出し（フェーズ区切り用） */
   .task-heading { font-size: 13px;font-weight: 600;color: #1A1F36;padding: 12px 0 4px 0;margin-top: 6px;border-top: 1px solid #E5E7EB;}
   .task-heading:first-child { margin-top: 0;border-top: none;padding-top: 0;}
@@ -3042,23 +3056,23 @@ const data = [
               title: "月次業務",
               tasks: [
                 "毎月の定例業務です。<b>期限がある順</b>に3ブロックに分けています。ブロック内も上から順に実施してください。",
-                "<b>■ 月初〜10日【期限厳守ブロック】</b>",
-                "（1日・顧客）<b>旅費報告書の締め連絡</b>：顧問先へ当月分の旅費・出張報告書の提出締切（20日）を案内します。",
-                "（〜10日）<b>源泉所得税の納付</b>：前月の給与・報酬から預かった分。納期特例（常時10人未満・届出済み）の場合は年2回：<b>上期分（1〜6月）＝7月10日</b>・<b>下期分（7〜12月）＝翌年1月20日</b> → <span class=\"tool-link\" onclick=\"jumpToKaikeiStep('F 税金','手順6')\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">F税金 手順6</span>。※遅れると不納付加算税（原則10%・自主納付なら5%）",
-                "（〜10日）<b>住民税（特別徴収）の納付</b>：従業員から預かった前月分。",
-                "（給与支給日まで）<b>勤怠の締め → 給与計算 → 振込・明細発行</b> → <span class=\"tool-link\" onclick=\"jumpToKaikeiStep('D 給与','手順2')\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">D給与 手順2〜5</span>",
-                "<b>■ 月中【平準化ブロック】</b>",
-                "記帳・証憑整理の遅れを回収（『日常業務』①〜④のたまり分をゼロに）。",
-                "定例の請求書発行：定期請求書（自動作成予約）分の内容確認と送付 → <span class=\"tool-link\" onclick=\"jumpToKaikeiStep('A 売上','手順2')\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">A売上 手順2</span>",
-                "（15日・内部）<b>顧客管理シートの進捗更新</b>：各顧問先の対応状況を月中時点で最新化します。",
-                "（20日・顧客）<b>旅費報告書の締切・内容チェック</b>：1日に案内した報告書を回収し、不足・不備がないか確認します。",
-                "（20日ごろ・顧客）<b>給与明細の送付</b>：支給日（24日）の直前だと修正が間に合わないため、20日ごろまでの送付を推奨（計算〜発行の流れは期限厳守ブロックの D給与 手順2〜5）。",
-                "<b>■ 月末〜翌月5営業日【締めブロック】</b>",
-                "（月末）社会保険料の口座振替を確認（前月分が当月末に引き落とし）。残高不足に注意。",
-                "（末日・内部）<b>顧客管理シートの進捗更新</b>：月末時点の最新状況に更新します（15日更新分の締め直し）。",
-                "<b>月次クローズ</b>：残高照合 → 登録漏れ・二重登録 → 売掛・買掛残高 → 月次推移の確認、の順でチェック1〜5を実施 → <span class=\"tool-link\" onclick=\"jumpToKaikeiStep('K 月次クローズ（毎月の締めチェック）','チェック1')\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">K月次クローズ チェック1〜5</span>",
-                "<b>試算表・月次レポートの作成</b> → 数字を読んで気づきをメモ → <span class=\"tool-link\" onclick=\"jumpToKaikeiStep('K 月次クローズ（毎月の締めチェック）','チェック5')\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">K チェック5（月次レポート）</span>",
-                "<b>顧問先へ月次報告</b>：試算表＋資金繰りの状況＋アラート（売掛滞留・残高減少など）をセットで共有。",
+                { type: "rsblock", theme: "red", icon: "⏰", title: "月初〜10日", sub: "期限厳守ブロック" },
+                { day: "1日", who: "顧客", title: "旅費報告書の締め連絡", body: "顧問先へ当月分の旅費・出張報告書の提出締切（20日）を案内します。" },
+                { day: "〜10日", who: "顧客", title: "源泉所得税の納付", body: "前月の給与・報酬から預かった分。納期特例（常時10人未満・届出済み）の場合は年2回：<b>上期分（1〜6月）＝7月10日</b>・<b>下期分（7〜12月）＝翌年1月20日</b> → <span class=\"tool-link\" onclick=\"jumpToKaikeiStep('F 税金','手順6')\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">F税金 手順6</span>。※遅れると不納付加算税（原則10%・自主納付なら5%）" },
+                { day: "〜10日", who: "顧客", title: "住民税（特別徴収）の納付", body: "従業員から預かった前月分。" },
+                { day: "支給日まで", title: "勤怠の締め → 給与計算 → 振込・明細発行", body: "<span class=\"tool-link\" onclick=\"jumpToKaikeiStep('D 給与','手順2')\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">D給与 手順2〜5</span>" },
+                { type: "rsblock", theme: "blue", icon: "🌊", title: "月中", sub: "平準化ブロック" },
+                { day: "月中", title: "記帳・証憑整理の遅れを回収", body: "『日常業務』①〜④のたまり分をゼロに。" },
+                { day: "月中", title: "定例の請求書発行", body: "定期請求書（自動作成予約）分の内容確認と送付 → <span class=\"tool-link\" onclick=\"jumpToKaikeiStep('A 売上','手順2')\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">A売上 手順2</span>" },
+                { day: "15日", who: "内部", title: "顧客管理シートの進捗更新", body: "各顧問先の対応状況を月中時点で最新化します。" },
+                { day: "20日", who: "顧客", title: "旅費報告書の締切・内容チェック", body: "1日に案内した報告書を回収し、不足・不備がないか確認します。" },
+                { day: "20日ごろ", who: "顧客", title: "給与明細の送付", body: "支給日（24日）の直前だと修正が間に合わないため、20日ごろまでの送付を推奨（計算〜発行の流れは期限厳守ブロックの D給与 手順2〜5）。" },
+                { type: "rsblock", theme: "green", icon: "✅", title: "月末〜翌月5営業日", sub: "締めブロック" },
+                { day: "月末", title: "社会保険料の口座振替を確認", body: "前月分が当月末に引き落とし。残高不足に注意。" },
+                { day: "末日", who: "内部", title: "顧客管理シートの進捗更新", body: "月末時点の最新状況に更新します（15日更新分の締め直し）。" },
+                { day: "〜翌5営業日", title: "月次クローズ", body: "残高照合 → 登録漏れ・二重登録 → 売掛・買掛残高 → 月次推移の確認、の順でチェック1〜5を実施 → <span class=\"tool-link\" onclick=\"jumpToKaikeiStep('K 月次クローズ（毎月の締めチェック）','チェック1')\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">K月次クローズ チェック1〜5</span>" },
+                { day: "〜翌5営業日", title: "試算表・月次レポートの作成", body: "数字を読んで気づきをメモ → <span class=\"tool-link\" onclick=\"jumpToKaikeiStep('K 月次クローズ（毎月の締めチェック）','チェック5')\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">K チェック5（月次レポート）</span>" },
+                { day: "〜翌5営業日", who: "顧客", title: "顧問先へ月次報告", body: "試算表＋資金繰りの状況＋アラート（売掛滞留・残高減少など）をセットで共有。" },
                 "【注意点】10日・月末が土日祝の場合は翌平日に繰り越し。源泉の納期特例は給与の支給人数が<b>常時10人未満</b>の場合のみ。",
                 "【関連業務】年に一度の作業は『年次業務』へ。税務の詳細は 4. 税務、労務は 5. 労務。",
               ]
@@ -4799,6 +4813,15 @@ function renderTasks(tasks) {
   const items = tasks.map(t => {
     if (typeof t === "object" && t.type === "heading") {
       return `<div class="task-heading">${t.text}</div>`;
+    }
+    // ランシートのブロック見出し（freeeヘルプ風カード）
+    if (typeof t === "object" && t.type === "rsblock") {
+      return `<div class="rs-head rs-head-${t.theme || "blue"}">${t.icon || ""} ${t.title}${t.sub ? `<span class="rs-sub">${t.sub}</span>` : ""}</div>`;
+    }
+    // ランシートのタスク行（日付バッジ＋顧客/内部タグ）
+    if (typeof t === "object" && t.day !== undefined) {
+      const tag = t.who ? `<span class="rs-tag ${t.who === "内部" ? "rs-tag-int" : "rs-tag-cli"}">${t.who}</span>` : "";
+      return `<div class="rs-row"><span class="rs-day">${t.day}</span>${tag}<span style="flex:1;min-width:0;"><span class="rs-title">${t.title}</span>${t.body ? `<span class="rs-body">${t.body}</span>` : ""}</span></div>`;
     }
     // 【...】のみで構成される文字列は見出しとして強調
     if (typeof t === "string" && /^【[^】]+】$/.test(t.trim())) {
