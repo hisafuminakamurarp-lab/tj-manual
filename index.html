@@ -439,7 +439,7 @@
     <span>マニュアル</span>
     <span class="breadcrumb-sep">›</span>
     <span class="" id="breadcrumbCurrent">業務</span>
-    <span id="breadcrumbExtra"><span class="breadcrumb-sep">›</span><span class="">顧問業務マップ</span><span class="breadcrumb-sep">›</span><span class="">全体図</span><span class="breadcrumb-sep">›</span><span class="breadcrumb-current">会計（freee会計）</span></span>
+    <span id="breadcrumbExtra"><span class="breadcrumb-sep">›</span><span class="">顧問業務マップ</span><span class="breadcrumb-sep">›</span><span class="">業務一覧</span><span class="breadcrumb-sep">›</span><span class="breadcrumb-current">会計（freee会計）</span></span>
   </div>
   <span class="topbar-badge" style="background: rgba(37, 99, 235, 0.082); color: rgb(37, 99, 235);">4 セクション</span></div>
   <div class="content-area" id="contentArea"></div>
@@ -533,7 +533,7 @@ const data = [
       tasks: [],
       subsections: [
         {
-          title: "全体図",
+          title: "業務一覧",
           tasks: [],
           children: [
         {
@@ -5445,7 +5445,7 @@ function jumpToShouzaiSection() {
   }, 50);
 }
 
-// 業務 ＞ 顧問業務マップ ＞ 全体図 ＞ 会計（freee会計）を開いてスクロール（freee会計の移行先）
+// 業務 ＞ 顧問業務マップ ＞ 業務一覧 ＞ 会計（freee会計）を開いてスクロール（freee会計の移行先）
 // childTitle を渡すと配下の孫ノード（A〜L・学習ガイド）まで開いてスクロールする
 function jumpToPhase(id) {
   var el = document.getElementById(id);
