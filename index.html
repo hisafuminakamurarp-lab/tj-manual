@@ -3074,7 +3074,6 @@ const data = [
                 "毎月の定例業務です。<b>期限がある順</b>に3ブロックに分けています。ブロック内も上から順に実施してください。",
                 { type: "rsblock", theme: "red", icon: "⏰", title: "月初〜10日", sub: "期限厳守ブロック" },
                 { day: "1日", who: "顧客", title: "旅費報告書の締め連絡", body: "顧問先へ当月分の旅費・出張報告書の提出締切（20日）を案内します。" },
-                { day: "〜10日", who: "顧客", title: "源泉所得税の納付", body: "前月の給与・報酬から預かった分。納期特例（常時10人未満・届出済み）の場合は年2回：<b>上期分（1〜6月）＝7月10日</b>・<b>下期分（7〜12月）＝翌年1月20日</b> → <span class=\"tool-link\" onclick=\"jumpToKaikeiStep('F 税金','手順6')\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">F税金 手順6</span>。※遅れると不納付加算税（原則10%・自主納付なら5%）" },
                 { day: "〜10日", who: "顧客", title: "住民税（特別徴収）の納付", body: "従業員から預かった前月分。" },
                 { day: "支給日まで", title: "勤怠の締め → 給与計算 → 振込・明細発行", body: "<span class=\"tool-link\" onclick=\"jumpToKaikeiStep('D 給与','手順2')\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">D給与 手順2〜5</span>" },
                 { type: "rsblock", theme: "blue", icon: "🌊", title: "月中", sub: "平準化ブロック" },
@@ -3089,8 +3088,8 @@ const data = [
                 { day: "〜翌5営業日", title: "月次クローズ", body: "残高照合 → 登録漏れ・二重登録 → 売掛・買掛残高 → 月次推移の確認、の順でチェック1〜5を実施 → <span class=\"tool-link\" onclick=\"jumpToKaikeiStep('K 月次クローズ（毎月の締めチェック）','チェック1')\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">K月次クローズ チェック1〜5</span>" },
                 { day: "〜翌5営業日", title: "試算表・月次レポートの作成", body: "数字を読んで気づきをメモ → <span class=\"tool-link\" onclick=\"jumpToKaikeiStep('K 月次クローズ（毎月の締めチェック）','チェック5')\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">K チェック5（月次レポート）</span>" },
                 { day: "〜翌5営業日", who: "顧客", title: "顧問先へ月次報告", body: "試算表＋資金繰りの状況＋アラート（売掛滞留・残高減少など）をセットで共有。" },
-                "【注意点】10日・月末が土日祝の場合は翌平日に繰り越し。源泉の納期特例は給与の支給人数が<b>常時10人未満</b>の場合のみ。",
-                "【関連業務】年に一度の作業は『年次業務』へ。税務の詳細は 4. 税務、労務は 5. 労務。",
+                "【注意点】10日・月末が土日祝の場合は翌平日に繰り越し。",
+                "【関連業務】年に一度の作業は『年次業務』へ。源泉所得税（納期特例）は『年次業務』の年間カレンダー（1月・7月）を参照。税務の詳細は 4. 税務、労務は 5. 労務。",
               ]
             },
             {
