@@ -3055,20 +3055,6 @@ const data = [
           tasks: [],
           children: [
             {
-              title: "日常業務",
-              tasks: [
-                "毎日〜週数回まわす基本ルーティンです。<b>①〜⑥を上から順</b>に実施してください。",
-                { type: "rsblock", theme: "blue", icon: "🔁", title: "毎日のルーティン", sub: "①〜⑥を順に" },
-                { day: "毎日", title: "① 明細の同期確認", body: "freeeの口座一覧で同期エラー・最終同期日時をチェック。エラーがあれば再認証 → <span class=\"tool-link\" onclick=\"jumpToKaikeiStep('L 設定','（基礎）口座を登録')\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">L設定（口座の同期）</span>" },
-                { day: "毎日", title: "② 証憑の取込", body: "レシート・請求書は届き次第ファイルボックスへ（スマホ撮影・スキャン・メール転送）→ <span class=\"tool-link\" onclick=\"jumpToKaikeiStep('B 仕入請求書','手順1')\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">B仕入 手順1（ファイルボックス取込）</span>" },
-                { day: "毎日〜週3", title: "③ 記帳", body: "『自動で経理』で新着明細を取引登録。自動登録ルールに乗っているものは内容確認のみでOK → <span class=\"tool-link\" onclick=\"jumpToKaikeiStep('C 経費','手順2')\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">C経費 手順2（自動で経理）</span>" },
-                { day: "毎日〜週3", title: "④ 消込", body: "入金があれば売掛金の消込 → <span class=\"tool-link\" onclick=\"jumpToKaikeiStep('A 売上','手順5')\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">A売上 手順5</span>、支払があれば買掛金の消込 → <span class=\"tool-link\" onclick=\"jumpToKaikeiStep('B 仕入請求書','手順4')\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">B仕入 手順4</span>" },
-                { day: "発生都度", title: "⑤ 請求・支払の発生対応", body: "請求書の発行・送付 → <span class=\"tool-link\" onclick=\"jumpToKaikeiStep('A 売上','手順2')\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">A売上 手順2</span>／受取請求書の支払予定の確認 → <span class=\"tool-link\" onclick=\"jumpToKaikeiStep('B 仕入請求書','手順3')\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">B仕入 手順3</span>" },
-                { day: "毎日", who: "顧客", title: "⑥ 問い合わせ・依頼対応", body: "顧問先からの依頼・質問に対応し、対応内容を記録します。" },
-                "【関連業務】月初・月末の締めは『月次業務』、年に一度の作業は『年次業務』へ。操作の詳細はすべて <span class=\"tool-link\" onclick=\"jumpToKaikei('A 売上')\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">freee会計（A〜L）</span> に手順があります。",
-              ]
-            },
-            {
               title: "月次業務",
               tasks: [
                 "毎月の定例業務です。<b>期限がある順</b>に3ブロックに分けています。ブロック内も上から順に実施してください。",
@@ -3077,7 +3063,7 @@ const data = [
                 { day: "〜10日", who: "顧客", title: "住民税（特別徴収）の納付", body: "従業員から預かった前月分。" },
                 { day: "支給日まで", title: "勤怠の締め → 給与計算 → 振込・明細発行", body: "<span class=\"tool-link\" onclick=\"jumpToKaikeiStep('D 給与','手順2')\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">D給与 手順2〜5</span>" },
                 { type: "rsblock", theme: "blue", icon: "🌊", title: "月中", sub: "平準化ブロック" },
-                { day: "月中", title: "記帳・証憑整理の遅れを回収", body: "『日常業務』①〜④のたまり分をゼロに。" },
+                { day: "月中", title: "記帳・証憑整理の遅れを回収", body: "明細の取引登録・証憑の取込・売掛買掛の消込のたまり分をゼロに（操作は <span class=\"tool-link\" onclick=\"jumpToKaikeiStep('C 経費','手順2')\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">C経費 手順2（自動で経理）</span>・<span class=\"tool-link\" onclick=\"jumpToKaikeiStep('A 売上','手順5')\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">A売上 手順5（消込）</span>）。" },
                 { day: "月中", title: "定例の請求書発行", body: "定期請求書（自動作成予約）分の内容確認と送付 → <span class=\"tool-link\" onclick=\"jumpToKaikeiStep('A 売上','手順2')\" style=\"cursor:pointer;color:#A21034;text-decoration:underline;\">A売上 手順2</span>" },
                 { day: "15日", who: "内部", title: "顧客管理シートの進捗更新", body: "各顧問先の対応状況を月中時点で最新化します。" },
                 { day: "20日", who: "顧客", title: "旅費報告書の締切・内容チェック", body: "1日に案内した報告書を回収し、不足・不備がないか確認します。" },
@@ -4891,7 +4877,7 @@ function renderTodayWidget() {
   }).join("");
   return `<div class="today-hero">
     <div class="today-hero-date">📅 今日の定例 — ${m}月${d}日（${youbi}）</div>
-    ${rows || `<div class="today-hero-none">今日が期日の定例タスクはありません（日常業務①〜⑥は毎日どおり）</div>`}
+    ${rows || `<div class="today-hero-none">今日が期日の定例タスクはありません</div>`}
     ${monthRow ? `<div class="today-hero-month">📆 今月（${m}月）の年次業務：<b>${monthRow.title}</b></div>` : ""}
     <div class="today-hero-note">※10日・月末が土日祝の場合は翌平日に繰り越し。詳細は下の月次業務・年次業務を参照</div>
   </div>`;
