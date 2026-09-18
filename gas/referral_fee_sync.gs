@@ -3,15 +3,23 @@
  *
  * 「従業員データ」シートを元に「紹介料管理」シートを丸ごと作り直します。
  *
- * ■ 導入手順
- *   1. スプレッドシートで「拡張機能 → Apps Script」を開く
+ * ■ 導入手順（既存プロジェクト「【RP】入社フロー」に追加する）
+ *   1. Apps Script エディタで「ファイル ＋ → スクリプト」を選び、名前を「紹介料管理」にする
  *   2. このファイルの内容を貼り付けて保存
- *   3. スプレッドシートを再読み込みすると、メニューに「紹介料管理」が出る
- *   4. 「紹介料管理 → 従業員データから更新」を実行（初回は権限の許可が必要）
+ *   3. 「【入社フロー】①.gs」の onFormSubmitToEmployee の末尾（addToSchedule_ の try/catch の直後）に
+ *        try { syncReferralFees(); } catch (err) { Logger.log('紹介料管理の更新でエラー: ' + err); }
+ *      を 1 行追加する（フォーム提出時にも一覧が更新される）
+ *   4. スプレッドシートを再読み込みすると、メニューに「紹介料管理」が出る
+ *   5. 「紹介料管理 → 従業員データから更新」を実行（初回は権限の許可が必要）
  *
  * ■ 自動更新
- *   「従業員データ」シートを編集すると onEdit で自動的に再生成されます。
+ *   「従業員データ」シートを手で編集（紹介者の入力など）すると onEdit で自動的に再生成されます。
+ *   スクリプトによる書き込み（フォーム提出）では onEdit は動かないため、手順 3 の 1 行が必要です。
  *   不要なら onEdit 関数を削除してください。
+ *
+ * ■ 既存コードとの関係
+ *   既存の定数・関数名（DST_SHEET, nextYm_, formatTel_ など）とは重複しません。
+ *   このファイルは既存コードを参照せず単独で動きます。
  *
  * ■ 前提
  *   - 両シートとも 1 行目が見出し、2 行目がフィルタ行、3 行目からデータ
@@ -28,13 +36,14 @@ const CONFIG = {
   HEADER_ROW: 1,
   DATA_START_ROW: 3,
 
-  // 「従業員データ」の見出し名
+  // 「従業員データ」の見出し名と、見出しが見つからない場合に使う列
+  // （列は【入社フロー】①.gs の書き込み位置に合わせてある）
   SRC: {
-    id: '社員番号',
-    lastName: '氏名_姓',
-    firstName: '氏名_名',
-    hireDate: '入社年月日',
-    referrer: '紹介者',
+    id:        { header: '社員番号',   col: 'B' },
+    lastName:  { header: '氏名_姓',    col: 'C' },
+    firstName: { header: '氏名_名',    col: 'D' },
+    hireDate:  { header: '入社年月日', col: 'P' },
+    referrer:  { header: '紹介者',     col: 'AG' },
   },
 
   // 「紹介料管理」の見出し名（この順で出力）
@@ -142,11 +151,14 @@ function readEmployees_(sheet) {
   const lastCol = sheet.getLastColumn();
   if (lastRow < CONFIG.DATA_START_ROW) return [];
 
-  const headers = sheet.getRange(CONFIG.HEADER_ROW, 1, 1, lastCol).getValues()[0].map(h => String(h).trim());
-  const col = name => {
-    const i = headers.indexOf(name);
-    if (i < 0) throw new Error(`「${CONFIG.SOURCE_SHEET}」に見出し「${name}」がありません`);
-    return i;
+  const headers = sheet.getRange(CONFIG.HEADER_ROW, 1, 1, lastCol).getValues()[0].map(normalizeHeader_);
+  const col = spec => {
+    const i = headers.indexOf(normalizeHeader_(spec.header));
+    if (i >= 0) return i;
+    const fallback = columnLetterToIndex_(spec.col);
+    if (fallback < 0 || fallback >= lastCol) throw new Error(`「${CONFIG.SOURCE_SHEET}」に見出し「${spec.header}」がありません`);
+    Logger.log(`見出し「${spec.header}」が見つからないため ${spec.col} 列を使用`);
+    return fallback;
   };
   const c = {
     id: col(CONFIG.SRC.id),
@@ -245,9 +257,9 @@ function buildRow_(e, excluded) {
 
 function writeRows_(dst, rows) {
   const lastCol = dst.getLastColumn();
-  const headers = dst.getRange(CONFIG.HEADER_ROW, 1, 1, lastCol).getValues()[0].map(h => String(h).trim());
+  const headers = dst.getRange(CONFIG.HEADER_ROW, 1, 1, lastCol).getValues()[0].map(normalizeHeader_);
   const col = name => {
-    const i = headers.indexOf(name);
+    const i = headers.indexOf(normalizeHeader_(name));
     if (i < 0) throw new Error(`「${CONFIG.TARGET_SHEET}」に見出し「${name}」がありません`);
     return i + 1; // 1 始まり
   };
@@ -299,6 +311,23 @@ function normalizeId_(v) {
   if (typeof v === 'number') return String(v).padStart(CONFIG.ID_DIGITS, '0');
   const s = String(v).trim();
   return /^\d+$/.test(s) && s.length < CONFIG.ID_DIGITS ? s.padStart(CONFIG.ID_DIGITS, '0') : s;
+}
+
+/** 見出しの比較用: 前後の空白除去、全角括弧→半角、括弧内外のスペース除去 */
+function normalizeHeader_(h) {
+  return String(h == null ? '' : h)
+    .trim()
+    .replace(/（/g, '(').replace(/）/g, ')')
+    .replace(/[\s\u3000]/g, '');
+}
+
+/** 'A' → 0, 'AG' → 32 */
+function columnLetterToIndex_(letter) {
+  const s = String(letter || '').toUpperCase().trim();
+  if (!/^[A-Z]+$/.test(s)) return -1;
+  let n = 0;
+  for (let i = 0; i < s.length; i++) n = n * 26 + (s.charCodeAt(i) - 64);
+  return n - 1;
 }
 
 /** 氏名の比較用: 全角/半角スペースを全て除去 */
