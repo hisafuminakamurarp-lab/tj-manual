@@ -82,9 +82,9 @@ function setLogColors_(sh) {
   const red = sh.getRange(5, 4, LOG_END - 4, 7);     // D〜J
   const yellow = sh.getRange(5, 9, LOG_END - 4, 2);  // I〜J
   const rules = sh.getConditionalFormatRules().filter(r => !overlaps_(r, red));
-  rules.push(
+  rules.unshift(
     SpreadsheetApp.newConditionalFormatRule()
-      .whenFormulaSatisfied('=AND(OR($A5<>"",$B5<>""),OR($I5="",$I5<TODAY()))')
+      .whenFormulaSatisfied('=AND(COUNTA($A5:$J5)>0,OR($I5="",$I5<TODAY()))')
       .setBackground('#F8CBAD').setFontColor('#9C0006')
       .setRanges([red]).build(),
     SpreadsheetApp.newConditionalFormatRule()
