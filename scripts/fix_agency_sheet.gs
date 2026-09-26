@@ -152,7 +152,7 @@ function fixSummary_(sh) {
   // 代理店ID：アクションログから重複なしで自動展開
   sh.getRange(`A${SUM_FIRST}`).setFormula(
     `=IFERROR(LET(ids,UNIQUE(FILTER(${L}!A5:A${LOG_END},${L}!A5:A${LOG_END}<>"")),` +
-    `ARRAYFORMULA(IFERROR(HYPERLINK("${KINTONE_APP_URL}?query="&ENCODEURL("${KINTONE_ID_FIELD} = &ids&),ids),ids))),"")`);
+    `ARRAYFORMULA(IFERROR(HYPERLINK("${KINTONE_APP_URL}?query="&ENCODEURL("${KINTONE_ID_FIELD} = """&ids&""""),ids),ids))),"")`);
 
   const rows = [];
   for (let r = SUM_FIRST; r <= SUM_END; r++) {
