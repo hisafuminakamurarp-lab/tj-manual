@@ -4,7 +4,7 @@
  * 「代理店一覧」シート削除で切れた数式を、今のシート構成のまま繋ぎ直す。
  *   - サマリー        … 代理店別集計（IDはアクションログから自動抽出）
  *   - 紹介・成約実績  … 代理店名をアクションログから自動表示
- *   - アクションログ  … 参照切れ数式の削除、プルダウン、期限の色分け
+ *   - アクションログ  … 参照切れ数式の削除、プルダウン、色分け（予定日なし・期限切れ＝D〜J列赤）
  *   - 使い方 / 設定 / 定例アクション計画 … 説明文を今の構成に合わせて更新
  *
  * 使い方：拡張機能 → Apps Script に貼り付け → fixAgencySheet を実行。
@@ -70,18 +70,27 @@ function fixLog_(sh) {
       .setHelpText('同じ代理店IDが既に登録されています。')
       .build());
 
-  // 次回アクション予定日：期限切れ＝赤、期限間近（設定C8の日数以内）＝黄
-  const target = sh.getRange(5, 9, LOG_END - 4, 2);
-  const rules = sh.getConditionalFormatRules().filter(r => !overlaps_(r, target));
+  setLogColors_(sh);
+}
+
+// 次回アクション予定日が未入力・期限切れ＝D〜J列を赤、期限間近（設定C8の日数以内）＝I〜J列を黄
+function setLogColors() {
+  setLogColors_(SpreadsheetApp.getActive().getSheetByName(SH.log));
+}
+
+function setLogColors_(sh) {
+  const red = sh.getRange(5, 4, LOG_END - 4, 7);     // D〜J
+  const yellow = sh.getRange(5, 9, LOG_END - 4, 2);  // I〜J
+  const rules = sh.getConditionalFormatRules().filter(r => !overlaps_(r, red));
   rules.push(
     SpreadsheetApp.newConditionalFormatRule()
-      .whenFormulaSatisfied('=AND($I5<>"",$I5<TODAY())')
-      .setBackground('#F8CBAD').setFontColor('#9C0006').setBold(true)
-      .setRanges([target]).build(),
+      .whenFormulaSatisfied('=AND(OR($A5<>"",$B5<>""),OR($I5="",$I5<TODAY()))')
+      .setBackground('#F8CBAD').setFontColor('#9C0006')
+      .setRanges([red]).build(),
     SpreadsheetApp.newConditionalFormatRule()
       .whenFormulaSatisfied('=AND($I5<>"",$I5>=TODAY(),$I5-TODAY()<=INDIRECT("設定!C8"))')
       .setBackground('#FFE699')
-      .setRanges([target]).build());
+      .setRanges([yellow]).build());
   sh.setConditionalFormatRules(rules);
 }
 
@@ -177,7 +186,7 @@ function fixSummary_(sh) {
 // ---------------------------------------------------------------- 説明文
 function fixTexts_(ss) {
   ss.getSheetByName(SH.plan).getRange('C5').setValue(
-    '『アクションログ』を次回アクション予定日で並べ替え、期限切れ（赤）・期限間近（黄）の代理店に連絡');
+    '『アクションログ』で赤（次回予定日なし・期限切れ）→黄（期限間近）の代理店に連絡し、次回アクションを入れる');
 
   const conf = ss.getSheetByName(SH.conf);
   conf.getRange('B6').setValue('稼働率の対象期間（ヶ月）');
@@ -199,14 +208,14 @@ function fixTexts_(ss) {
     ['■ 色のルール', null],
     ['黄色の見出し', '入力する列。'],
     ['灰色の見出し／数式の列', '自動計算（数式が入っているので上書きしない）。'],
-    ['次回アクション 赤', '次回アクション予定日を過ぎている。'],
+    ['アクションログ 赤（D〜J列）', '次回アクション予定日が未入力、または予定日を過ぎている。'],
     ['次回アクション 黄', '次回アクション予定日まで『設定』C8の日数以内。'],
     ['', null],
     ['■ 運用の流れ', null],
     ['① 代理店を登録', '『アクションログ』に代理店ID・代理店名・担当者を入力。代理店IDはkintone『マスタ｜代理店管理』と同じIDを使う。'],
     ['② 接触したら更新', 'その代理店の行の「最終アクション日・内容」を書き換え、「次回アクション予定日・内容」を必ず入れる。'],
     ['③ 紹介を受けたら記録', '『紹介・成約実績』に1行追加（代理店ID・紹介社名・紹介日）。成約したら同じ行に成約日・金額・報酬を追記。'],
-    ['④ 毎週月曜に確認', '『アクションログ』を次回アクション予定日で並べ替え、赤→黄の順に連絡。'],
+    ['④ 毎週月曜に確認', '『アクションログ』で赤の行（予定日なし・期限切れ）→黄の行（期限間近）の順に連絡し、次回アクションを入れる。'],
     ['⑤ 月末に振り返り', '『サマリー』で稼働率が0%（灰色）の代理店を洗い出し、再活性化の打ち手を決める。'],
     ['', null],
     ['■ 自動計算の意味', null],
