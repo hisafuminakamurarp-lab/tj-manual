@@ -6,6 +6,7 @@
  *   - 紹介・成約実績  … 代理店名をアクションログから自動表示
  *   - アクションログ  … 参照切れ数式の削除、プルダウン、色分け（予定日なし・期限切れ＝D〜J列赤）
  *   - 使い方 / 設定 / 定例アクション計画 … 説明文を今の構成に合わせて更新
+ *   - 代理店ID … kintone『8. 代理店管理』のレコードへリンク（入力すると自動でリンク化）
  *
  * 使い方：拡張機能 → Apps Script に貼り付け → fixAgencySheet を実行。
  * 何度実行しても同じ状態になる（入力済みのデータは消さない）。
@@ -24,6 +25,10 @@ const KPI_END = 3003;   // 紹介・成約実績の最終行
 const SUM_FIRST = 6;    // サマリーの代理店1行目（5行目は合計）
 const SUM_END = 105;    // 代理店100社分
 
+// kintone『8. 代理店管理』のレコード詳細URL（末尾に代理店IDの数字部分を付ける）
+// 例：P-0000016 → https://zeimukeeoer.cybozu.com/k/39/show#record=16
+const KINTONE_RECORD_URL = 'https://zeimukeeoer.cybozu.com/k/39/show#record=';
+
 function fixAgencySheet() {
   const ss = SpreadsheetApp.getActive();
   const need = Object.values(SH).filter(n => !ss.getSheetByName(n));
@@ -33,6 +38,7 @@ function fixAgencySheet() {
   fixKpi_(ss.getSheetByName(SH.kpi));
   fixSummary_(ss.getSheetByName(SH.sum));
   fixTexts_(ss);
+  linkKintoneIds();
   SpreadsheetApp.flush();
 
   const broken = findBrokenFormulas_(ss);
@@ -144,7 +150,8 @@ function fixSummary_(sh) {
 
   // 代理店ID：アクションログから重複なしで自動展開
   sh.getRange(`A${SUM_FIRST}`).setFormula(
-    `=IFERROR(UNIQUE(FILTER(${L}!A5:A${LOG_END},${L}!A5:A${LOG_END}<>"")),"")`);
+    `=IFERROR(LET(ids,UNIQUE(FILTER(${L}!A5:A${LOG_END},${L}!A5:A${LOG_END}<>"")),` +
+    `ARRAYFORMULA(IFERROR(HYPERLINK("${KINTONE_RECORD_URL}"&VALUE(REGEXEXTRACT(ids,"[0-9]+$")),ids),ids))),"")`);
 
   const rows = [];
   for (let r = SUM_FIRST; r <= SUM_END; r++) {
@@ -221,6 +228,7 @@ function fixTexts_(ss) {
     ['■ 自動計算の意味', null],
     ['稼働率', '直近の対象期間（初期値3ヶ月）のうち、紹介があった月の割合。3ヶ月中2ヶ月紹介あり→67%。'],
     ['紹介数・成約数', '『紹介・成約実績』の行数と、そのうち成約日が入っている行数。'],
+    ['代理店IDのリンク', '代理店IDはkintone『8. 代理店管理』のレコードへのリンク。クリックするとkintoneが開く（入力すると自動でリンク化）。'],
   ];
   const how = ss.getSheetByName(SH.howto);
   how.getRange('B4:C40').clearContent().setBackground(null).setFontWeight('normal');
@@ -235,6 +243,44 @@ function fixTexts_(ss) {
   how.getRange('B13').setBackground('#D9D9D9');
   how.getRange('B14').setBackground('#F8CBAD');
   how.getRange('B15').setBackground('#FFE699');
+}
+
+// ---------------------------------------------------------------- kintoneリンク
+// アクションログ・紹介・成約実績の代理店IDを、kintoneのレコードへのリンクにする（既存データを一括変換）
+function linkKintoneIds() {
+  const ss = SpreadsheetApp.getActive();
+  [SH.log, SH.kpi].forEach(name => {
+    const sh = ss.getSheetByName(name);
+    const last = sh.getLastRow();
+    if (last >= 5) linkIds_(sh.getRange(5, 1, last - 4, 1));
+  });
+}
+
+// 代理店IDを入力・貼り付け・プルダウン選択したら自動でリンク化（シンプルトリガー）
+function onEdit(e) {
+  const sh = e.range.getSheet();
+  if (![SH.log, SH.kpi].includes(sh.getName())) return;
+  if (e.range.getColumn() !== 1) return;
+  const top = Math.max(e.range.getRow(), 5);
+  const bottom = e.range.getLastRow();
+  if (bottom < top) return;
+  linkIds_(sh.getRange(top, 1, bottom - top + 1, 1));
+}
+
+function linkIds_(range) {
+  const values = range.getDisplayValues();
+  const rich = values.map(([v]) => {
+    const text = String(v).trim();
+    const url = kintoneUrl_(text);
+    const b = SpreadsheetApp.newRichTextValue().setText(text);
+    return [url ? b.setLinkUrl(url).build() : b.build()];
+  });
+  range.setRichTextValues(rich);
+}
+
+function kintoneUrl_(id) {
+  const m = String(id).match(/([0-9]+)$/);
+  return m ? KINTONE_RECORD_URL + Number(m[1]) : null;
 }
 
 // ---------------------------------------------------------------- 共通
