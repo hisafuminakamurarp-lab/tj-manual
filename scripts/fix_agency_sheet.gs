@@ -25,9 +25,10 @@ const KPI_END = 3003;   // 紹介・成約実績の最終行
 const SUM_FIRST = 6;    // サマリーの代理店1行目（5行目は合計）
 const SUM_END = 105;    // 代理店100社分
 
-// kintone『8. 代理店管理』のレコード詳細URL（末尾に代理店IDの数字部分を付ける）
-// 例：P-0000016 → https://zeimukeeoer.cybozu.com/k/39/show#record=16
-const KINTONE_RECORD_URL = 'https://zeimukeeoer.cybozu.com/k/39/show#record=';
+// kintone『8. 代理店管理』アプリのURLと、代理店IDのフィールドコード
+// 代理店IDで一覧を絞り込んだページを開く（例：代理店ID = "P-0000016"）
+const KINTONE_APP_URL = 'https://zeimukeeoer.cybozu.com/k/39/';
+const KINTONE_ID_FIELD = '代理店ID';
 
 function fixAgencySheet() {
   const ss = SpreadsheetApp.getActive();
@@ -151,7 +152,7 @@ function fixSummary_(sh) {
   // 代理店ID：アクションログから重複なしで自動展開
   sh.getRange(`A${SUM_FIRST}`).setFormula(
     `=IFERROR(LET(ids,UNIQUE(FILTER(${L}!A5:A${LOG_END},${L}!A5:A${LOG_END}<>"")),` +
-    `ARRAYFORMULA(IFERROR(HYPERLINK("${KINTONE_RECORD_URL}"&VALUE(REGEXEXTRACT(ids,"[0-9]+$")),ids),ids))),"")`);
+    `ARRAYFORMULA(IFERROR(HYPERLINK("${KINTONE_APP_URL}?query="&ENCODEURL("${KINTONE_ID_FIELD} = &ids&),ids),ids))),"")`);
 
   const rows = [];
   for (let r = SUM_FIRST; r <= SUM_END; r++) {
@@ -228,7 +229,7 @@ function fixTexts_(ss) {
     ['■ 自動計算の意味', null],
     ['稼働率', '直近の対象期間（初期値3ヶ月）のうち、紹介があった月の割合。3ヶ月中2ヶ月紹介あり→67%。'],
     ['紹介数・成約数', '『紹介・成約実績』の行数と、そのうち成約日が入っている行数。'],
-    ['代理店IDのリンク', '代理店IDはkintone『8. 代理店管理』のレコードへのリンク。クリックするとkintoneが開く（入力すると自動でリンク化）。'],
+    ['代理店IDのリンク', '代理店IDはkintone『8. 代理店管理』のレコードへのリンク。クリックするとkintoneでその代理店に絞り込んだ一覧が開く（入力すると自動でリンク化）。'],
   ];
   const how = ss.getSheetByName(SH.howto);
   how.getRange('B4:C40').clearContent().setBackground(null).setFontWeight('normal');
@@ -279,8 +280,8 @@ function linkIds_(range) {
 }
 
 function kintoneUrl_(id) {
-  const m = String(id).match(/([0-9]+)$/);
-  return m ? KINTONE_RECORD_URL + Number(m[1]) : null;
+  if (!id) return null;
+  return KINTONE_APP_URL + '?query=' + encodeURIComponent(`${KINTONE_ID_FIELD} = "${id}"`);
 }
 
 // ---------------------------------------------------------------- 共通
