@@ -50,7 +50,7 @@ function fixAgencySheet() {
   if (need.length) throw new Error('シートが見つかりません：' + need.join('、'));
 
   const c = kpiCols_(ss.getSheetByName(SH.kpi));
-  fixLog_(ss.getSheetByName(SH.log), c);
+  fixLog_(ss.getSheetByName(SH.log));
   const notes = fixKpi_(ss.getSheetByName(SH.kpi), c);
   fixSummary_(ss.getSheetByName(SH.sum), c);
   fixTexts_(ss);
@@ -66,11 +66,10 @@ function fixAgencySheet() {
 }
 
 // ---------------------------------------------------------------- アクションログ
-function fixLog_(sh, c) {
+function fixLog_(sh) {
   sh.getRange('A2').setValue(
     '代理店ごとに1行。接触したら「最終アクション日・内容」と「次回アクション予定日・内容」を更新します。' +
-    '代理店ID・代理店名はここが元データになり、『紹介・成約実績』『サマリー』に自動反映されます。' +
-    '紹介社数・成約数は『紹介・成約実績』から自動で数えます。');
+    '代理店ID・代理店名はここが元データになり、『紹介・成約実績』『サマリー』に自動反映されます。');
 
   // C列（代理店担当者）：削除済みシートを参照する数式だけを消し、入力済みの値は残す
   const rng = sh.getRange(5, 3, LOG_END - 4, 1);
@@ -93,19 +92,6 @@ function fixLog_(sh, c) {
       .setAllowInvalid(false)
       .setHelpText('同じ代理店IDが既に登録されています。')
       .build());
-
-  // K列：紹介社数、L列：成約数（『紹介・成約実績』から自動集計）
-  const kId = kpiRange_(c.id), kClose = kpiRange_(c.close);
-  const counts = [];
-  for (let r = 5; r <= LOG_END; r++) {
-    counts.push([
-      `=IF(A${r}="","",COUNTIF(${kId},A${r}))`,
-      `=IF(A${r}="","",COUNTIFS(${kId},A${r},${kClose},"<>"))`,
-    ]);
-  }
-  sh.getRange('K4:L4').setValues([['紹介社数', '成約数']]).setBackground('#D9D9D9');
-  sh.getRange(5, 11, counts.length, 2).setFormulas(counts)
-    .setNumberFormat('#,##0').setHorizontalAlignment('center');
 
   setLogColors_(sh);
 }
@@ -309,7 +295,7 @@ function fixTexts_(ss) {
 
   const lines = [
     ['■ シート構成', null],
-    ['アクションログ', '代理店ごとに1行。代理店の基本情報と、最終アクション・次回アクションを管理する。代理店IDの元データ。紹介社数・成約数は自動集計。'],
+    ['アクションログ', '代理店ごとに1行。代理店の基本情報と、最終アクション・次回アクションを管理する。代理店IDの元データ。'],
     ['紹介・成約実績', '紹介1件につき1行。代理店IDを選ぶと代理店名が自動表示。成約したら成約日・金額・報酬を入力。'],
     ['サマリー', '代理店別の稼働率・紹介数・成約数・成約金額・代理店報酬を自動集計（入力不要）。'],
     ['定例アクション計画', '週次・月次・四半期で行う代理店向けアクションの一覧（運用例）。'],
