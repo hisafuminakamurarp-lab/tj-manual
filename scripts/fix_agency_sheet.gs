@@ -30,27 +30,43 @@ const SUM_END = 105;    // 代理店100社分
 const KINTONE_APP_URL = 'https://zeimukeeoer.cybozu.com/k/39/';
 const KINTONE_ID_FIELD = '代理店ID';
 
+// 成約商材の選択肢（kintoneのドロップダウンと同じ内容）。kintone側で増やしたらここにも追加して再実行
+const ANKEN1_OPTIONS = [
+  '節税ショット', '助成金', '補助金', '税務調査', '資金調達', '金融コンサル', '経営コンサル',
+  '社会保険料削減スキーム', '蓄電池', '決算申告', '確定申告', '記帳代行',
+];
+const ANKEN2_OPTIONS = [
+  'GPUサーバー', 'モバイルファンド', '大型ビジョン', 'デジタルサイネージ', 'Elan Media 広告',
+  '税務キーパー決算書診断', 'ものづくり補助金', 'IT導入補助金', 'キャリアアップ助成金',
+  '事業展開等リスキングコース', 'UTGL', 'ファミリーオフィス', 'ジンバブエ投資(ゴールド)',
+  'エンジェル税制', 'キャプティブ', 'アイヌ', '同和', 'ドバイ不動産', '税務調査決算書診断',
+  '税務調査立会', '模擬調査',
+];
+const OPT_FIRST = 14, OPT_END = 63;  // 『設定』の選択肢リスト行（50件まで）
+
 function fixAgencySheet() {
   const ss = SpreadsheetApp.getActive();
   const need = Object.values(SH).filter(n => !ss.getSheetByName(n));
   if (need.length) throw new Error('シートが見つかりません：' + need.join('、'));
 
-  fixLog_(ss.getSheetByName(SH.log));
-  fixKpi_(ss.getSheetByName(SH.kpi));
-  fixSummary_(ss.getSheetByName(SH.sum));
+  const c = kpiCols_(ss.getSheetByName(SH.kpi));
+  fixLog_(ss.getSheetByName(SH.log), c);
+  const notes = fixKpi_(ss.getSheetByName(SH.kpi), c);
+  fixSummary_(ss.getSheetByName(SH.sum), c);
   fixTexts_(ss);
   linkKintoneIds();
   SpreadsheetApp.flush();
 
   const broken = findBrokenFormulas_(ss);
-  const msg = broken.length
+  let msg = broken.length
     ? '修正しました。ただし参照切れの数式が残っています：\n' + broken.slice(0, 20).join('\n')
     : '修正が完了しました。参照切れの数式はありません。';
+  if (notes.length) msg += '\n\n' + notes.join('\n');
   SpreadsheetApp.getUi().alert(msg);
 }
 
 // ---------------------------------------------------------------- アクションログ
-function fixLog_(sh) {
+function fixLog_(sh, c) {
   sh.getRange('A2').setValue(
     '代理店ごとに1行。接触したら「最終アクション日・内容」と「次回アクション予定日・内容」を更新します。' +
     '代理店ID・代理店名はここが元データになり、『紹介・成約実績』『サマリー』に自動反映されます。' +
@@ -79,12 +95,12 @@ function fixLog_(sh) {
       .build());
 
   // K列：紹介社数、L列：成約数（『紹介・成約実績』から自動集計）
-  const K = `'${SH.kpi}'`;
+  const kId = kpiRange_(c.id), kClose = kpiRange_(c.close);
   const counts = [];
   for (let r = 5; r <= LOG_END; r++) {
     counts.push([
-      `=IF(A${r}="","",COUNTIF(${K}!$A$5:$A$${KPI_END},A${r}))`,
-      `=IF(A${r}="","",COUNTIFS(${K}!$A$5:$A$${KPI_END},A${r},${K}!$E$5:$E$${KPI_END},"<>"))`,
+      `=IF(A${r}="","",COUNTIF(${kId},A${r}))`,
+      `=IF(A${r}="","",COUNTIFS(${kId},A${r},${kClose},"<>"))`,
     ]);
   }
   sh.getRange('K4:L4').setValues([['紹介社数', '成約数']]).setBackground('#D9D9D9');
@@ -116,10 +132,42 @@ function setLogColors_(sh) {
 }
 
 // ---------------------------------------------------------------- 紹介・成約実績
-function fixKpi_(sh) {
+// 見出し（4行目）の名前から列番号を探す。列を増やしても動くようにするため
+function kpiCols_(sh) {
+  const h = sh.getRange(4, 1, 1, sh.getLastColumn()).getDisplayValues()[0]
+    .map(v => v.replace(/\s/g, ''));
+  const find = (label, re) => {
+    const i = h.findIndex(v => re.test(v));
+    if (i < 0) throw new Error(`『${SH.kpi}』の4行目に「${label}」の列が見つかりません`);
+    return colLetter_(i + 1);
+  };
+  return {
+    id: find('代理店ID', /代理店ID/),
+    intro: find('紹介日', /紹介日/),
+    close: find('成約日', /^成約日/),
+    komon: find('成約商材（顧問種別）', /顧問種別/),
+    anken1: find('成約商材（案件種別①）', /案件種別(①|1)/),
+    anken2: find('成約商材（案件種別②）', /案件種別(②|2)/),
+    amount: find('成約金額（円）', /成約金額/),
+    reward: find('代理店報酬（円）', /代理店報酬/),
+  };
+}
+
+function kpiRange_(col) {
+  return `'${SH.kpi}'!$${col}$5:$${col}$${KPI_END}`;
+}
+
+function colLetter_(n) {
+  let s = '';
+  for (; n > 0; n = Math.floor((n - 1) / 26)) s = String.fromCharCode(65 + (n - 1) % 26) + s;
+  return s;
+}
+
+function fixKpi_(sh, c) {
+  const notes = [];
   sh.getRange('A2').setValue(
     '紹介1件につき1行。代理店IDを選ぶと代理店名が自動表示されます（IDは『アクションログ』に登録したもの）。' +
-    '成約したら成約日・成約金額・代理店報酬を入力。');
+    '成約したら成約日・成約商材・成約金額・代理店報酬を入力。');
 
   const n = KPI_END - 4;
   const f = [];
@@ -128,17 +176,55 @@ function fixKpi_(sh) {
             `MATCH(A${r},'${SH.log}'!$A$5:$A$${LOG_END},0)),"※未登録のID"))`]);
   }
   sh.getRange(5, 2, n, 1).setFormulas(f);
-  sh.getRange(5, 3, n, 1).setNumberFormat('@');           // 紹介社名
-  sh.getRange(5, 4, n, 2).setNumberFormat('yyyy/mm/dd');  // 紹介日・成約日
-  sh.getRange(5, 6, n, 2).setNumberFormat('#,##0');       // 金額・報酬
+  sh.getRange(`C5:C${KPI_END}`).setNumberFormat('@');                    // 紹介社名
+  sh.getRange(`${c.intro}5:${c.intro}${KPI_END}`).setNumberFormat('yyyy/mm/dd');
+  sh.getRange(`${c.close}5:${c.close}${KPI_END}`).setNumberFormat('yyyy/mm/dd');
+  [c.komon, c.anken1, c.anken2].forEach(col =>
+    sh.getRange(`${col}5:${col}${KPI_END}`).setNumberFormat('@'));
+  sh.getRange(`${c.amount}5:${c.amount}${KPI_END}`).setNumberFormat('#,##0');
+  sh.getRange(`${c.reward}5:${c.reward}${KPI_END}`).setNumberFormat('#,##0');
 
   // 代理店IDはサマリーに並んだID（＝アクションログ登録済み）から選択
   setListValidation_(sh.getRange(5, 1, n, 1),
     sh.getParent().getSheetByName(SH.sum).getRange(`A${SUM_FIRST}:A${SUM_END}`));
+
+  // 成約商材のプルダウン（選択肢は『設定』M〜O列）
+  const conf = sh.getParent().getSheetByName(SH.conf);
+  conf.getRange('M12').setValue('成約商材の選択肢（kintoneと同じ内容）').setFontWeight('bold').setFontColor('#1F3864');
+  conf.getRange('M13:O13').setValues([['顧問種別', '案件種別①', '案件種別②']])
+    .setFontWeight('bold').setBackground('#FFF2CC').setHorizontalAlignment('center');
+  writeOptions_(conf.getRange(`N${OPT_FIRST}:N${OPT_END}`), ANKEN1_OPTIONS);
+  writeOptions_(conf.getRange(`O${OPT_FIRST}:O${OPT_END}`), ANKEN2_OPTIONS);
+  conf.setColumnWidths(13, 3, 180);
+
+  // 顧問種別：『設定』M列が空なら、F列に既に設定済みのプルダウン項目を引き継ぐ
+  const komonList = conf.getRange(`M${OPT_FIRST}:M${OPT_END}`);
+  const komonCol = sh.getRange(`${c.komon}5:${c.komon}${KPI_END}`);
+  if (komonList.getValues().every(([v]) => v === '')) {
+    const dv = komonCol.getCell(1, 1).getDataValidation();
+    if (dv && dv.getCriteriaType() === SpreadsheetApp.DataValidationCriteria.VALUE_IN_LIST) {
+      writeOptions_(komonList, dv.getCriteriaValues()[0]);
+    }
+  }
+  if (komonList.getValues().some(([v]) => v !== '')) {
+    setListValidation_(komonCol, komonList);
+  } else {
+    notes.push('※ 顧問種別の選択肢が未登録です。『設定』シートM14から下にkintoneの顧問種別の項目を入力し、もう一度実行してください。');
+  }
+  setListValidation_(sh.getRange(`${c.anken1}5:${c.anken1}${KPI_END}`), conf.getRange(`N${OPT_FIRST}:N${OPT_END}`));
+  setListValidation_(sh.getRange(`${c.anken2}5:${c.anken2}${KPI_END}`), conf.getRange(`O${OPT_FIRST}:O${OPT_END}`));
+  return notes;
+}
+
+function writeOptions_(range, items) {
+  const rows = range.getNumRows();
+  const vals = [];
+  for (let i = 0; i < rows; i++) vals.push([items[i] || '']);
+  range.setValues(vals);
 }
 
 // ---------------------------------------------------------------- サマリー
-function fixSummary_(sh) {
+function fixSummary_(sh, c) {
   sh.getCharts().forEach(c => sh.removeChart(c));  // 月次前提のグラフは列構成と合わないため削除
   const lastRow = Math.max(sh.getMaxRows(), SUM_END);
   sh.getRange(5, 1, lastRow - 4, 7).clearContent().setBackground(null).setFontWeight('normal');
@@ -149,8 +235,9 @@ function fixSummary_(sh) {
     '稼働率＝直近の対象期間（『設定』C6、初期値3ヶ月）のうち紹介があった月の割合。');
   sh.getRange('A4:G4').setValues([['代理店ID', '代理店名', '稼働率', '紹介数', '成約数', '成約金額（円）', '代理店報酬（円）']]);
 
-  const L = `'${SH.log}'`, K = `'${SH.kpi}'`;
-  const kId = `${K}!$A$5:$A$${KPI_END}`, kIntro = `${K}!$D$5:$D$${KPI_END}`, kClose = `${K}!$E$5:$E$${KPI_END}`;
+  const L = `'${SH.log}'`;
+  const kId = kpiRange_(c.id), kIntro = kpiRange_(c.intro), kClose = kpiRange_(c.close);
+  const kAmount = kpiRange_(c.amount), kReward = kpiRange_(c.reward);
 
   // 合計行
   sh.getRange('A5').setValue('合計');
@@ -180,8 +267,8 @@ function fixSummary_(sh) {
         `${kIntro},">="&${m}+1-${seq},1),${kIntro},"<"&${m}+2-${seq},1))>0)))/設定!$C$6)`,
       `=IF(${A}="","",COUNTIFS(${kId},${A}))`,
       `=IF(${A}="","",COUNTIFS(${kId},${A},${kClose},"<>"))`,
-      `=IF(${A}="","",SUMIFS(${K}!$F$5:$F$${KPI_END},${kId},${A}))`,
-      `=IF(${A}="","",SUMIFS(${K}!$G$5:$G$${KPI_END},${kId},${A}))`,
+      `=IF(${A}="","",SUMIFS(${kAmount},${kId},${A}))`,
+      `=IF(${A}="","",SUMIFS(${kReward},${kId},${A}))`,
     ]);
   }
   sh.getRange(SUM_FIRST, 2, rows.length, 6).setFormulas(rows);
@@ -226,7 +313,7 @@ function fixTexts_(ss) {
     ['紹介・成約実績', '紹介1件につき1行。代理店IDを選ぶと代理店名が自動表示。成約したら成約日・金額・報酬を入力。'],
     ['サマリー', '代理店別の稼働率・紹介数・成約数・成約金額・代理店報酬を自動集計（入力不要）。'],
     ['定例アクション計画', '週次・月次・四半期で行う代理店向けアクションの一覧（運用例）。'],
-    ['設定', '稼働率の対象期間、期限間近の日数、プルダウンの選択肢を管理。'],
+    ['設定', '稼働率の対象期間、期限間近の日数、プルダウンの選択肢（成約商材はM〜O列）を管理。'],
     ['', null],
     ['■ 色のルール', null],
     ['黄色の見出し', '入力する列。'],
@@ -237,7 +324,7 @@ function fixTexts_(ss) {
     ['■ 運用の流れ', null],
     ['① 代理店を登録', '『アクションログ』に代理店ID・代理店名・担当者を入力。代理店IDはkintone『マスタ｜代理店管理』と同じIDを使う。'],
     ['② 接触したら更新', 'その代理店の行の「最終アクション日・内容」を書き換え、「次回アクション予定日・内容」を必ず入れる。'],
-    ['③ 紹介を受けたら記録', '『紹介・成約実績』に1行追加（代理店ID・紹介社名・紹介日）。成約したら同じ行に成約日・金額・報酬を追記。'],
+    ['③ 紹介を受けたら記録', '『紹介・成約実績』に1行追加（代理店ID・紹介社名・紹介日）。成約したら同じ行に成約日・成約商材・金額・報酬を追記。'],
     ['④ 毎週月曜に確認', '『アクションログ』で赤の行（予定日なし・期限切れ）→黄の行（期限間近）の順に連絡し、次回アクションを入れる。'],
     ['⑤ 月末に振り返り', '『サマリー』で稼働率が0%（灰色）の代理店を洗い出し、再活性化の打ち手を決める。'],
     ['', null],
