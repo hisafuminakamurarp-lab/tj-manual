@@ -53,7 +53,8 @@ function fixAgencySheet() {
 function fixLog_(sh) {
   sh.getRange('A2').setValue(
     '代理店ごとに1行。接触したら「最終アクション日・内容」と「次回アクション予定日・内容」を更新します。' +
-    '代理店ID・代理店名はここが元データになり、『紹介・成約実績』『サマリー』に自動反映されます。');
+    '代理店ID・代理店名はここが元データになり、『紹介・成約実績』『サマリー』に自動反映されます。' +
+    '紹介社数・成約数は『紹介・成約実績』から自動で数えます。');
 
   // C列（代理店担当者）：削除済みシートを参照する数式だけを消し、入力済みの値は残す
   const rng = sh.getRange(5, 3, LOG_END - 4, 1);
@@ -76,6 +77,19 @@ function fixLog_(sh) {
       .setAllowInvalid(false)
       .setHelpText('同じ代理店IDが既に登録されています。')
       .build());
+
+  // K列：紹介社数、L列：成約数（『紹介・成約実績』から自動集計）
+  const K = `'${SH.kpi}'`;
+  const counts = [];
+  for (let r = 5; r <= LOG_END; r++) {
+    counts.push([
+      `=IF(A${r}="","",COUNTIF(${K}!$A$5:$A$${KPI_END},A${r}))`,
+      `=IF(A${r}="","",COUNTIFS(${K}!$A$5:$A$${KPI_END},A${r},${K}!$E$5:$E$${KPI_END},"<>"))`,
+    ]);
+  }
+  sh.getRange('K4:L4').setValues([['紹介社数', '成約数']]).setBackground('#D9D9D9');
+  sh.getRange(5, 11, counts.length, 2).setFormulas(counts)
+    .setNumberFormat('#,##0').setHorizontalAlignment('center');
 
   setLogColors_(sh);
 }
@@ -139,15 +153,16 @@ function fixSummary_(sh) {
   const kId = `${K}!$A$5:$A$${KPI_END}`, kIntro = `${K}!$D$5:$D$${KPI_END}`, kClose = `${K}!$E$5:$E$${KPI_END}`;
 
   // 合計行
-  sh.getRange('A5:G5').setFormulas([[
-    '合計',
+  sh.getRange('A5').setValue('合計');
+  sh.getRange('B5:G5').setFormulas([[
     `=COUNTIF(A${SUM_FIRST}:A${SUM_END},"?*")&"社"`,
     `=IFERROR(AVERAGE(C${SUM_FIRST}:C${SUM_END}),"")`,
     `=SUM(D${SUM_FIRST}:D${SUM_END})`,
     `=SUM(E${SUM_FIRST}:E${SUM_END})`,
     `=SUM(F${SUM_FIRST}:F${SUM_END})`,
     `=SUM(G${SUM_FIRST}:G${SUM_END})`,
-  ]]).setBackground('#DDEBF7').setFontWeight('bold');
+  ]]);
+  sh.getRange('A5:G5').setBackground('#DDEBF7').setFontWeight('bold');
 
   // 代理店ID：アクションログから重複なしで自動展開
   sh.getRange(`A${SUM_FIRST}`).setFormula(
@@ -207,7 +222,7 @@ function fixTexts_(ss) {
 
   const lines = [
     ['■ シート構成', null],
-    ['アクションログ', '代理店ごとに1行。代理店の基本情報と、最終アクション・次回アクションを管理する。代理店IDの元データ。'],
+    ['アクションログ', '代理店ごとに1行。代理店の基本情報と、最終アクション・次回アクションを管理する。代理店IDの元データ。紹介社数・成約数は自動集計。'],
     ['紹介・成約実績', '紹介1件につき1行。代理店IDを選ぶと代理店名が自動表示。成約したら成約日・金額・報酬を入力。'],
     ['サマリー', '代理店別の稼働率・紹介数・成約数・成約金額・代理店報酬を自動集計（入力不要）。'],
     ['定例アクション計画', '週次・月次・四半期で行う代理店向けアクションの一覧（運用例）。'],
