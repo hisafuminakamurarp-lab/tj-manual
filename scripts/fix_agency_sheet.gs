@@ -202,7 +202,7 @@ function setupPersonTab_(sh, name) {
   sh.getRange(3, 1, 1, STATUS_LABELS.length).setValues([STATUS_LABELS])
     .setBackground(COLOR.auto).setFontWeight('bold').setFontSize(9).setHorizontalAlignment('center');
   sh.getRange(4, 1, 1, STATUS_LABELS.length).setFormulas([[
-    `=IFERROR(COUNTUNIQUE(FILTER(${r(PC.id)},${r(PC.id)}<>"")),0)`,
+    `=IFERROR(ROWS(UNIQUE(FILTER(${r(PC.id)},${r(PC.id)}<>""))),0)`,  // 空のときは0（COUNTUNIQUEだとエラーを1件と数える）
     `=COUNTIFS(${r(PC.id)},"?*",${r(PC.nextDate)},"")+COUNTIFS(${r(PC.id)},"?*",${r(PC.nextDate)},"<"&TODAY())`,
     `=COUNTIFS(${r(PC.id)},"?*",${r(PC.nextDate)},">="&TODAY(),${r(PC.nextDate)},"<="&TODAY()+設定!$C$8)`,
     `=COUNTIFS(${r(PC.id)},"?*",${r(PC.lastDate)},">="&設定!$C$5)`,
