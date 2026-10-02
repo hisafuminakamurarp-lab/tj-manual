@@ -14,9 +14,9 @@
  * 『使い方』『定例アクション計画』『設定』の説明を作り直すときだけ updateGuides を実行。
  */
 
-// 自社の担当者。増えたらここに追加して fixAgencySheet を実行（「名前＋ログ」のタブが自動で作られる）
+// 自社の担当者。増えたらここに追加して fixAgencySheet を実行（「名前：代理店」のタブが自動で作られる）
 const ASSIGNEES = ['前田紘孝', '浅沼雄太'];
-const TAB = name => `${name}ログ`;
+const TAB = name => `${name}：代理店`;
 
 const SH = {
   log: '代理店全体ログ',
@@ -93,7 +93,8 @@ function fixAgencySheet() {
   const notes = writeLists_(ss);
   ASSIGNEES.forEach(name => {
     if (ss.getSheetByName(TAB(name))) return;
-    const plain = ss.getSheetByName(name);  // 以前の「名前だけ」のタブがあれば改名して使う
+    // 以前の名前（「名前ログ」「名前だけ」）のタブがあれば改名して使う
+    const plain = ss.getSheetByName(`${name}ログ`) || ss.getSheetByName(name);
     if (plain) plain.setName(TAB(name)); else ss.insertSheet(TAB(name), 0);
   });
   if (!migrateOldLog_(ss)) return;  // 旧形式のデータ移行（担当者未入力なら中断）
@@ -550,7 +551,7 @@ function writeHowto_(ss) {
     ['紹介・成約実績', '担当者ログのうち紹介社名が入った行を自動で一覧化（入力しない）。'],
     ['サマリー', '代理店別の稼働率・紹介数・成約数・成約金額・代理店報酬を自動集計（入力しない）。'],
     ['定例アクション計画', 'いつ・どの代理店に・何をするかの運用ルール。'],
-    ['営業管理（担当者ごと）', '顧客ごとに1行。紺色の列を入力し、緑色の列（決算まで・状況）は自動。上部に本人のステータス。'],
+    ['営業管理（担当者ごと）', '顧客ごとに1行。紺色の列を入力し、緑色の列（決算まで・状況）は自動。案件IDはkintone『案件管理』へのリンクになる。上部に本人のステータス。'],
     ['営業管理全体ログ', '担当者ごとの営業管理を自動で合算（入力しない）。上部に担当者別・合計のステータス表。'],
     ['設定', '稼働率の対象期間（C6）、期限間近の日数（C8）、プルダウンの選択肢（接触手段＝H列、連絡ツール＝K列、成約商材＝M〜O列、営業管理＝Q〜S列）。'],
     ['', null],
@@ -584,7 +585,7 @@ function writeHowto_(ss) {
     ['', null],
     ['■ 管理者向け', null],
     ['列を変えたとき', '拡張機能 → Apps Script で fixAgencySheet を実行すると、数式・プルダウン・色分けが整う。'],
-    ['担当者が増えたとき', 'スクリプト上部の ASSIGNEES に名前を追加して fixAgencySheet を実行（「名前＋ログ」のタブが自動で作られる）。'],
+    ['担当者が増えたとき', 'スクリプト上部の ASSIGNEES に名前を追加して fixAgencySheet と setupSales を実行（「名前：代理店」「名前：営業管理」のタブが自動で作られる）。'],
     ['商材を増やしたとき', '『設定』N・O列に追記し、スクリプト上部の ANKEN1_OPTIONS / ANKEN2_OPTIONS にも同じ項目を追加する。'],
   ];
   const colors = {
@@ -616,6 +617,7 @@ function linkKintoneIds() {
 
 // 代理店IDを入力・貼り付けしたら自動でリンク化（シンプルトリガー）
 function onEdit(e) {
+  onEditSales_(e);  // 営業管理タブの案件IDのリンク化
   const sh = e.range.getSheet();
   if (!ASSIGNEES.map(TAB).includes(sh.getName()) || e.range.getColumn() !== 1) return;
   const top = Math.max(e.range.getRow(), P_FIRST);
@@ -624,11 +626,11 @@ function onEdit(e) {
   linkIds_(sh.getRange(top, 1, bottom - top + 1, 1));
 }
 
-function linkIds_(range) {
+function linkIds_(range, toUrl) {
   const values = range.getDisplayValues();
   const rich = values.map(([v]) => {
     const text = String(v).trim();
-    const url = kintoneUrl_(text);
+    const url = (toUrl || kintoneUrl_)(text);
     const b = SpreadsheetApp.newRichTextValue().setText(text);
     return [url ? b.setLinkUrl(url).build() : b.build()];
   });
@@ -645,21 +647,55 @@ function idLink_(expr) {
   return `HYPERLINK("${KINTONE_APP_URL}?query="&ENCODEURL("${KINTONE_ID_FIELD} = """&${expr}&""""),${expr})`;
 }
 
+// 『設定』タブを消してしまったときの復旧用（基準日などの値と選択肢を作り直す）
+function restoreSettings() {
+  const ss = SpreadsheetApp.getActive();
+  const conf = ss.getSheetByName(SH.conf) || ss.insertSheet(SH.conf);
+  ensureSize_(conf, OPT_END, 19);
+  conf.getRange('A1').setValue('設定・マスタ').setFontColor('#FFFFFF').setFontWeight('bold').setFontSize(14);
+  conf.getRange(1, 1, 1, 19).setBackground(COLOR.title);
+  conf.getRange('A2').setValue('黄色セルを自社の運用に合わせて変更してください。他シートの判定・プルダウンはここを参照します。')
+    .setFontColor('#595959').setFontSize(9);
+  conf.getRange('B4:D8').setValues([
+    ['基準日', '', '自動（今日の日付）'],
+    ['今月初日', '', '自動'],
+    ['稼働率の対象期間（ヶ月）', 3, '『サマリー』の稼働率：直近この月数のうち紹介があった月の割合'],
+    ['', '', ''],
+    ['期限間近の表示（日前）', 3, '担当者ログ・代理店全体ログで、次回アクション予定日のこの日数前から黄色表示'],
+  ]);
+  conf.getRange('C4').setFormula('=TODAY()');
+  conf.getRange('C5').setFormula('=DATE(YEAR(C4),MONTH(C4),1)');
+  conf.getRange('C4:C5').setNumberFormat('yyyy/mm/dd');
+  conf.getRange('B4:B8').setFontWeight('bold');
+  conf.getRange('C6').setBackground(COLOR.input);
+  conf.getRange('C8').setBackground(COLOR.input);
+  conf.getRange('D4:D8').setFontColor('#595959').setFontSize(9);
+  conf.setColumnWidth(2, 200);
+  const komon = conf.getRange(`M${OPT_FIRST}:M${OPT_END}`);
+  if (komon.getValues().every(([v]) => v === '')) writeOptions_(komon, ['税務顧問', '節税顧問']);
+  writeLists_(ss);
+  writeSalesLists_(ss);
+  SpreadsheetApp.getUi().alert('『設定』タブを作り直しました。続けて fixAgencySheet を実行してください。');
+}
+
 // ================================================================ 営業管理
 // 担当者ごとの営業管理タブ（入力）と、営業管理全体ログ（自動合算）
-// タブ名は「名前＋営業管理」「営業管理全体ログ」。既に「営業」を含む同名系のタブがあればそれを使う
-const SALES_TAB = name => `${name}営業管理`;
+// タブ名は「名前：営業管理」「営業管理全体ログ」。既に「営業」を含む同名系のタブがあればそれを使う
+const SALES_TAB = name => `${name}：営業管理`;
+// kintone『案件管理』アプリのURLと、案件IDのフィールドコード（案件IDで絞り込んだ一覧を開く）
+const KINTONE_DEAL_URL = 'https://zeimukeeoer.cybozu.com/k/33/';
+const KINTONE_DEAL_FIELD = '案件ID';
 const SALES_LOG = '営業管理全体ログ';
 // [見出し, 入力 or 自動, 列幅]
 const S_COLS = [
-  ['会社名', 'in', 200], ['氏名', 'in', 110], ['役職', 'in', 100], ['決算月', 'in', 65],
+  ['案件ID', 'in', 100], ['会社名', 'in', 200], ['氏名', 'in', 110], ['役職', 'in', 100], ['決算月', 'in', 65],
   ['決算まで', 'auto', 70], ['単発／顧問', 'in', 80], ['提案商材', 'in', 150], ['進捗', 'in', 110],
   ['最終接触日', 'in', 90], ['次回アポ日', 'in', 90], ['アポ方法', 'in', 90], ['状況', 'auto', 85],
   ['メモ', 'in', 320],
 ];
 const SC = {  // 営業管理タブの列
-  company: 'A', fiscal: 'D', untilFiscal: 'E', kind: 'F', product: 'G', progress: 'H',
-  lastDate: 'I', nextDate: 'J', method: 'K', state: 'L',
+  deal: 'A', company: 'B', position: 'D', fiscal: 'E', untilFiscal: 'F', kind: 'G', product: 'H',
+  progress: 'I', lastDate: 'J', nextDate: 'K', method: 'L', state: 'M',
 };
 const S_STATUS = ['進行中', '今週アポ', 'アポなし', '期限切れ', '決算間近', '顧問見込み', '受注'];
 const POSITION_OPTIONS = ['代表取締役', '取締役', '部長', '担当者', 'その他'];
@@ -669,7 +705,6 @@ const SCOLOR = { input: '#1F3864', auto: '#2B6F68', red: '#F4CCCC', redFont: '#9
 
 // 営業管理だけを作り直したいとき用
 function setupSales() {
-  writeLists_(SpreadsheetApp.getActive());
   setupSales_(SpreadsheetApp.getActive());
   SpreadsheetApp.getUi().alert('営業管理タブと営業管理全体ログを整えました。');
 }
@@ -695,7 +730,12 @@ function findSalesTab_(ss, name) {
 
 // 選択肢（『設定』Q〜S列）。手で編集した内容は残し、空のときだけ初期値を入れる
 function writeSalesLists_(ss) {
-  const conf = ss.getSheetByName(SH.conf);
+  const conf = ss.getSheetByName(SH.conf) || ss.insertSheet(SH.conf);
+  ensureSize_(conf, OPT_END, 19);
+  if (conf.getRange(`H${OPT_FIRST}:H${OPT_END}`).getValues().every(([v]) => v === '')) {
+    conf.getRange('H13').setValue('接触手段').setFontWeight('bold').setBackground(COLOR.input);
+    writeOptions_(conf.getRange(`H${OPT_FIRST}:H${OPT_END}`), METHOD_OPTIONS);  // アポ方法の選択肢
+  }
   conf.getRange('Q12').setValue('営業管理の選択肢').setFontWeight('bold').setFontColor(COLOR.title);
   conf.getRange('Q13:S13').setValues([['役職', '進捗', '提案商材']])
     .setFontWeight('bold').setBackground(COLOR.input).setHorizontalAlignment('center');
@@ -712,8 +752,12 @@ function writeSalesLists_(ss) {
 // ---------------------------------------------------------------- 営業管理（担当者ごと）
 function setupSalesTab_(sh, name) {
   const nCol = S_COLS.length;
-  // 想定外の内容が入っていたら、触る前にバックアップ
-  if (sh.getLastRow() >= P_FIRST && sh.getRange(P_HEAD, 1).getDisplayValues()[0][0] !== '会社名') {
+  const a6 = sh.getRange(P_HEAD, 1).getDisplayValues()[0][0];
+  if (a6 === '会社名') {
+    // 案件ID列がなかった頃の形 → 左に1列足して、入力済みのデータをそのまま右へずらす
+    sh.insertColumnBefore(1);
+  } else if (sh.getLastRow() >= P_FIRST && a6 !== '案件ID') {
+    // 想定外の内容が入っていたら、触る前にバックアップ
     const backup = `${sh.getName()}（作成前）`;
     if (!sh.getParent().getSheetByName(backup)) sh.copyTo(sh.getParent()).setName(backup);
   }
@@ -749,21 +793,23 @@ function setupSalesTab_(sh, name) {
 
   // 自動の列：決算まで（月数）・状況
   const f = [];
+  const c = col => i => `${col}${i}`;
+  const [co, fi, pr, nx] = [c(SC.company), c(SC.fiscal), c(SC.progress), c(SC.nextDate)];
   for (let i = P_FIRST; i <= P_LAST; i++) {
-    f.push([`=IF(OR(A${i}="",D${i}=""),"",MOD(VALUE(SUBSTITUTE(D${i},"月",""))-MONTH(TODAY()),12))`]);
+    f.push([`=IF(OR(${co(i)}="",${fi(i)}=""),"",MOD(VALUE(SUBSTITUTE(${fi(i)},"月",""))-MONTH(TODAY()),12))`]);
   }
   sh.getRange(r(SC.untilFiscal)).setFormulas(f);
   const g = [];
   for (let i = P_FIRST; i <= P_LAST; i++) {
-    g.push([`=IF(A${i}="","",IF(H${i}="受注","受注",IF(H${i}="失注","失注",IF(J${i}="","アポなし",` +
-      `IF(J${i}<TODAY(),"期限切れ",IF(J${i}<=TODAY()-WEEKDAY(TODAY(),2)+7,"今週アポ","予定あり"))))))`]);
+    g.push([`=IF(${co(i)}="","",IF(${pr(i)}="受注","受注",IF(${pr(i)}="失注","失注",IF(${nx(i)}="","アポなし",` +
+      `IF(${nx(i)}<TODAY(),"期限切れ",IF(${nx(i)}<=TODAY()-WEEKDAY(TODAY(),2)+7,"今週アポ","予定あり"))))))`]);
   }
   sh.getRange(r(SC.state)).setFormulas(g);
 
   // プルダウン
   const conf = sh.getParent().getSheetByName(SH.conf);
   const list = col => conf.getRange(`${col}${OPT_FIRST}:${col}${OPT_END}`);
-  setListValidation_(sh.getRange(r('C')), list('Q'));  // 役職
+  setListValidation_(sh.getRange(r(SC.position)), list('Q'));  // 役職
   setValueListValidation_(sh.getRange(r(SC.fiscal)), Array.from({ length: 12 }, (_, i) => `${i + 1}月`));
   setValueListValidation_(sh.getRange(r(SC.kind)), ['単発', '顧問']);
   setListValidation_(sh.getRange(r(SC.product)), list('S'));
@@ -772,8 +818,24 @@ function setupSalesTab_(sh, name) {
 
   salesColors_(sh, P_FIRST, P_LAST, SC.untilFiscal, SC.state, nCol);
   sh.setFrozenRows(P_HEAD);
-  sh.setFrozenColumns(1);
+  sh.setFrozenColumns(2);
   sh.getRange(P_HEAD, 1, P_ROWS + 1, nCol).createFilter();
+  if (sh.getLastRow() >= P_FIRST) linkIds_(sh.getRange(P_FIRST, 1, sh.getLastRow() - P_FIRST + 1, 1), dealUrl_);
+}
+
+// 案件IDをkintone『案件管理』へのリンクにする
+function dealUrl_(id) {
+  if (!id) return null;
+  return KINTONE_DEAL_URL + '?query=' + encodeURIComponent(`${KINTONE_DEAL_FIELD} = "${id}"`);
+}
+
+// 営業管理タブのA列（案件ID）を入力・貼り付けしたら自動でリンク化（onEdit から呼ばれる）
+function onEditSales_(e) {
+  const sh = e.range.getSheet();
+  if (!ASSIGNEES.map(SALES_TAB).includes(sh.getName()) || e.range.getColumn() !== 1) return;
+  const top = Math.max(e.range.getRow(), P_FIRST);
+  if (e.range.getLastRow() < top) return;
+  linkIds_(sh.getRange(top, 1, e.range.getLastRow() - top + 1, 1), dealUrl_);
 }
 
 // ---------------------------------------------------------------- 営業管理全体ログ（合算）
@@ -802,10 +864,15 @@ function buildSalesLog_(sh, tabs) {
   salesHeader_(sh, head, cols);
   const rest = S_COLS.map((_, i) => i + 1).join(',');
   const lets = tabs.map(([, t], i) => `p${i},'${t.getName()}'!A${P_FIRST}:${colLetter_(S_COLS.length)}${P_LAST}`).join(',');
+  const company = S_COLS.findIndex(([h]) => h === '会社名') + 1;
   const parts = tabs.map(([name], i) =>
-    `HSTACK(IF(CHOOSECOLS(p${i},1)<>"","${name}",""),CHOOSECOLS(p${i},${rest}))`);
+    `HSTACK(IF(CHOOSECOLS(p${i},${company})<>"","${name}",""),CHOOSECOLS(p${i},${rest}))`);
+  const after = S_COLS.slice(1).map((_, i) => i + 3).join(',');
+  const id = 'CHOOSECOLS(f,2)';
   sh.getRange(first, 1).setFormula(
-    `=IFERROR(ARRAYFORMULA(LET(${lets},all,VSTACK(${parts.join(',')}),FILTER(all,CHOOSECOLS(all,2)<>""))),"")`);
+    `=IFERROR(ARRAYFORMULA(LET(${lets},all,VSTACK(${parts.join(',')}),f,FILTER(all,CHOOSECOLS(all,${company + 1})<>""),` +
+    `HSTACK(CHOOSECOLS(f,1),IF(${id}="","",HYPERLINK("${KINTONE_DEAL_URL}?query="&ENCODEURL("${KINTONE_DEAL_FIELD} = """&${id}&""""),${id})),` +
+    `CHOOSECOLS(f,${after})))),"")`);
 
   // 書式（営業管理タブの列が「担当」の分だけ右にずれる）
   const L = col => colLetter_(col.charCodeAt(0) - 64 + 1);
@@ -817,7 +884,7 @@ function buildSalesLog_(sh, tabs) {
   rr(L(SC.state)).setHorizontalAlignment('center').setFontWeight('bold');
   salesColors_(sh, first, end, L(SC.untilFiscal), L(SC.state), nCol);
   sh.setFrozenRows(head);
-  sh.setFrozenColumns(2);
+  sh.setFrozenColumns(3);
 }
 
 // ---------------------------------------------------------------- 営業管理の共通
