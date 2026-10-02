@@ -6,6 +6,8 @@
  *   - 紹介・成約実績  … 担当者ログのうち紹介社名が入った行を自動で一覧化
  *   - サマリー        … 代理店別集計（稼働率・紹介数・成約数・金額）
  *   - 代理店ID        … kintone『8. 代理店管理』へのリンク（入力すると自動でリンク化）
+ *   - 営業管理（担当者ごと）… 顧客の営業進捗を入力。決算まで・状況は自動
+ *   - 営業管理全体ログ … 担当者ごとの営業管理を自動で合算。上部に担当者別・合計のステータス
  *
  * 使い方：拡張機能 → Apps Script に貼り付け → fixAgencySheet を実行。
  * 何度実行しても同じ状態になる（入力済みのデータは消さない）。
@@ -104,6 +106,7 @@ function fixAgencySheet() {
   buildLog_(ss.getSheetByName(SH.log));
   notes.push(...buildKpi_(ss));
   fixSummary_(ss.getSheetByName(SH.sum));
+  setupSales_(ss);
   linkKintoneIds();
   SpreadsheetApp.flush();
 
@@ -547,7 +550,9 @@ function writeHowto_(ss) {
     ['紹介・成約実績', '担当者ログのうち紹介社名が入った行を自動で一覧化（入力しない）。'],
     ['サマリー', '代理店別の稼働率・紹介数・成約数・成約金額・代理店報酬を自動集計（入力しない）。'],
     ['定例アクション計画', 'いつ・どの代理店に・何をするかの運用ルール。'],
-    ['設定', '稼働率の対象期間（C6）、期限間近の日数（C8）、プルダウンの選択肢（接触手段＝H列、連絡ツール＝K列、成約商材＝M〜O列）。'],
+    ['営業管理（担当者ごと）', '顧客ごとに1行。紺色の列を入力し、緑色の列（決算まで・状況）は自動。上部に本人のステータス。'],
+    ['営業管理全体ログ', '担当者ごとの営業管理を自動で合算（入力しない）。上部に担当者別・合計のステータス表。'],
+    ['設定', '稼働率の対象期間（C6）、期限間近の日数（C8）、プルダウンの選択肢（接触手段＝H列、連絡ツール＝K列、成約商材＝M〜O列、営業管理＝Q〜S列）。'],
     ['', null],
     ['■ 色のルール', null],
     ['黄色の見出し', '入力する列（オレンジの見出しは紹介に関する列）。'],
@@ -571,6 +576,11 @@ function writeHowto_(ss) {
     ['稼働率', '直近の対象期間（初期値3ヶ月）のうち、紹介があった月の割合。3ヶ月中2ヶ月紹介あり→67%。'],
     ['紹介数・成約数', '紹介社名が入った行の数と、そのうち成約日が入った行の数。'],
     ['代理店IDのリンク', 'クリックするとkintone『8. 代理店管理』でその代理店に絞り込んだ一覧が開く（入力すると自動でリンク化）。'],
+    ['', null],
+    ['■ 営業管理の自動項目', null],
+    ['決算まで', '決算月まであと何ヶ月か（今月／1ヶ月…）。2ヶ月以内はオレンジ。'],
+    ['状況', '進捗が受注・失注ならそのまま。次回アポ日が空欄＝アポなし、過ぎている＝期限切れ（赤）、今週中＝今週アポ（黄）、それ以降＝予定あり。'],
+    ['進行中・顧問見込み', '進行中＝受注・失注以外の顧客。顧問見込み＝そのうち単発／顧問が「顧問」。'],
     ['', null],
     ['■ 管理者向け', null],
     ['列を変えたとき', '拡張機能 → Apps Script で fixAgencySheet を実行すると、数式・プルダウン・色分けが整う。'],
@@ -635,6 +645,259 @@ function idLink_(expr) {
   return `HYPERLINK("${KINTONE_APP_URL}?query="&ENCODEURL("${KINTONE_ID_FIELD} = """&${expr}&""""),${expr})`;
 }
 
+// ================================================================ 営業管理
+// 担当者ごとの営業管理タブ（入力）と、営業管理全体ログ（自動合算）
+// タブ名は「名前＋営業管理」「営業管理全体ログ」。既に「営業」を含む同名系のタブがあればそれを使う
+const SALES_TAB = name => `${name}営業管理`;
+const SALES_LOG = '営業管理全体ログ';
+// [見出し, 入力 or 自動, 列幅]
+const S_COLS = [
+  ['会社名', 'in', 200], ['氏名', 'in', 110], ['役職', 'in', 100], ['決算月', 'in', 65],
+  ['決算まで', 'auto', 70], ['単発／顧問', 'in', 80], ['提案商材', 'in', 150], ['進捗', 'in', 110],
+  ['最終接触日', 'in', 90], ['次回アポ日', 'in', 90], ['アポ方法', 'in', 90], ['状況', 'auto', 85],
+  ['メモ', 'in', 320],
+];
+const SC = {  // 営業管理タブの列
+  company: 'A', fiscal: 'D', untilFiscal: 'E', kind: 'F', product: 'G', progress: 'H',
+  lastDate: 'I', nextDate: 'J', method: 'K', state: 'L',
+};
+const S_STATUS = ['進行中', '今週アポ', 'アポなし', '期限切れ', '決算間近', '顧問見込み', '受注'];
+const POSITION_OPTIONS = ['代表取締役', '取締役', '部長', '担当者', 'その他'];
+const PROGRESS_OPTIONS = ['アポ調整中', 'アポ確定', '提案中', '見積提出', 'クロージング', '受注', '失注', '保留'];
+const FISCAL_NEAR = 2;  // 決算まで何ヶ月以内を「決算間近」とするか
+const SCOLOR = { input: '#1F3864', auto: '#2B6F68', red: '#F4CCCC', redFont: '#990000', orange: '#FCE5CD' };
+
+// 営業管理だけを作り直したいとき用
+function setupSales() {
+  writeLists_(SpreadsheetApp.getActive());
+  setupSales_(SpreadsheetApp.getActive());
+  SpreadsheetApp.getUi().alert('営業管理タブと営業管理全体ログを整えました。');
+}
+
+function setupSales_(ss) {
+  writeSalesLists_(ss);
+  const tabs = ASSIGNEES.map(name => [name, findSalesTab_(ss, name)]);
+  tabs.forEach(([name, sh]) => setupSalesTab_(sh, name));
+  const log = ss.getSheets().find(sh => /営業/.test(sh.getName()) && /全体/.test(sh.getName()))
+    || ss.insertSheet(SALES_LOG);
+  buildSalesLog_(log, tabs);
+}
+
+function findSalesTab_(ss, name) {
+  const exact = ss.getSheetByName(SALES_TAB(name));
+  if (exact) return exact;
+  const surname = name.slice(0, 2);
+  return ss.getSheets().find(sh => {
+    const n = sh.getName();
+    return /営業/.test(n) && !/全体|（/.test(n) && (n.includes(name) || n.includes(surname));
+  }) || ss.insertSheet(SALES_TAB(name));
+}
+
+// 選択肢（『設定』Q〜S列）。手で編集した内容は残し、空のときだけ初期値を入れる
+function writeSalesLists_(ss) {
+  const conf = ss.getSheetByName(SH.conf);
+  conf.getRange('Q12').setValue('営業管理の選択肢').setFontWeight('bold').setFontColor(COLOR.title);
+  conf.getRange('Q13:S13').setValues([['役職', '進捗', '提案商材']])
+    .setFontWeight('bold').setBackground(COLOR.input).setHorizontalAlignment('center');
+  const keep = (col, items) => {
+    const rng = conf.getRange(`${col}${OPT_FIRST}:${col}${OPT_END}`);
+    if (rng.getValues().every(([v]) => v === '')) writeOptions_(rng, items);
+  };
+  keep('Q', POSITION_OPTIONS);
+  keep('R', PROGRESS_OPTIONS);
+  keep('S', ['未定'].concat(ANKEN1_OPTIONS, ANKEN2_OPTIONS));
+  conf.setColumnWidths(17, 3, 150);
+}
+
+// ---------------------------------------------------------------- 営業管理（担当者ごと）
+function setupSalesTab_(sh, name) {
+  const nCol = S_COLS.length;
+  // 想定外の内容が入っていたら、触る前にバックアップ
+  if (sh.getLastRow() >= P_FIRST && sh.getRange(P_HEAD, 1).getDisplayValues()[0][0] !== '会社名') {
+    const backup = `${sh.getName()}（作成前）`;
+    if (!sh.getParent().getSheetByName(backup)) sh.copyTo(sh.getParent()).setName(backup);
+  }
+  ensureSize_(sh, P_LAST, nCol);
+  if (sh.getFilter()) sh.getFilter().remove();
+  sh.getRange(P_FIRST, 1, P_ROWS, sh.getMaxColumns()).clearDataValidations();
+  salesTitle_(sh, `${name}の営業管理`, nCol);
+
+  // ステータス（3〜4行目）
+  const r = col => `${col}${P_FIRST}:${col}${P_LAST}`;
+  const open = `${r(SC.company)},"?*",${r(SC.progress)},"<>受注",${r(SC.progress)},"<>失注"`;
+  sh.getRange(3, 1, 2, sh.getMaxColumns()).clear();
+  sh.getRange(3, 1, 1, S_STATUS.length).setValues([S_STATUS]);
+  sh.getRange(4, 1, 1, S_STATUS.length).setFormulas([[
+    `=COUNTIFS(${open})`,
+    `=COUNTIF(${r(SC.state)},"今週アポ")`,
+    `=COUNTIF(${r(SC.state)},"アポなし")`,
+    `=COUNTIF(${r(SC.state)},"期限切れ")`,
+    `=COUNTIFS(${open},${r(SC.untilFiscal)},"<="&${FISCAL_NEAR})`,
+    `=COUNTIFS(${open},${r(SC.kind)},"顧問")`,
+    `=COUNTIF(${r(SC.progress)},"受注")`,
+  ]]);
+  salesStatusStyle_(sh, 3, 1, 1);
+
+  // 見出し・本体
+  salesHeader_(sh, P_HEAD, S_COLS);
+  sh.getRange(P_FIRST, 1, P_ROWS, nCol).setNumberFormat('General').setFontSize(10).setVerticalAlignment('middle')
+    .setBorder(true, true, true, true, true, true, COLOR.border, SpreadsheetApp.BorderStyle.SOLID);
+  [SC.lastDate, SC.nextDate].forEach(col => sh.getRange(r(col)).setNumberFormat('m/d'));
+  sh.getRange(r(SC.untilFiscal)).setNumberFormat('[=0]"今月";0"ヶ月"').setHorizontalAlignment('center');
+  sh.getRange(r(SC.state)).setHorizontalAlignment('center').setFontWeight('bold');
+  [SC.untilFiscal, SC.state].forEach(col => sh.getRange(r(col)).setBackground('#F3F3F3'));
+
+  // 自動の列：決算まで（月数）・状況
+  const f = [];
+  for (let i = P_FIRST; i <= P_LAST; i++) {
+    f.push([`=IF(OR(A${i}="",D${i}=""),"",MOD(VALUE(SUBSTITUTE(D${i},"月",""))-MONTH(TODAY()),12))`]);
+  }
+  sh.getRange(r(SC.untilFiscal)).setFormulas(f);
+  const g = [];
+  for (let i = P_FIRST; i <= P_LAST; i++) {
+    g.push([`=IF(A${i}="","",IF(H${i}="受注","受注",IF(H${i}="失注","失注",IF(J${i}="","アポなし",` +
+      `IF(J${i}<TODAY(),"期限切れ",IF(J${i}<=TODAY()-WEEKDAY(TODAY(),2)+7,"今週アポ","予定あり"))))))`]);
+  }
+  sh.getRange(r(SC.state)).setFormulas(g);
+
+  // プルダウン
+  const conf = sh.getParent().getSheetByName(SH.conf);
+  const list = col => conf.getRange(`${col}${OPT_FIRST}:${col}${OPT_END}`);
+  setListValidation_(sh.getRange(r('C')), list('Q'));  // 役職
+  setValueListValidation_(sh.getRange(r(SC.fiscal)), Array.from({ length: 12 }, (_, i) => `${i + 1}月`));
+  setValueListValidation_(sh.getRange(r(SC.kind)), ['単発', '顧問']);
+  setListValidation_(sh.getRange(r(SC.product)), list('S'));
+  setListValidation_(sh.getRange(r(SC.progress)), list('R'));
+  setListValidation_(sh.getRange(r(SC.method)), conf.getRange(`H${OPT_FIRST}:H${OPT_FIRST + 9}`));
+
+  salesColors_(sh, P_FIRST, P_LAST, SC.untilFiscal, SC.state, nCol);
+  sh.setFrozenRows(P_HEAD);
+  sh.setFrozenColumns(1);
+  sh.getRange(P_HEAD, 1, P_ROWS + 1, nCol).createFilter();
+}
+
+// ---------------------------------------------------------------- 営業管理全体ログ（合算）
+function buildSalesLog_(sh, tabs) {
+  const cols = [['担当', 'auto', 80]].concat(S_COLS.map(([h, , w]) => [h, 'auto', w]));
+  const nCol = cols.length;
+  const n = tabs.length;
+  const head = n + 6, first = head + 1, end = first + n * P_ROWS - 1;
+  ensureSize_(sh, end, nCol);
+  if (sh.getFilter()) sh.getFilter().remove();
+  sh.setConditionalFormatRules([]);
+  sh.getRange(3, 1, sh.getMaxRows() - 2, sh.getMaxColumns()).clear().clearDataValidations();
+  salesTitle_(sh, '営業管理（全担当者の合算）', nCol,
+    `${tabs.map(([, t]) => t.getName()).join('・')}を自動で合算（ここでは入力しない。修正は各担当者の営業管理タブで）`);
+
+  // 担当者別ステータス表
+  sh.getRange(3, 1, 1, S_STATUS.length + 1).setValues([['担当'].concat(S_STATUS)]);
+  sh.getRange(4, 1, n, 1).setValues(tabs.map(([name]) => [name]));
+  sh.getRange(4, 2, n, S_STATUS.length).setFormulas(
+    tabs.map(([, t]) => S_STATUS.map((_, i) => `='${t.getName()}'!${colLetter_(i + 1)}4`)));
+  sh.getRange(4 + n, 1).setValue('合計');
+  sh.getRange(4 + n, 2, 1, S_STATUS.length).setFormulas([
+    S_STATUS.map((_, i) => { const c = colLetter_(i + 2); return `=SUM(${c}4:${c}${3 + n})`; })]);
+  salesStatusStyle_(sh, 3, 2, n);
+
+  salesHeader_(sh, head, cols);
+  const rest = S_COLS.map((_, i) => i + 1).join(',');
+  const lets = tabs.map(([, t], i) => `p${i},'${t.getName()}'!A${P_FIRST}:${colLetter_(S_COLS.length)}${P_LAST}`).join(',');
+  const parts = tabs.map(([name], i) =>
+    `HSTACK(IF(CHOOSECOLS(p${i},1)<>"","${name}",""),CHOOSECOLS(p${i},${rest}))`);
+  sh.getRange(first, 1).setFormula(
+    `=IFERROR(ARRAYFORMULA(LET(${lets},all,VSTACK(${parts.join(',')}),FILTER(all,CHOOSECOLS(all,2)<>""))),"")`);
+
+  // 書式（営業管理タブの列が「担当」の分だけ右にずれる）
+  const L = col => colLetter_(col.charCodeAt(0) - 64 + 1);
+  const rr = col => sh.getRange(`${col}${first}:${col}${end}`);
+  sh.getRange(first, 1, end - first + 1, nCol).setFontSize(10).setVerticalAlignment('middle')
+    .setBorder(true, true, true, true, true, true, COLOR.border, SpreadsheetApp.BorderStyle.SOLID);
+  [SC.lastDate, SC.nextDate].forEach(col => rr(L(col)).setNumberFormat('m/d'));
+  rr(L(SC.untilFiscal)).setNumberFormat('[=0]"今月";0"ヶ月"').setHorizontalAlignment('center');
+  rr(L(SC.state)).setHorizontalAlignment('center').setFontWeight('bold');
+  salesColors_(sh, first, end, L(SC.untilFiscal), L(SC.state), nCol);
+  sh.setFrozenRows(head);
+  sh.setFrozenColumns(2);
+}
+
+// ---------------------------------------------------------------- 営業管理の共通
+function salesTitle_(sh, title, nCol, note) {
+  sh.getRange(1, 1, 2, sh.getMaxColumns()).clear();
+  sh.getRange('A1').setValue(title).setFontColor(SCOLOR.input).setFontWeight('bold').setFontSize(14);
+  sh.getRange('D1').setFormula(
+    `="基準日：" & TEXT(TODAY(),"yyyy/mm/dd") & "　／　${note || '紺色の列だけ入力（緑色の列は自動）'}"`)
+    .setFontColor('#595959').setFontSize(9);
+  sh.setRowHeight(1, 30);
+}
+
+function salesHeader_(sh, row, cols) {
+  sh.getRange(row, 1, 1, cols.length)
+    .setValues([cols.map(([h]) => h)])
+    .setBackgrounds([cols.map(([, kind]) => kind === 'in' ? SCOLOR.input : SCOLOR.auto)])
+    .setFontColor('#FFFFFF').setFontWeight('bold').setFontSize(10)
+    .setHorizontalAlignment('center').setVerticalAlignment('middle').setWrap(true)
+    .setBorder(true, true, true, true, true, true, '#FFFFFF', SpreadsheetApp.BorderStyle.SOLID);
+  sh.setRowHeight(row, 36);
+  cols.forEach(([, , w], i) => sh.setColumnWidth(i + 1, w));
+}
+
+// ステータス表：見出し行 headRow、数値は startCol 列から、行数 n（＋合計行）
+function salesStatusStyle_(sh, headRow, startCol, n) {
+  const width = S_STATUS.length + startCol - 1;
+  const rows = startCol === 1 ? 1 : n + 1;
+  sh.getRange(headRow, 1, 1, width).setBackground(SCOLOR.auto).setFontColor('#FFFFFF')
+    .setFontWeight('bold').setFontSize(10).setHorizontalAlignment('center').setVerticalAlignment('middle');
+  sh.setRowHeight(headRow, 30);
+  const vals = sh.getRange(headRow + 1, startCol, rows, S_STATUS.length);
+  vals.setNumberFormat('0;-0;"-"').setHorizontalAlignment('center').setFontSize(startCol === 1 ? 14 : 10);
+  if (startCol > 1) {
+    sh.getRange(headRow + 1, 1, rows, 1).setFontWeight('bold');
+    sh.getRange(headRow + rows, 1, 1, width).setBackground(COLOR.total).setFontWeight('bold');
+  }
+  sh.getRange(headRow, 1, rows + 1, width)
+    .setBorder(true, true, true, true, true, true, COLOR.border, SpreadsheetApp.BorderStyle.SOLID);
+  // アポなし・期限切れ＝赤、決算間近＝オレンジ（0件のときは色なし）
+  const col = label => colLetter_(S_STATUS.indexOf(label) + startCol);
+  const rng = label => sh.getRange(`${col(label)}${headRow + 1}:${col(label)}${headRow + rows}`);
+  const rules = sh.getConditionalFormatRules().filter(rule =>
+    !rule.getRanges().some(x => x.getRow() >= headRow && x.getRow() <= headRow + rows));
+  ['アポなし', '期限切れ'].forEach(label => rules.push(SpreadsheetApp.newConditionalFormatRule()
+    .whenNumberGreaterThan(0).setBackground(SCOLOR.red).setFontColor(SCOLOR.redFont).setBold(true)
+    .setRanges([rng(label)]).build()));
+  rules.push(SpreadsheetApp.newConditionalFormatRule()
+    .whenNumberGreaterThan(0).setBackground(SCOLOR.orange).setFontColor(SCOLOR.redFont).setBold(true)
+    .setRanges([rng('決算間近')]).build());
+  sh.setConditionalFormatRules(rules);
+}
+
+// 決算まで（2ヶ月以内＝オレンジ）と状況（期限切れ・アポなし＝赤、今週アポ＝黄、受注＝緑、失注＝グレー）
+function salesColors_(sh, first, last, fiscalCol, stateCol, nCol) {
+  const fiscal = sh.getRange(`${fiscalCol}${first}:${fiscalCol}${last}`);
+  const state = sh.getRange(`${stateCol}${first}:${stateCol}${last}`);
+  const s = `$${stateCol}${first}`;
+  const rules = sh.getConditionalFormatRules().filter(rule => rule.getRanges().every(x => x.getRow() < first));
+  rules.push(
+    SpreadsheetApp.newConditionalFormatRule()
+      .whenFormulaSatisfied(`=AND($${fiscalCol}${first}<>"",$${fiscalCol}${first}<=${FISCAL_NEAR},${s}<>"受注",${s}<>"失注")`)
+      .setBackground(SCOLOR.orange).setFontColor(SCOLOR.redFont).setBold(true).setRanges([fiscal]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('期限切れ')
+      .setBackground(SCOLOR.red).setFontColor(SCOLOR.redFont).setRanges([state]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('アポなし')
+      .setBackground(SCOLOR.red).setFontColor(SCOLOR.redFont).setRanges([state]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('今週アポ')
+      .setBackground(COLOR.yellow).setRanges([state]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('受注')
+      .setBackground(COLOR.green).setRanges([state]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenFormulaSatisfied(`=${s}="失注"`)
+      .setFontColor('#A6A6A6').setRanges([sh.getRange(first, 1, last - first + 1, nCol)]).build());
+  sh.setConditionalFormatRules(rules);
+}
+
+function setValueListValidation_(range, items) {
+  range.setDataValidation(
+    SpreadsheetApp.newDataValidation().requireValueInList(items, true).setAllowInvalid(true).build());
+}
+
 // ---------------------------------------------------------------- 共通
 function titleRow_(sh, title, nCol, note) {
   sh.getRange(1, 1, 1, nCol).setBackground(COLOR.title);
@@ -689,7 +952,7 @@ function overlaps_(rule, target) {
 function findBrokenFormulas_(ss) {
   const out = [];
   ss.getSheets().forEach(sh => {
-    if (/（(移行前|組み替え前)）$/.test(sh.getName())) return;
+    if (/（(移行前|組み替え前|作成前)）$/.test(sh.getName())) return;
     const rng = sh.getDataRange();
     const f = rng.getFormulas();
     for (let i = 0; i < f.length; i++) {
