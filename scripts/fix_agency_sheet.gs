@@ -152,7 +152,7 @@ function migrateOldLog_(ss) {
     const mine = data.filter(r => String(r[3]).trim() === name)
       .map(r => [r[0], r[1], r[2], r[4], r[5], r[6], r[7], r[8], r[9]]);
     if (!mine.length) return;
-    // 見出しを新しい形にしてから書き込む（remapPersonColumns_ で組み替え対象にしない）
+    // 見出しを新しい形にしてから書き込む（remapColumns_ で組み替え対象にしない）
     sh.getRange(P_HEAD, 1, 1, P_COLS.length).setValues([P_COLS.map(([h]) => h)]);
     const filled = sh.getRange(P_FIRST, 1, P_ROWS, 1).getValues().filter(([v]) => v !== '').length;
     sh.getRange(P_FIRST + filled, 1, mine.length, mine[0].length).setValues(mine);
