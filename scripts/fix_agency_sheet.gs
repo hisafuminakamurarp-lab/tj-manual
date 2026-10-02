@@ -1,13 +1,14 @@
 /**
  * 代理店進捗管理シート：セットアップ・連動スクリプト（Google Apps Script）
  *
- *   - 担当者ログ（前田紘孝：代理店・浅沼雄太：代理店）… 入力はここだけ。代理店とのやりとり＋紹介いただいた企業の情報
+ *   - 担当者ログ（前田紘孝：代理店・浅沼雄太：代理店）… 代理店1社につき1行。代理店とのやりとりを入力し、
+ *                       紹介件数・進行中・受注・対応漏れ・紹介料は営業管理から自動で数える
  *   - 代理店全体ログ  … 担当者ログを自動で合算。上部に担当者別・合計のステータス
- *   - 紹介・成約実績  … 担当者ログのうち紹介社名が入った行を自動で一覧化
- *   - サマリー        … 代理店別集計（稼働率・紹介数・成約数・金額）
+ *   - 紹介・成約実績  … 営業管理のうち「紹介元の代理店」が入った案件を自動で一覧化
+ *   - サマリー        … 代理店別集計（稼働率・紹介件数・受注・金額）
  *   - 代理店ID        … kintone『8. 代理店管理』へのリンク（入力すると自動でリンク化）
- *   - 営業管理（担当者ごと）… 顧客の営業進捗を入力。決算まで・状況は自動
- *   - 営業管理全体ログ … 担当者ごとの営業管理を自動で合算。上部に担当者別・合計のステータス
+ *   - 営業管理（担当者ごと）… 顧客の営業進捗を入力。代理店からの紹介案件もここに入れる（営業管理.gs）
+ *   - 営業管理全体ログ … 担当者ごとの営業管理を自動で合算。上部に担当者別・合計のステータス（営業管理.gs）
  *
  * 使い方：拡張機能 → Apps Script に貼り付け → fixAgencySheet を実行。
  * 何度実行しても同じ状態になる（入力済みのデータは消さない）。
@@ -27,25 +28,26 @@ const SH = {
   conf: '設定',
 };
 
-// 担当者ログ：3〜4行目＝ステータス、6行目＝見出し、7行目〜＝データ（1行＝代理店とのやりとり or 紹介1件）
+// 担当者ログ：3〜4行目＝ステータス、6行目＝見出し、7行目〜＝データ（代理店1社につき1行）
 const P_HEAD = 6, P_FIRST = 7, P_ROWS = 300;
 const P_LAST = P_FIRST + P_ROWS - 1;
-// [見出し, 列幅]
+// [見出し, 列幅, 自動なら 'auto']
 const P_COLS = [
   ['代理店ID', 100], ['代理店名', 200], ['代理店担当者', 110],
   ['連絡ツール', 110], ['接触手段', 110], ['最終アクション日', 100], ['最終アクション内容', 260],
   ['次回アクション予定日', 110], ['次回アクション内容', 260],
-  ['紹介社名', 180], ['紹介日', 95], ['成約日', 95],
-  ['成約商材（顧問種別）', 120], ['成約商材（案件種別①）', 130], ['成約商材（案件種別②）', 150],
-  ['成約金額（円）', 110], ['代理店報酬（円）', 110], ['備考', 220],
+  ['紹介件数', 65, 'auto'], ['進行中', 65, 'auto'], ['受注', 65, 'auto'], ['対応漏れ', 65, 'auto'],
+  ['受注金額（円）', 110, 'auto'], ['紹介料（円）', 100, 'auto'], ['紹介料未払（円）', 100, 'auto'],
+  ['備考', 220],
 ];
 const PC = {  // 担当者ログの列
-  id: 'A', tool: 'D', method: 'E', lastDate: 'F', lastText: 'G', nextDate: 'H', nextText: 'I',
-  company: 'J', intro: 'K', close: 'L', komon: 'M', anken1: 'N', anken2: 'O', amount: 'P', reward: 'Q',
+  id: 'A', name: 'B', tool: 'D', method: 'E', lastDate: 'F', lastText: 'G', nextDate: 'H', nextText: 'I',
+  count: 'J', open: 'K', won: 'L', miss: 'M', amount: 'N', fee: 'O', unpaid: 'P',
 };
 const TOOL_OPTIONS = ['グループLINE', '個別LINE', 'Chatwork', 'メール', '電話'];
 const METHOD_OPTIONS = ['電話', '訪問', 'オンライン面談', 'メール', 'LINE/チャット', '勉強会・セミナー', '会食'];
-const STATUS_LABELS = ['担当代理店数', '要連絡（赤）', '期限間近（黄）', '今月の接触', '紹介数', '成約数', '成約金額（円）'];
+const STATUS_LABELS = ['担当代理店数', '要連絡（赤）', '期限間近（黄）', '今月の接触',
+  '紹介件数', '進行中', '受注', '対応漏れ', '受注金額（円）', '紹介料未払（円）'];
 
 // 代理店全体ログ：3行目〜＝担当者別ステータス表、その2行下が見出し、次の行から合算データ
 const LOG_HEAD = ASSIGNEES.length + 6;
@@ -53,9 +55,9 @@ const LOG_FIRST = LOG_HEAD + 1;
 const LOG_END = LOG_FIRST + ASSIGNEES.length * P_ROWS - 1;
 const LOG_COLS = P_COLS.slice(0, 2).concat([['自社担当', 90]], P_COLS.slice(2));  // 自社担当をC列に挿入
 
-// 紹介・成約実績：4行目＝見出し、5行目〜＝担当者ログから自動（紹介社名が入った行だけ）
-const KPI_HEADS = ['代理店ID', '代理店名', '自社担当', '紹介社名', '紹介日', '成約日',
-  '成約商材（顧問種別）', '成約商材（案件種別①）', '成約商材（案件種別②）', '成約金額（円）', '代理店報酬（円）', '備考'];
+// 紹介・成約実績：4行目＝見出し、5行目〜＝営業管理全体ログから自動（紹介元の代理店が入った案件だけ）
+const KPI_HEADS = ['紹介日', '紹介元の代理店', '自社担当', '会社名', '単発／顧問', '提案商材', '進捗',
+  '次回アポ日', '状況', '受注金額（円）', '紹介料（円）', '紹介料支払', 'メモ'];
 const KPI_FIRST = 5;
 const KPI_END = KPI_FIRST + ASSIGNEES.length * P_ROWS - 1;
 
@@ -99,15 +101,16 @@ function fixAgencySheet() {
   });
   if (!migrateOldLog_(ss)) return;  // 旧形式のデータ移行（担当者未入力なら中断）
 
+  setupSales_(ss);                     // 営業管理を先に整える（代理店側の自動集計が参照するため）
+  notes.push(...migrateReferrals_(ss));  // 担当者ログの紹介データを営業管理へ移す（1回だけ）
   ASSIGNEES.forEach(name => {
     const sh = ss.getSheetByName(TAB(name));
-    remapPersonColumns_(sh);
+    remapColumns_(sh, P_COLS.map(([h]) => h), { '備考': ['備考', 'メモ'] });
     setupPersonTab_(sh, name);
   });
   buildLog_(ss.getSheetByName(SH.log));
   notes.push(...buildKpi_(ss));
   fixSummary_(ss.getSheetByName(SH.sum));
-  setupSales_(ss);
   linkKintoneIds();
   SpreadsheetApp.flush();
 
@@ -161,21 +164,20 @@ function migrateOldLog_(ss) {
   return true;
 }
 
-// 担当者ログの見出しが今の列構成と違うとき、見出し名を手がかりにデータを新しい列へ並べ替える
-// （使わなくなった列・自動計算の列は捨てる。「メモ」は「備考」へ移す）
-function remapPersonColumns_(sh) {
-  const want = P_COLS.map(([h]) => h);
+// 見出しが今の列構成と違うとき、見出し名を手がかりにデータを新しい列へ並べ替える（担当者ログ・営業管理で共通）
+// （使わなくなった列・自動計算の列は捨てる。alias＝旧名 → 新名）
+function remapColumns_(sh, want, alias) {
+  const norm = v => String(v).replace(/\s/g, '');
   const width = Math.max(sh.getLastColumn(), want.length);
-  const head = sh.getRange(P_HEAD, 1, 1, width).getDisplayValues()[0].map(v => v.replace(/\s/g, ''));
-  if (want.every((h, i) => head[i] === h.replace(/\s/g, ''))) return;
+  const head = sh.getRange(P_HEAD, 1, 1, width).getDisplayValues()[0].map(norm);
+  if (want.every((h, i) => head[i] === norm(h))) return;
   if (head.every(v => v === '')) return;  // 新規タブ
 
   const rng = sh.getRange(P_FIRST, 1, P_ROWS, width);
   const values = rng.getValues();
   const formulas = rng.getFormulas();
-  const alias = { '備考': ['備考', 'メモ'] };
   const src = want.map(h => {
-    const names = (alias[h] || [h]).map(n => n.replace(/\s/g, ''));
+    const names = ((alias || {})[h] || [h]).map(norm);
     return head.findIndex(v => names.includes(v));
   });
   const rows = values.map((row, r) => src.map(i => (i < 0 || formulas[r][i]) ? '' : row[i]));
@@ -187,66 +189,169 @@ function remapPersonColumns_(sh) {
   sh.setConditionalFormatRules([]);
   sh.getRange(P_FIRST, 1, P_ROWS, sh.getMaxColumns()).clear().clearDataValidations();
   sh.getRange(P_FIRST, 1, P_ROWS, want.length).setValues(rows);
+  sh.getRange(P_HEAD, 1, 1, sh.getMaxColumns()).clearContent();
+  sh.getRange(P_HEAD, 1, 1, want.length).setValues([want]);
+}
+
+// 担当者ログに「紹介社名」などの列があった頃の形 → 紹介は担当者の営業管理へ1件1行で移し、
+// 代理店の行は1社1行にまとめる（同じ代理店の行は、最終アクション日がいちばん新しい行の内容を残す）
+function migrateReferrals_(ss) {
+  const notes = [];
+  const tz = ss.getSpreadsheetTimeZone();
+  const fmt = d => d instanceof Date ? Utilities.formatDate(d, tz, 'yyyy/MM/dd') : String(d);
+  ASSIGNEES.forEach(name => {
+    const sh = ss.getSheetByName(TAB(name));
+    const width = sh.getLastColumn();
+    if (width < 1) return;
+    const head = sh.getRange(P_HEAD, 1, 1, width).getDisplayValues()[0].map(v => v.replace(/\s/g, ''));
+    if (!head.includes('紹介社名')) return;
+
+    const backup = `${sh.getName()}（紹介移行前）`;
+    if (!ss.getSheetByName(backup)) sh.copyTo(ss).setName(backup);
+    const rows = sh.getRange(P_FIRST, 1, P_ROWS, width).getValues();
+    const g = (row, h) => { const i = head.indexOf(h.replace(/\s/g, '')); return i < 0 ? '' : row[i]; };
+    const has = v => String(v).trim() !== '';
+
+    // 紹介 → 営業管理（1件1行）。代理店名が空なら、同じ代理店IDの別の行から補う
+    const nameOf = row => {
+      if (has(g(row, '代理店名'))) return g(row, '代理店名');
+      const same = rows.find(x => has(g(x, '代理店名')) && has(g(row, '代理店ID')) &&
+        String(g(x, '代理店ID')).trim() === String(g(row, '代理店ID')).trim());
+      return same ? g(same, '代理店名') : '';
+    };
+    const deals = [];
+    rows.filter(row => has(g(row, '紹介社名'))).forEach(row => {
+      const komon = g(row, '成約商材（顧問種別）'), a1 = g(row, '成約商材（案件種別①）'), a2 = g(row, '成約商材（案件種別②）');
+      const close = g(row, '成約日');
+      const memo = [has(komon) ? `顧問種別：${komon}` : '', has(a1) && has(a2) ? `案件種別：${a1}／${a2}` : '',
+        has(close) ? `成約日：${fmt(close)}` : ''].filter(has).join('　');
+      deals.push({
+        '会社名': g(row, '紹介社名'), '紹介元の代理店': nameOf(row), '紹介日': g(row, '紹介日'),
+        '単発／顧問': has(komon) ? '顧問' : '', '提案商材': has(a2) ? a2 : a1, '進捗': has(close) ? '受注' : '',
+        '受注金額（円）': g(row, '成約金額（円）'), '紹介料（円）': g(row, '代理店報酬（円）'), 'メモ': memo,
+      });
+    });
+    const moved = appendDeals_(findSalesTab_(ss, name), deals);
+
+    // 代理店の行 → 1社1行
+    const groups = new Map();
+    rows.forEach(row => {
+      const key = String(g(row, '代理店ID')).trim() || String(g(row, '代理店名')).trim();
+      if (!key) return;
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(row);
+    });
+    const firstOf = (list, h) => { const row = list.find(x => has(g(x, h))); return row ? g(row, h) : ''; };
+    const out = [...groups.values()].map(list => {
+      const acted = list.filter(x => ['最終アクション日', '最終アクション内容', '次回アクション予定日', '次回アクション内容']
+        .some(h => has(g(x, h))));
+      const time = x => g(x, '最終アクション日') instanceof Date ? g(x, '最終アクション日').getTime() : 0;
+      const latest = acted.reduce((a, x) => (!a || time(x) >= time(a)) ? x : a, null);
+      const notesCol = [...new Set(list.map(x => String(g(x, '備考') || g(x, 'メモ')).trim()).filter(has))].join(' / ');
+      return P_COLS.map(([h, , kind]) => {
+        if (kind === 'auto') return '';
+        if (h === '備考') return notesCol;
+        if (/アクション/.test(h)) return latest ? g(latest, h) : '';
+        return firstOf(list, h);
+      });
+    });
+
+    if (sh.getFilter()) sh.getFilter().remove();
+    sh.setConditionalFormatRules([]);
+    sh.getRange(P_FIRST, 1, P_ROWS, sh.getMaxColumns()).clear().clearDataValidations();
+    sh.getRange(P_HEAD, 1, 1, sh.getMaxColumns()).clearContent();
+    sh.getRange(P_HEAD, 1, 1, P_COLS.length).setValues([P_COLS.map(([h]) => h)]);
+    if (out.length) sh.getRange(P_FIRST, 1, out.length, P_COLS.length).setValues(out);
+    const before = rows.filter(row => row.some(has)).length;
+    notes.push(`※『${sh.getName()}』の紹介${deals.length}件を『${findSalesTab_(ss, name).getName()}』へ移しました` +
+      `（追加${moved}件・同じ会社名はスキップ）。代理店の行は${before}行→${out.length}行（1社1行）にまとめました。元の内容は『${backup}』に保存。`);
+  });
+  return notes;
 }
 
 // ---------------------------------------------------------------- 担当者ログ
 function setupPersonTab_(sh, name) {
+  const ss = sh.getParent();
   const nCol = P_COLS.length;
   ensureSize_(sh, P_LAST, nCol);
   if (sh.getFilter()) sh.getFilter().remove();
   sh.getRange(P_FIRST, 1, P_ROWS, sh.getMaxColumns()).clearDataValidations();
   titleRow_(sh, `${name}の担当代理店`, nCol,
-    '代理店とのやりとりを1行ずつ記録し、紹介をいただいたら紹介社名から右に入力します（同じ代理店から2件目の紹介は、同じ代理店IDで行を追加）。' +
-    `接触したら「最終アクション日・内容」を書き換え、「次回アクション予定日・内容」を必ず入れる。内容は『${SH.log}』『${SH.kpi}』に自動で反映されます。`);
+    '代理店1社につき1行。接触したら「最終アクション日・内容」を書き換え、「次回アクション予定日・内容」を必ず入れる。' +
+    '紹介いただいた会社は営業管理に入力し「紹介元の代理店」を選ぶと、灰色の列（紹介件数〜紹介料未払）に自動で反映されます。');
+
+  // 自動の列：営業管理全体ログのうち、紹介元の代理店がこの行の代理店名と同じ案件を数える
+  const r = col => `${col}${P_FIRST}:${col}${P_LAST}`;
+  const nm = r(PC.name);
+  const ag = salesRange_(ss, '紹介元の代理店'), pr = salesRange_(ss, '進捗'), st = salesRange_(ss, '状況');
+  const am = salesRange_(ss, '受注金額（円）'), fe = salesRange_(ss, '紹介料（円）'), pd = salesRange_(ss, '紹介料支払');
+  const each = expr => `=ARRAYFORMULA(IF(${nm}="","",${expr}))`;
+  sh.getRange(`${PC.count}${P_FIRST}:${PC.unpaid}${P_LAST}`).clearContent();
+  sh.getRange(`${PC.count}${P_FIRST}:${PC.unpaid}${P_FIRST}`).setFormulas([[
+    each(`COUNTIFS(${ag},${nm})`),
+    each(`COUNTIFS(${ag},${nm},${pr},"<>受注",${pr},"<>失注")`),
+    each(`COUNTIFS(${ag},${nm},${pr},"受注")`),
+    each(`COUNTIFS(${ag},${nm},${st},"アポなし")+COUNTIFS(${ag},${nm},${st},"期限切れ")`),
+    each(`SUMIFS(${am},${ag},${nm})`),
+    each(`SUMIFS(${fe},${ag},${nm})`),
+    each(`SUMIFS(${fe},${ag},${nm},${pd},"<>支払済")`),
+  ]]);
 
   // ステータス（3〜4行目）
-  const r = col => `${col}${P_FIRST}:${col}${P_LAST}`;
   sh.getRange(3, 1, 1, sh.getMaxColumns()).clear();
   sh.getRange(4, 1, 1, sh.getMaxColumns()).clear();
   sh.getRange(3, 1, 1, STATUS_LABELS.length).setValues([STATUS_LABELS])
-    .setBackground(COLOR.auto).setFontWeight('bold').setFontSize(9).setHorizontalAlignment('center');
+    .setBackground(COLOR.auto).setFontWeight('bold').setFontSize(9).setHorizontalAlignment('center').setWrap(true);
   sh.getRange(4, 1, 1, STATUS_LABELS.length).setFormulas([[
-    `=IFERROR(ROWS(UNIQUE(FILTER(${r(PC.id)},${r(PC.id)}<>""))),0)`,  // 空のときは0（COUNTUNIQUEだとエラーを1件と数える）
-    `=COUNTIFS(${r(PC.id)},"?*",${r(PC.nextDate)},"")+COUNTIFS(${r(PC.id)},"?*",${r(PC.nextDate)},"<"&TODAY())`,
-    `=COUNTIFS(${r(PC.id)},"?*",${r(PC.nextDate)},">="&TODAY(),${r(PC.nextDate)},"<="&TODAY()+設定!$C$8)`,
-    `=COUNTIFS(${r(PC.id)},"?*",${r(PC.lastDate)},">="&設定!$C$5)`,
-    `=COUNTIF(${r(PC.company)},"?*")`,
-    `=COUNT(${r(PC.close)})`,
+    `=IFERROR(ROWS(UNIQUE(FILTER(${nm},${nm}<>""))),0)`,  // 空のときは0（COUNTUNIQUEだとエラーを1件と数える）
+    `=COUNTIFS(${nm},"?*",${r(PC.nextDate)},"")+COUNTIFS(${nm},"?*",${r(PC.nextDate)},"<"&TODAY())`,
+    `=COUNTIFS(${nm},"?*",${r(PC.nextDate)},">="&TODAY(),${r(PC.nextDate)},"<="&TODAY()+設定!$C$8)`,
+    `=COUNTIFS(${nm},"?*",${r(PC.lastDate)},">="&設定!$C$5)`,
+    `=SUM(${r(PC.count)})`,
+    `=SUM(${r(PC.open)})`,
+    `=SUM(${r(PC.won)})`,
+    `=SUM(${r(PC.miss)})`,
     `=SUM(${r(PC.amount)})`,
+    `=SUM(${r(PC.unpaid)})`,
   ]]).setFontSize(14).setFontWeight('bold').setHorizontalAlignment('center').setNumberFormat('#,##0');
   sh.getRange(3, 1, 2, STATUS_LABELS.length)
     .setBorder(true, true, true, true, true, true, COLOR.border, SpreadsheetApp.BorderStyle.SOLID);
-  sh.getRange('B4').setFontColor(COLOR.redFont);
+  sh.setRowHeight(3, 30);
 
-  headerRow_(sh, P_HEAD, P_COLS.map(([h, w]) => [h, 'in', w]));
-  // 紹介に関する列は見出しを少し濃くして、代理店とのやりとり部分と区別する
-  sh.getRange(`${PC.company}${P_HEAD}:R${P_HEAD}`).setBackground('#FCE4D6');
+  headerRow_(sh, P_HEAD, P_COLS.map(([h, w, kind]) => [h, kind || 'in', w]));
   const body = sh.getRange(P_FIRST, 1, P_ROWS, nCol);
   body.setNumberFormat('General').setFontSize(10).setVerticalAlignment('middle')
     .setBorder(true, true, true, true, true, true, COLOR.border, SpreadsheetApp.BorderStyle.SOLID);
-  [PC.lastDate, PC.nextDate, PC.intro, PC.close].forEach(col => sh.getRange(r(col)).setNumberFormat('yyyy/mm/dd'));
-  [PC.amount, PC.reward].forEach(col => sh.getRange(r(col)).setNumberFormat('#,##0'));
+  [PC.lastDate, PC.nextDate].forEach(col => sh.getRange(r(col)).setNumberFormat('yyyy/mm/dd'));
   [PC.lastText, PC.nextText].forEach(col => sh.getRange(r(col)).setWrap(true));
+  sh.getRange(`${PC.count}${P_FIRST}:${PC.miss}${P_LAST}`).setNumberFormat('0;-0;"-"').setHorizontalAlignment('center');
+  sh.getRange(`${PC.amount}${P_FIRST}:${PC.unpaid}${P_LAST}`).setNumberFormat('#,##0;-#,##0;"-"');
+  sh.getRange(`${PC.count}${P_FIRST}:${PC.unpaid}${P_LAST}`).setBackground('#F3F3F3');
 
   // プルダウン（選択肢は『設定』）
-  const conf = sh.getParent().getSheetByName(SH.conf);
-  const list = (col, end) => conf.getRange(`${col}${OPT_FIRST}:${col}${end || OPT_FIRST + 9}`);
+  const conf = ss.getSheetByName(SH.conf);
+  const list = col => conf.getRange(`${col}${OPT_FIRST}:${col}${OPT_FIRST + 9}`);
   setListValidation_(sh.getRange(r(PC.tool)), list('K'));
   setListValidation_(sh.getRange(r(PC.method)), list('H'));
-  setListValidation_(sh.getRange(r(PC.komon)), list('M', OPT_END));
-  setListValidation_(sh.getRange(r(PC.anken1)), list('N', OPT_END));
-  setListValidation_(sh.getRange(r(PC.anken2)), list('O', OPT_END));
 
   // 色分け：次回アクション予定日が未入力・期限切れ＝D〜I列を赤、期限間近＝H〜I列を黄
+  //         対応漏れがある＝赤、紹介料の未払がある＝オレンジ（ステータスも同じ）
   const f = P_FIRST;
+  const status = label => sh.getRange(4, STATUS_LABELS.indexOf(label) + 1);
   sh.setConditionalFormatRules([
     SpreadsheetApp.newConditionalFormatRule()
-      .whenFormulaSatisfied(`=AND(COUNTA($A${f}:$R${f})>0,OR($H${f}="",$H${f}<TODAY()))`)
+      .whenFormulaSatisfied(`=AND(COUNTA($A${f}:$I${f})>0,OR($H${f}="",$H${f}<TODAY()))`)
       .setBackground(COLOR.red).setFontColor(COLOR.redFont)
       .setRanges([sh.getRange(`D${f}:I${P_LAST}`)]).build(),
     SpreadsheetApp.newConditionalFormatRule()
       .whenFormulaSatisfied(`=AND($H${f}<>"",$H${f}>=TODAY(),$H${f}-TODAY()<=INDIRECT("設定!C8"))`)
       .setBackground(COLOR.yellow).setRanges([sh.getRange(`H${f}:I${P_LAST}`)]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenNumberGreaterThan(0)
+      .setBackground(COLOR.red).setFontColor(COLOR.redFont).setBold(true)
+      .setRanges([sh.getRange(r(PC.miss)), status('要連絡（赤）'), status('対応漏れ')]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenNumberGreaterThan(0)
+      .setBackground('#FCE5CD').setFontColor(COLOR.redFont)
+      .setRanges([sh.getRange(r(PC.unpaid)), status('紹介料未払（円）')]).build(),
   ]);
 
   sh.setFrozenRows(P_HEAD);
@@ -281,7 +386,10 @@ function buildLog_(sh) {
     })]);
   sh.getRange(totalRow, 1, 1, STATUS_LABELS.length + 1).setBackground(COLOR.total).setFontWeight('bold');
   sh.getRange(4, 2, n + 1, STATUS_LABELS.length).setHorizontalAlignment('center').setNumberFormat('#,##0');
-  sh.getRange(4, 3, n + 1, 1).setFontColor(COLOR.redFont).setFontWeight('bold');
+  ['要連絡（赤）', '対応漏れ'].forEach(label =>
+    sh.getRange(4, STATUS_LABELS.indexOf(label) + 2, n + 1, 1).setFontColor(COLOR.redFont).setFontWeight('bold'));
+  sh.setRowHeight(3, 30);
+  sh.getRange(3, 1, 1, STATUS_LABELS.length + 1).setWrap(true);
   sh.getRange(3, 1, n + 2, STATUS_LABELS.length + 1)
     .setBorder(true, true, true, true, true, true, COLOR.border, SpreadsheetApp.BorderStyle.SOLID);
 
@@ -289,13 +397,14 @@ function buildLog_(sh) {
 
   // 担当者ログを縦に合算（自社担当の名前をC列に入れる）。代理店IDはkintoneリンク付き
   const rest = P_COLS.slice(2).map((_, i) => i + 3).join(',');
+  const used = x => `((CHOOSECOLS(${x},1)<>"")+(CHOOSECOLS(${x},2)<>""))`;  // 代理店IDか代理店名が入っている行
   const parts = ASSIGNEES.map((name, i) =>
-    `HSTACK(CHOOSECOLS(p${i},1,2),IF(CHOOSECOLS(p${i},1)<>"","${name}",""),CHOOSECOLS(p${i},${rest}))`);
+    `HSTACK(CHOOSECOLS(p${i},1,2),IF(${used(`p${i}`)},"${name}",""),CHOOSECOLS(p${i},${rest}))`);
   const lets = ASSIGNEES.map((name, i) =>
     `p${i},'${TAB(name)}'!A${P_FIRST}:${colLetter_(P_COLS.length)}${P_LAST}`).join(',');
   const others = LOG_COLS.slice(1).map((_, i) => i + 2).join(',');
   sh.getRange(LOG_FIRST, 1).setFormula(
-    `=IFERROR(ARRAYFORMULA(LET(${lets},all,VSTACK(${parts.join(',')}),f,FILTER(all,CHOOSECOLS(all,1)<>""),` +
+    `=IFERROR(ARRAYFORMULA(LET(${lets},all,VSTACK(${parts.join(',')}),f,FILTER(all,${used('all')}),` +
     `HSTACK(${idLink_('CHOOSECOLS(f,1)')},CHOOSECOLS(f,${others})))),"")`);
 
   // 書式（担当者ログの列が自社担当の分だけ右にずれる）
@@ -303,8 +412,9 @@ function buildLog_(sh) {
   const rr = col => sh.getRange(`${col}${LOG_FIRST}:${col}${LOG_END}`);
   sh.getRange(LOG_FIRST, 1, LOG_END - LOG_FIRST + 1, nCol).setFontSize(10).setVerticalAlignment('middle')
     .setBorder(true, true, true, true, true, true, COLOR.border, SpreadsheetApp.BorderStyle.SOLID);
-  ['最終アクション日', '次回アクション予定日', '紹介日', '成約日'].forEach(h => rr(L(h)).setNumberFormat('yyyy/mm/dd'));
-  ['成約金額（円）', '代理店報酬（円）'].forEach(h => rr(L(h)).setNumberFormat('#,##0'));
+  ['最終アクション日', '次回アクション予定日'].forEach(h => rr(L(h)).setNumberFormat('yyyy/mm/dd'));
+  ['紹介件数', '進行中', '受注', '対応漏れ'].forEach(h => rr(L(h)).setNumberFormat('0;-0;"-"').setHorizontalAlignment('center'));
+  ['受注金額（円）', '紹介料（円）', '紹介料未払（円）'].forEach(h => rr(L(h)).setNumberFormat('#,##0;-#,##0;"-"'));
   ['最終アクション内容', '次回アクション内容'].forEach(h => rr(L(h)).setWrap(true));
   sh.getRange(`C${LOG_FIRST}:C${LOG_END}`).setHorizontalAlignment('center');
 
@@ -312,13 +422,19 @@ function buildLog_(sh) {
   const f = LOG_FIRST, next = L('次回アクション予定日');
   sh.setConditionalFormatRules([
     SpreadsheetApp.newConditionalFormatRule()
-      .whenFormulaSatisfied(`=AND($A${f}<>"",OR($${next}${f}="",$${next}${f}<TODAY()))`)
+      .whenFormulaSatisfied(`=AND(OR($A${f}<>"",$B${f}<>""),OR($${next}${f}="",$${next}${f}<TODAY()))`)
       .setBackground(COLOR.red).setFontColor(COLOR.redFont)
       .setRanges([sh.getRange(`${L('連絡ツール')}${f}:${L('次回アクション内容')}${LOG_END}`)]).build(),
     SpreadsheetApp.newConditionalFormatRule()
       .whenFormulaSatisfied(`=AND($${next}${f}<>"",$${next}${f}>=TODAY(),$${next}${f}-TODAY()<=INDIRECT("設定!C8"))`)
       .setBackground(COLOR.yellow)
       .setRanges([sh.getRange(`${next}${f}:${L('次回アクション内容')}${LOG_END}`)]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenNumberGreaterThan(0)
+      .setBackground(COLOR.red).setFontColor(COLOR.redFont).setBold(true)
+      .setRanges([rr(L('対応漏れ'))]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenNumberGreaterThan(0)
+      .setBackground('#FCE5CD').setFontColor(COLOR.redFont)
+      .setRanges([rr(L('紹介料未払（円）'))]).build(),
   ]);
   sh.setFrozenRows(LOG_HEAD);
   sh.setFrozenColumns(2);
@@ -334,7 +450,7 @@ function buildKpi_(ss) {
       sh.getRange(KPI_FIRST, 1, sh.getLastRow() - KPI_FIRST + 1, 1).getValues().some(([v]) => v !== '')) {
     const backup = `${SH.kpi}（移行前）`;
     if (!ss.getSheetByName(backup)) sh.copyTo(ss).setName(backup);
-    notes.push(`※『${SH.kpi}』に手入力の紹介データがあったため『${backup}』に退避しました。各担当者ログの紹介社名〜備考の列に入力し直してください。`);
+    notes.push(`※『${SH.kpi}』に手入力の紹介データがあったため『${backup}』に退避しました。紹介は各担当者の営業管理に入力してください。`);
   }
 
   const nCol = KPI_HEADS.length;
@@ -343,35 +459,42 @@ function buildKpi_(ss) {
   sh.setConditionalFormatRules([]);
   sh.getRange(3, 1, sh.getMaxRows() - 2, sh.getMaxColumns()).clear().clearDataValidations();
   titleRow_(sh, `${SH.kpi}（紹介1件につき1行・自動）`, nCol,
-    '担当者ログで紹介社名を入力した行が、ここに自動で並びます（ここでは入力しません。修正は各担当者ログで）。');
+    '営業管理で「紹介元の代理店」を選んだ案件が、ここに自動で並びます（ここでは入力しません。修正は各担当者の営業管理で）。');
 
-  const widths = { '代理店ID': 100, '代理店名': 200, '自社担当': 90, '紹介社名': 180, '備考': 220 };
-  headerRow_(sh, 4, KPI_HEADS.map(h => [h, 'auto', widths[h] || 115]));
+  const widths = { '紹介元の代理店': 180, '自社担当': 90, '会社名': 200, '提案商材': 150, 'メモ': 260 };
+  headerRow_(sh, 4, KPI_HEADS.map(h => [h, 'auto', widths[h] || 90]));
 
-  const src = KPI_HEADS.map(h => LOG_COLS.findIndex(([x]) => x === h) + 1);
-  const company = LOG_COLS.findIndex(([x]) => x === '紹介社名') + 1;
-  const range = `'${SH.log}'!A${LOG_FIRST}:${colLetter_(LOG_COLS.length)}${LOG_END}`;
-  const rest = KPI_HEADS.slice(1).map((_, i) => i + 2).join(',');
+  // 営業管理全体ログの列（A列＝担当、B列以降＝営業管理の列）から必要な列だけ取り出す
+  const src = KPI_HEADS.map(h => h === '自社担当' ? 1 : S_COLS.findIndex(([x]) => x === h) + 2);
+  const agency = S_COLS.findIndex(([x]) => x === '紹介元の代理店') + 2;
   sh.getRange(KPI_FIRST, 1).setFormula(
-    `=IFERROR(ARRAYFORMULA(LET(d,${range},f,FILTER(CHOOSECOLS(d,${src.join(',')}),CHOOSECOLS(d,${company})<>""),` +
-    `HSTACK(${idLink_('CHOOSECOLS(f,1)')},CHOOSECOLS(f,${rest})))),"")`);
+    `=IFERROR(LET(d,${salesRange_(ss)},SORT(FILTER(CHOOSECOLS(d,${src.join(',')}),CHOOSECOLS(d,${agency})<>""),1,TRUE)),"")`);
 
   const K = h => colLetter_(KPI_HEADS.indexOf(h) + 1);
-  const rr = col => sh.getRange(`${col}${KPI_FIRST}:${col}${KPI_END}`);
+  const rr = h => sh.getRange(`${K(h)}${KPI_FIRST}:${K(h)}${KPI_END}`);
   sh.getRange(KPI_FIRST, 1, KPI_END - KPI_FIRST + 1, nCol).setFontSize(10).setVerticalAlignment('middle')
     .setBorder(true, true, true, true, true, true, COLOR.border, SpreadsheetApp.BorderStyle.SOLID);
-  ['紹介日', '成約日'].forEach(h => rr(K(h)).setNumberFormat('yyyy/mm/dd'));
-  ['成約金額（円）', '代理店報酬（円）'].forEach(h => rr(K(h)).setNumberFormat('#,##0'));
-  rr(K('自社担当')).setHorizontalAlignment('center');
+  ['紹介日', '次回アポ日'].forEach(h => rr(h).setNumberFormat('yyyy/mm/dd'));
+  ['受注金額（円）', '紹介料（円）'].forEach(h => rr(h).setNumberFormat('#,##0'));
+  ['自社担当', '単発／顧問', '進捗', '状況', '紹介料支払'].forEach(h => rr(h).setHorizontalAlignment('center'));
+  rr('状況').setFontWeight('bold');
+
+  // 状況：アポなし・期限切れ＝赤、今週アポ＝黄、受注＝緑。紹介料：金額があって未払＝オレンジ
+  const st = `$${K('状況')}${KPI_FIRST}`;
+  sh.setConditionalFormatRules([
+    SpreadsheetApp.newConditionalFormatRule().whenFormulaSatisfied(`=OR(${st}="アポなし",${st}="期限切れ")`)
+      .setBackground(COLOR.red).setFontColor(COLOR.redFont).setRanges([rr('状況')]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('今週アポ')
+      .setBackground(COLOR.yellow).setRanges([rr('状況')]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('受注')
+      .setBackground(COLOR.green).setRanges([rr('状況')]).build(),
+    SpreadsheetApp.newConditionalFormatRule()
+      .whenFormulaSatisfied(`=AND($${K('紹介料（円）')}${KPI_FIRST}>0,$${K('紹介料支払')}${KPI_FIRST}<>"支払済")`)
+      .setBackground('#FCE5CD').setFontColor(COLOR.redFont).setRanges([rr('紹介料支払')]).build(),
+  ]);
   sh.setFrozenRows(4);
   sh.setFrozenColumns(2);
   return notes;
-}
-
-// 紹介・成約実績の列を参照する範囲（サマリー用）
-function kpiRange_(head) {
-  const col = colLetter_(KPI_HEADS.indexOf(head) + 1);
-  return `'${SH.kpi}'!$${col}$${KPI_FIRST}:$${col}$${KPI_END}`;
 }
 
 // ---------------------------------------------------------------- 『設定』の選択肢
@@ -379,7 +502,7 @@ function writeLists_(ss) {
   const notes = [];
   const conf = ss.getSheetByName(SH.conf);
   const last = OPT_FIRST + 9;
-  conf.getRange('G12').setValue('入力リスト（担当者ログのプルダウン）').setFontWeight('bold').setFontColor(COLOR.title);
+  conf.getRange('G12').setValue('入力リスト（担当者ログ・営業管理のプルダウン）').setFontWeight('bold').setFontColor(COLOR.title);
   conf.getRange(`I12:J${last}`).clear();  // 使わなくなった「代理店ステータス」「紹介見込み」
   conf.getRange('G13:K13').setValues([['自社担当', '接触手段', '', '', '連絡ツール']])
     .setFontWeight('bold').setHorizontalAlignment('center');
@@ -397,34 +520,32 @@ function writeLists_(ss) {
   conf.getRange('G25').setValue('※ 自社担当はスクリプト上部の ASSIGNEES で管理。接触手段・連絡ツールは空欄に追記するとプルダウンに反映されます（各10件まで）。');
 
   // 成約商材（kintoneと同じ選択肢）。顧問種別は手入力の内容を残す
-  conf.getRange('M12').setValue('成約商材の選択肢（kintoneと同じ内容）').setFontWeight('bold').setFontColor(COLOR.title);
+  conf.getRange('M12').setValue('商材の選択肢（kintoneと同じ内容。営業管理の提案商材＝S列の初期値）').setFontWeight('bold').setFontColor(COLOR.title);
   conf.getRange('M13:O13').setValues([['顧問種別', '案件種別①', '案件種別②']])
     .setFontWeight('bold').setBackground(COLOR.input).setHorizontalAlignment('center');
   writeOptions_(conf.getRange(`N${OPT_FIRST}:N${OPT_END}`), ANKEN1_OPTIONS);
   writeOptions_(conf.getRange(`O${OPT_FIRST}:O${OPT_END}`), ANKEN2_OPTIONS);
   conf.setColumnWidths(13, 3, 180);
-  if (conf.getRange(`M${OPT_FIRST}:M${OPT_END}`).getValues().every(([v]) => v === '')) {
-    notes.push('※ 顧問種別の選択肢が未登録です。『設定』シートM14から下にkintoneの顧問種別の項目を入力してください。');
-  }
   return notes;
 }
 
 // ---------------------------------------------------------------- サマリー
 function fixSummary_(sh) {
+  const ss = sh.getParent();
   sh.getCharts().forEach(ch => sh.removeChart(ch));
   const lastRow = Math.max(sh.getMaxRows(), SUM_END);
   sh.getRange(5, 1, lastRow - 4, 7).clearContent().setBackground(null).setFontWeight('normal');
 
   sh.getRange('A1').setValue('サマリー（代理店別）');
   sh.getRange('A2').setValue(
-    `すべて自動計算。代理店IDは担当者ログ（${SH.log}）から自動で並びます。` +
+    `すべて自動計算。代理店は担当者ログ（${SH.log}）から、紹介・受注は営業管理（紹介元の代理店）から集計します。` +
     '稼働率＝直近の対象期間（『設定』C6、初期値3ヶ月）のうち紹介があった月の割合。');
-  sh.getRange('A4:G4').setValues([['代理店ID', '代理店名', '稼働率', '紹介数', '成約数', '成約金額（円）', '代理店報酬（円）']]);
+  sh.getRange('A4:G4').setValues([['代理店名', '自社担当', '稼働率', '紹介件数', '受注', '受注金額（円）', '紹介料（円）']]);
 
   const L = `'${SH.log}'`;
-  const logId = `${L}!$A$${LOG_FIRST}:$A$${LOG_END}`, logName = `${L}!$B$${LOG_FIRST}:$B$${LOG_END}`;
-  const kId = kpiRange_('代理店ID'), kIntro = kpiRange_('紹介日'), kClose = kpiRange_('成約日');
-  const kAmount = kpiRange_('成約金額（円）'), kReward = kpiRange_('代理店報酬（円）');
+  const logName = `${L}!$B$${LOG_FIRST}:$B$${LOG_END}`, logWho = `${L}!$C$${LOG_FIRST}:$C$${LOG_END}`;
+  const ag = salesRange_(ss, '紹介元の代理店'), intro = salesRange_(ss, '紹介日'), pr = salesRange_(ss, '進捗');
+  const am = salesRange_(ss, '受注金額（円）'), fe = salesRange_(ss, '紹介料（円）');
 
   // 合計行
   sh.getRange('A5').setValue('合計');
@@ -438,9 +559,8 @@ function fixSummary_(sh) {
   ]]);
   sh.getRange('A5:G5').setBackground(COLOR.total).setFontWeight('bold');
 
-  // 代理店ID：代理店全体ログから重複なしで自動展開
-  sh.getRange(`A${SUM_FIRST}`).setFormula(
-    `=IFERROR(LET(ids,UNIQUE(FILTER(${logId},${logId}<>"")),ARRAYFORMULA(IFERROR(${idLink_('ids')},ids))),"")`);
+  // 代理店名：代理店全体ログから重複なしで自動展開
+  sh.getRange(`A${SUM_FIRST}`).setFormula(`=IFERROR(UNIQUE(FILTER(${logName},${logName}<>"")),"")`);
 
   const rows = [];
   for (let r = SUM_FIRST; r <= SUM_END; r++) {
@@ -448,22 +568,23 @@ function fixSummary_(sh) {
     const m = 'DATE(YEAR(設定!$C$5),MONTH(設定!$C$5)';
     const seq = 'SEQUENCE(設定!$C$6)';
     rows.push([
-      `=IF(${A}="","",IFERROR(INDEX(${logName},MATCH(${A},${logId},0)),""))`,
-      `=IF(${A}="","",ARRAYFORMULA(SUMPRODUCT(--(COUNTIFS(${kId},${A},` +
-        `${kIntro},">="&${m}+1-${seq},1),${kIntro},"<"&${m}+2-${seq},1))>0)))/設定!$C$6)`,
-      `=IF(${A}="","",COUNTIFS(${kId},${A}))`,
-      `=IF(${A}="","",COUNTIFS(${kId},${A},${kClose},"<>"))`,
-      `=IF(${A}="","",SUMIFS(${kAmount},${kId},${A}))`,
-      `=IF(${A}="","",SUMIFS(${kReward},${kId},${A}))`,
+      `=IF(${A}="","",IFERROR(INDEX(${logWho},MATCH(${A},${logName},0)),""))`,
+      `=IF(${A}="","",ARRAYFORMULA(SUMPRODUCT(--(COUNTIFS(${ag},${A},` +
+        `${intro},">="&${m}+1-${seq},1),${intro},"<"&${m}+2-${seq},1))>0)))/設定!$C$6)`,
+      `=IF(${A}="","",COUNTIFS(${ag},${A}))`,
+      `=IF(${A}="","",COUNTIFS(${ag},${A},${pr},"受注"))`,
+      `=IF(${A}="","",SUMIFS(${am},${ag},${A}))`,
+      `=IF(${A}="","",SUMIFS(${fe},${ag},${A}))`,
     ]);
   }
   sh.getRange(SUM_FIRST, 2, rows.length, 6).setFormulas(rows);
 
-  sh.getRange(5, 1, SUM_END - 4, 2).setHorizontalAlignment('center');
+  sh.getRange(5, 2, SUM_END - 4, 1).setHorizontalAlignment('center');
   sh.getRange(5, 3, SUM_END - 4, 1).setNumberFormat('0%');
   sh.getRange(5, 4, SUM_END - 4, 4).setNumberFormat('#,##0');
   sh.getRange(5, 1, SUM_END - 4, 7)
     .setBorder(true, true, true, true, true, true, COLOR.border, SpreadsheetApp.BorderStyle.SOLID);
+  sh.setColumnWidth(1, 200);
   sh.setFrozenRows(5);
 
   // 稼働率：0%＝グレー（休眠）、100%＝緑
@@ -514,12 +635,12 @@ function writePlan_(sh) {
     ['毎週', '紹介が多い代理店（『サマリー』で稼働率が高い）',
      '紹介予定・進捗の確認連絡', '紹介の流れを止めない', '各担当', '電話・LINE'],
     ['紹介を受けた当日中', '紹介元の代理店',
-     '紹介受領のお礼と今後の流れを連絡し、担当者ログに紹介社名・紹介日を入力（2件目以降は同じ代理店IDで行を追加）',
+     '紹介受領のお礼と今後の流れを連絡し、自分の営業管理に会社を追加して「紹介元の代理店」「紹介日」を入力',
      '紹介して良かったと感じてもらう', '各担当', '電話・チャット'],
     ['初回面談から3営業日以内', '紹介元の代理店',
      '面談結果・次のステップを報告', '代理店が顧客にフォローしやすくする', '各担当', 'メール・チャット'],
     ['成約時（24時間以内）', '紹介元の代理店',
-     '成約報告と報酬見込みの連絡。担当者ログのその紹介の行に成約日・成約商材・成約金額・代理店報酬を入力',
+     '成約報告と紹介料の連絡。営業管理のその会社の行で進捗を「受注」にし、受注金額・紹介料を入力',
      '成功体験を共有し次の紹介につなげる', '各担当', '電話'],
     ['毎月初', '全代理店',
      '新商材・キャンペーン情報、紹介トークのポイントを配信', '紹介のきっかけを定期的に提供', 'マーケ担当', 'メール・チャット'],
@@ -529,7 +650,7 @@ function writePlan_(sh) {
      '再活性化の個別提案（勉強会招待、同行営業の提案など）', '休眠代理店を掘り起こす', '各担当', '電話・訪問'],
     ['四半期ごと', '全代理店',
      '代理店向け勉強会（税制改正・商材説明・成功事例共有）', '知識を更新し、紹介しやすい状態をつくる', '責任者', 'セミナー・オンライン'],
-    ['半期ごと', '重点代理店（『サマリー』で紹介数・成約数が多い代理店）',
+    ['半期ごと', '重点代理店（『サマリー』で紹介件数・受注が多い代理店）',
      '個別面談（目標のすり合わせ・インセンティブ案内）', '重点代理店のモチベーション維持', '責任者', '訪問・オンライン'],
     ['顧客の決算期が集中する時期の前', '全代理店',
      '節税・決算対策の提案キャンペーンを案内', '繁忙期前に紹介を集中させる', 'マーケ担当', 'メール・勉強会'],
@@ -546,36 +667,40 @@ function writeHowto_(ss) {
   how.getRange('A2').setValue('代理店とのコミュニケーションを切らさず、紹介を継続的に生み出すための管理シートです。');
   const lines = [
     ['■ シート構成', null],
-    ['担当者ログ', `${ASSIGNEES.map(TAB).join('・')}。入力はここだけ。代理店とのやりとりと、紹介いただいた企業の情報を入力する。上部に本人のステータス。`],
+    ['担当者ログ', `${ASSIGNEES.map(TAB).join('・')}。代理店1社につき1行。代理店とのやりとりを入力する。紹介件数〜紹介料未払は営業管理から自動。上部に本人のステータス。`],
     ['代理店全体ログ', '担当者ログを自動で合算した一覧（入力しない）。上部に担当者別・合計のステータス表。'],
-    ['紹介・成約実績', '担当者ログのうち紹介社名が入った行を自動で一覧化（入力しない）。'],
-    ['サマリー', '代理店別の稼働率・紹介数・成約数・成約金額・代理店報酬を自動集計（入力しない）。'],
+    ['紹介・成約実績', '営業管理のうち「紹介元の代理店」が入った案件を自動で一覧化（入力しない）。'],
+    ['サマリー', '代理店別の稼働率・紹介件数・受注・受注金額・紹介料を自動集計（入力しない）。'],
     ['定例アクション計画', 'いつ・どの代理店に・何をするかの運用ルール。'],
-    ['営業管理（担当者ごと）', '顧客ごとに1行。紺色の列を入力し、緑色の列（決算まで・状況）は自動。案件IDはkintone『案件管理』へのリンクになる。上部に本人のステータス。'],
+    ['営業管理（担当者ごと）', '顧客ごとに1行。代理店からの紹介案件もここに入れ、「紹介元の代理店」を選ぶ。紺色の列を入力し、緑色の列（決算まで・状況）は自動。案件IDはkintone『案件管理』へのリンクになる。上部に本人のステータス。'],
     ['営業管理全体ログ', '担当者ごとの営業管理を自動で合算（入力しない）。上部に担当者別・合計のステータス表。'],
-    ['設定', '稼働率の対象期間（C6）、期限間近の日数（C8）、プルダウンの選択肢（接触手段＝H列、連絡ツール＝K列、成約商材＝M〜O列、営業管理＝Q〜S列）。'],
+    ['設定', '稼働率の対象期間（C6）、期限間近の日数（C8）、プルダウンの選択肢（接触手段＝H列、連絡ツール＝K列、商材＝M〜O列、営業管理＝Q〜S列）。'],
     ['', null],
     ['■ 色のルール', null],
-    ['黄色の見出し', '入力する列（オレンジの見出しは紹介に関する列）。'],
-    ['灰色の見出し', '自動の列・タブ（上書きしない）。'],
+    ['黄色の見出し', '入力する列。'],
+    ['灰色の見出し', '自動の列・タブ（上書きしない）。担当者ログの紹介件数〜紹介料未払も自動。'],
     ['赤', '担当者ログ・代理店全体ログ：次回アクション予定日が未入力、または予定日を過ぎている。'],
     ['黄', '担当者ログ・代理店全体ログ：次回アクション予定日まで『設定』C8の日数以内。'],
+    ['対応漏れの赤', '紹介案件のうち、営業管理の状況が「アポなし」「期限切れ」のものがある。'],
+    ['紹介料未払のオレンジ', '紹介料が入っていて、紹介料支払が「支払済」になっていない。'],
     ['サマリーの灰色', '稼働率0%（対象期間に紹介がない）。'],
     ['サマリーの緑', '稼働率100%（対象期間の毎月に紹介がある）。'],
     ['', null],
     ['■ 運用の流れ', null],
-    ['① 代理店を登録', '自分の担当者ログに代理店ID・代理店名・代理店担当者を入力。代理店IDはkintone『8. 代理店管理』と同じIDを使う。'],
+    ['① 代理店を登録', '自分の担当者ログに1社1行で代理店ID・代理店名・代理店担当者を入力。代理店IDはkintone『8. 代理店管理』と同じIDを使う。'],
     ['② 接触したら更新', 'その代理店の行の「最終アクション日・内容」を書き換え、「次回アクション予定日・内容」を必ず入れる。'],
-    ['③ 紹介を受けたら', '同じ行の紹介社名・紹介日を入力（紹介欄が埋まっている代理店の2件目以降は、同じ代理店IDで行を追加）。'],
-    ['④ 成約したら', 'その紹介の行に成約日・成約商材・成約金額・代理店報酬を入力。紹介・成約実績とサマリーに自動で反映される。'],
-    ['⑤ 毎週月曜に確認', '担当者：自分のログで赤→黄の順に連絡。責任者：『代理店全体ログ』上部で担当者ごとの要連絡件数を確認。'],
+    ['③ 紹介を受けたら', '自分の営業管理に会社を1行追加し、「紹介元の代理店」をプルダウンで選んで紹介日を入力。以降の進捗も営業管理で追う。'],
+    ['④ 成約したら', '営業管理で進捗を「受注」にし、受注金額・紹介料を入力。紹介料を払ったら紹介料支払を「支払済」に。代理店の行・紹介・成約実績・サマリーに自動で反映される。'],
+    ['⑤ 毎週月曜に確認', '担当者：自分のログで赤→黄の順に連絡し、対応漏れがあれば営業管理で次回アポを入れる。責任者：『代理店全体ログ』上部で担当者ごとの要連絡・対応漏れを確認。'],
     ['⑥ 月末に振り返り', '『サマリー』で稼働率0%（灰色）の代理店を洗い出し、『定例アクション計画』に沿って再活性化の手を打つ。'],
     ['担当替えのとき', 'その代理店の行を切り取り、相手の担当者ログに貼り付ける。'],
     ['', null],
     ['■ 自動計算の意味', null],
-    ['担当代理店数', '担当者ログにある代理店IDの数（同じ代理店の行が複数あっても1社）。'],
+    ['担当代理店数', '担当者ログにある代理店名の数。'],
     ['稼働率', '直近の対象期間（初期値3ヶ月）のうち、紹介があった月の割合。3ヶ月中2ヶ月紹介あり→67%。'],
-    ['紹介数・成約数', '紹介社名が入った行の数と、そのうち成約日が入った行の数。'],
+    ['紹介件数・進行中・受注', '営業管理で紹介元の代理店にその代理店名が入った案件の数（進行中＝受注・失注以外）。'],
+    ['対応漏れ', 'そのうち、営業管理の状況が「アポなし」「期限切れ」の案件の数。'],
+    ['紹介料未払', 'そのうち、紹介料支払が「支払済」でない案件の紹介料の合計。'],
     ['代理店IDのリンク', 'クリックするとkintone『8. 代理店管理』でその代理店に絞り込んだ一覧が開く（入力すると自動でリンク化）。'],
     ['', null],
     ['■ 営業管理の自動項目', null],
@@ -591,6 +716,7 @@ function writeHowto_(ss) {
   const colors = {
     '黄色の見出し': COLOR.input, '灰色の見出し': COLOR.auto, '赤': COLOR.red,
     '黄': COLOR.yellow, 'サマリーの灰色': COLOR.gray, 'サマリーの緑': COLOR.green,
+    '対応漏れの赤': COLOR.red, '紹介料未払のオレンジ': '#FCE5CD',
   };
   how.getRange('B4:C70').clearContent().setBackground(null).setFontWeight('normal')
     .setFontColor('#000000').setFontSize(10);
@@ -644,7 +770,7 @@ function kintoneUrl_(id) {
 
 // 数式内で代理店IDをkintoneリンクにする（expr は ID の列や配列）
 function idLink_(expr) {
-  return `HYPERLINK("${KINTONE_APP_URL}?query="&ENCODEURL("${KINTONE_ID_FIELD} = """&${expr}&""""),${expr})`;
+  return `IF(${expr}="","",HYPERLINK("${KINTONE_APP_URL}?query="&ENCODEURL("${KINTONE_ID_FIELD} = """&${expr}&""""),${expr}))`;
 }
 
 // 『設定』タブを消してしまったときの復旧用（基準日などの値と選択肢を作り直す）
@@ -688,15 +814,18 @@ const KINTONE_DEAL_FIELD = '案件ID';
 const SALES_LOG = '営業管理全体ログ';
 // [見出し, 入力 or 自動, 列幅]
 const S_COLS = [
-  ['案件ID', 'in', 100], ['会社名', 'in', 200], ['氏名', 'in', 110], ['役職', 'in', 100], ['決算月', 'in', 65],
+  ['案件ID', 'in', 100], ['会社名', 'in', 200], ['氏名', 'in', 110], ['役職', 'in', 100],
+  ['紹介元の代理店', 'in', 160], ['紹介日', 'in', 90], ['決算月', 'in', 65],
   ['決算まで', 'auto', 70], ['単発／顧問', 'in', 80], ['提案商材', 'in', 150], ['進捗', 'in', 110],
   ['最終接触日', 'in', 90], ['次回アポ日', 'in', 90], ['アポ方法', 'in', 90], ['状況', 'auto', 85],
+  ['受注金額（円）', 'in', 110], ['紹介料（円）', 'in', 100], ['紹介料支払', 'in', 90],
   ['メモ', 'in', 320],
 ];
 const SC = {  // 営業管理タブの列
-  deal: 'A', company: 'B', position: 'D', fiscal: 'E', untilFiscal: 'F', kind: 'G', product: 'H',
-  progress: 'I', lastDate: 'J', nextDate: 'K', method: 'L', state: 'M',
+  deal: 'A', company: 'B', position: 'D', agency: 'E', introDate: 'F', fiscal: 'G', untilFiscal: 'H', kind: 'I',
+  product: 'J', progress: 'K', lastDate: 'L', nextDate: 'M', method: 'N', state: 'O', amount: 'P', fee: 'Q', paid: 'R',
 };
+const PAID_OPTIONS = ['未払', '支払済'];
 const S_STATUS = ['進行中', '今週アポ', 'アポなし', '期限切れ', '決算間近', '顧問見込み', '受注'];
 const POSITION_OPTIONS = ['代表取締役', '取締役', '部長', '担当者', 'その他'];
 const PROGRESS_OPTIONS = ['アポ調整中', 'アポ確定', '提案中', '見積提出', 'クロージング', '受注', '失注', '保留'];
@@ -713,9 +842,37 @@ function setupSales_(ss) {
   writeSalesLists_(ss);
   const tabs = ASSIGNEES.map(name => [name, findSalesTab_(ss, name)]);
   tabs.forEach(([name, sh]) => setupSalesTab_(sh, name));
-  const log = ss.getSheets().find(sh => /営業/.test(sh.getName()) && /全体/.test(sh.getName()))
-    || ss.insertSheet(SALES_LOG);
-  buildSalesLog_(log, tabs);
+  buildSalesLog_(findSalesLog_(ss) || ss.insertSheet(SALES_LOG), tabs);
+}
+
+function findSalesLog_(ss) {
+  return ss.getSheetByName(SALES_LOG)
+    || ss.getSheets().find(sh => /営業/.test(sh.getName()) && /全体/.test(sh.getName()) && !/（/.test(sh.getName()));
+}
+
+// 営業管理全体ログの範囲（A列＝担当、B列以降＝営業管理の列）。head を省くと全列。代理店側の自動集計で使う
+function salesRange_(ss, head) {
+  const log = findSalesLog_(ss);
+  const name = log ? log.getName() : SALES_LOG;
+  const first = ASSIGNEES.length + 7, end = first + ASSIGNEES.length * P_ROWS - 1;
+  if (!head) return `'${name}'!$A$${first}:$${colLetter_(S_COLS.length + 1)}$${end}`;
+  const col = colLetter_(S_COLS.findIndex(([h]) => h === head) + 2);
+  return `'${name}'!$${col}$${first}:$${col}$${end}`;
+}
+
+// 営業管理タブの末尾に案件を追加（同じ会社名が既にあれば追加しない）。追加した件数を返す
+function appendDeals_(sh, deals) {
+  const norm = v => String(v).replace(/\s/g, '');
+  const companies = sh.getRange(`${SC.company}${P_FIRST}:${SC.company}${P_LAST}`).getValues().map(([v]) => norm(v));
+  const add = deals.filter(d => !companies.includes(norm(d['会社名'])));
+  if (!add.length) return 0;
+  const lastUsed = companies.reduce((a, v, i) => v ? i : a, -1);
+  const start = P_FIRST + lastUsed + 1;
+  if (start + add.length - 1 > P_LAST) throw new Error(`『${sh.getName()}』に空き行が足りません。`);
+  const rng = sh.getRange(start, 1, add.length, S_COLS.length);
+  const formulas = rng.getFormulas();  // 自動の列（決算まで・状況）の数式はそのまま残す
+  rng.setValues(add.map((d, r) => S_COLS.map(([h, kind], c) => kind === 'auto' ? formulas[r][c] : (d[h] ?? ''))));
+  return add.length;
 }
 
 function findSalesTab_(ss, name) {
@@ -752,16 +909,9 @@ function writeSalesLists_(ss) {
 // ---------------------------------------------------------------- 営業管理（担当者ごと）
 function setupSalesTab_(sh, name) {
   const nCol = S_COLS.length;
-  const a6 = sh.getRange(P_HEAD, 1).getDisplayValues()[0][0];
-  if (a6 === '会社名') {
-    // 案件ID列がなかった頃の形 → 左に1列足して、入力済みのデータをそのまま右へずらす
-    sh.insertColumnBefore(1);
-  } else if (sh.getLastRow() >= P_FIRST && a6 !== '案件ID') {
-    // 想定外の内容が入っていたら、触る前にバックアップ
-    const backup = `${sh.getName()}（作成前）`;
-    if (!sh.getParent().getSheetByName(backup)) sh.copyTo(sh.getParent()).setName(backup);
-  }
+  // 列構成が変わっていたら、見出し名を手がかりに入力済みのデータを新しい列へ移す（元の内容は（組み替え前）に保存）
   ensureSize_(sh, P_LAST, nCol);
+  remapColumns_(sh, S_COLS.map(([h]) => h));
   if (sh.getFilter()) sh.getFilter().remove();
   sh.getRange(P_FIRST, 1, P_ROWS, sh.getMaxColumns()).clearDataValidations();
   salesTitle_(sh, `${name}の営業管理`, nCol);
@@ -787,6 +937,9 @@ function setupSalesTab_(sh, name) {
   sh.getRange(P_FIRST, 1, P_ROWS, nCol).setNumberFormat('General').setFontSize(10).setVerticalAlignment('middle')
     .setBorder(true, true, true, true, true, true, COLOR.border, SpreadsheetApp.BorderStyle.SOLID);
   [SC.lastDate, SC.nextDate].forEach(col => sh.getRange(r(col)).setNumberFormat('m/d'));
+  sh.getRange(r(SC.introDate)).setNumberFormat('yyyy/mm/dd');
+  [SC.amount, SC.fee].forEach(col => sh.getRange(r(col)).setNumberFormat('#,##0'));
+  sh.getRange(r(SC.paid)).setHorizontalAlignment('center');
   sh.getRange(r(SC.untilFiscal)).setNumberFormat('[=0]"今月";0"ヶ月"').setHorizontalAlignment('center');
   sh.getRange(r(SC.state)).setHorizontalAlignment('center').setFontWeight('bold');
   [SC.untilFiscal, SC.state].forEach(col => sh.getRange(r(col)).setBackground('#F3F3F3'));
@@ -815,8 +968,11 @@ function setupSalesTab_(sh, name) {
   setListValidation_(sh.getRange(r(SC.product)), list('S'));
   setListValidation_(sh.getRange(r(SC.progress)), list('R'));
   setListValidation_(sh.getRange(r(SC.method)), conf.getRange(`H${OPT_FIRST}:H${OPT_FIRST + 9}`));
+  setValueListValidation_(sh.getRange(r(SC.paid)), PAID_OPTIONS);
+  const agencyLog = sh.getParent().getSheetByName(SH.log);  // 紹介元の代理店＝担当者ログの代理店名
+  if (agencyLog) setListValidation_(sh.getRange(r(SC.agency)), agencyLog.getRange(`B${LOG_FIRST}:B${LOG_END}`));
 
-  salesColors_(sh, P_FIRST, P_LAST, SC.untilFiscal, SC.state, nCol);
+  salesColors_(sh, P_FIRST, P_LAST, SC.untilFiscal, SC.state, nCol, SC.fee, SC.paid);
   sh.setFrozenRows(P_HEAD);
   sh.setFrozenColumns(2);
   sh.getRange(P_HEAD, 1, P_ROWS + 1, nCol).createFilter();
@@ -880,9 +1036,12 @@ function buildSalesLog_(sh, tabs) {
   sh.getRange(first, 1, end - first + 1, nCol).setFontSize(10).setVerticalAlignment('middle')
     .setBorder(true, true, true, true, true, true, COLOR.border, SpreadsheetApp.BorderStyle.SOLID);
   [SC.lastDate, SC.nextDate].forEach(col => rr(L(col)).setNumberFormat('m/d'));
+  rr(L(SC.introDate)).setNumberFormat('yyyy/mm/dd');
+  [SC.amount, SC.fee].forEach(col => rr(L(col)).setNumberFormat('#,##0'));
+  rr(L(SC.paid)).setHorizontalAlignment('center');
   rr(L(SC.untilFiscal)).setNumberFormat('[=0]"今月";0"ヶ月"').setHorizontalAlignment('center');
   rr(L(SC.state)).setHorizontalAlignment('center').setFontWeight('bold');
-  salesColors_(sh, first, end, L(SC.untilFiscal), L(SC.state), nCol);
+  salesColors_(sh, first, end, L(SC.untilFiscal), L(SC.state), nCol, L(SC.fee), L(SC.paid));
   sh.setFrozenRows(head);
   sh.setFrozenColumns(3);
 }
@@ -938,7 +1097,8 @@ function salesStatusStyle_(sh, headRow, startCol, n) {
 }
 
 // 決算まで（2ヶ月以内＝オレンジ）と状況（期限切れ・アポなし＝赤、今週アポ＝黄、受注＝緑、失注＝グレー）
-function salesColors_(sh, first, last, fiscalCol, stateCol, nCol) {
+// 紹介料支払（紹介料が入っていて支払済でない＝オレンジ）
+function salesColors_(sh, first, last, fiscalCol, stateCol, nCol, feeCol, paidCol) {
   const fiscal = sh.getRange(`${fiscalCol}${first}:${fiscalCol}${last}`);
   const state = sh.getRange(`${stateCol}${first}:${stateCol}${last}`);
   const s = `$${stateCol}${first}`;
@@ -955,6 +1115,10 @@ function salesColors_(sh, first, last, fiscalCol, stateCol, nCol) {
       .setBackground(COLOR.yellow).setRanges([state]).build(),
     SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('受注')
       .setBackground(COLOR.green).setRanges([state]).build(),
+    SpreadsheetApp.newConditionalFormatRule()
+      .whenFormulaSatisfied(`=AND($${feeCol}${first}>0,$${paidCol}${first}<>"支払済")`)
+      .setBackground(SCOLOR.orange).setFontColor(SCOLOR.redFont)
+      .setRanges([sh.getRange(`${paidCol}${first}:${paidCol}${last}`)]).build(),
     SpreadsheetApp.newConditionalFormatRule().whenFormulaSatisfied(`=${s}="失注"`)
       .setFontColor('#A6A6A6').setRanges([sh.getRange(first, 1, last - first + 1, nCol)]).build());
   sh.setConditionalFormatRules(rules);
@@ -1019,7 +1183,7 @@ function overlaps_(rule, target) {
 function findBrokenFormulas_(ss) {
   const out = [];
   ss.getSheets().forEach(sh => {
-    if (/（(移行前|組み替え前|作成前)）$/.test(sh.getName())) return;
+    if (/（(移行前|組み替え前|作成前|紹介移行前)）$/.test(sh.getName())) return;
     const rng = sh.getDataRange();
     const f = rng.getFormulas();
     for (let i = 0; i < f.length; i++) {
