@@ -89,8 +89,9 @@ const COLOR = {
 
 function fixAgencySheet() {
   const ss = SpreadsheetApp.getActive();
-  const need = [SH.log, SH.kpi, SH.sum, SH.conf].filter(n => !ss.getSheetByName(n));
-  if (need.length) throw new Error('シートが見つかりません：' + need.join('、'));
+  if (!ss.getSheetByName(SH.conf)) throw new Error('『設定』がありません。先に restoreSettings を実行してください。');
+  // 自動で作り直せるタブは、消えていたら新しく作る
+  [SH.log, SH.kpi, SH.sum].forEach(n => { if (!ss.getSheetByName(n)) ss.insertSheet(n); });
 
   const notes = writeLists_(ss);
   ASSIGNEES.forEach(name => {
